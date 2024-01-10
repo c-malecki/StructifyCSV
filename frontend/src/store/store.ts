@@ -1,29 +1,13 @@
 import { defineStore } from "pinia";
-import { SelectFile } from "../../wailsjs/go/main/App";
+import { ImportCsv, WriteModel, WriteSchema } from "../../wailsjs/go/main/App";
+import { main } from "../../wailsjs/go/models";
 
 export type EntityTypes = "model" | "schema" | "field";
-export type EntityBase = {
-  name: string;
-  type: EntityTypes;
-};
 
-export type DataTypes =
-  | { name: "text (string)"; value: "string" }
-  | { name: "int (whole number)"; value: "int" }
-  | { name: "boolean (true/false)"; value: "bool" };
-
-export type Field = EntityBase & {
-  dataType: DataTypes;
-};
-
-export type Schema = EntityBase & {
-  fields: Field[];
-};
-
-export type Model = EntityBase & {
-  schemas: Schema[];
-  baseSchema: number;
-};
+export type DataTypes = main.DataType;
+export type Field = main.Field;
+export type Schema = main.Schema;
+export type Model = main.Model;
 
 export type CsvColumn = {
   header: string;
@@ -101,11 +85,19 @@ export const useStore = defineStore("store", {
         field: 0,
       },
     ],
-    model: {
+    model: new main.Model({
       name: "Example Model",
       type: "model",
       baseSchema: 0,
       schemas: [
+        {
+          name: "Person",
+          type: "schema",
+          fields: [
+            { name: "firstName", type: "field", dataType: { name: "text (string)", value: "string" } },
+            { name: "lastName", type: "field", dataType: { name: "text (string)", value: "string" } },
+          ],
+        },
         {
           name: "Person",
           type: "schema",
@@ -125,7 +117,7 @@ export const useStore = defineStore("store", {
           fields: [{ name: "name", type: "field", dataType: { name: "text (string)", value: "string" } }],
         },
       ],
-    },
+    }),
     selectedSchema: 0,
   }),
   getters: {
@@ -169,10 +161,23 @@ export const useStore = defineStore("store", {
     },
   },
   actions: {
-    async saveModel() {},
+    async saveSchema() {
+      try {
+        await WriteSchema(this.model.schemas[this.selectedSchema]);
+      } catch (err) {
+        console.log(err);
+      }
+    },
+    async saveModel() {
+      try {
+        await WriteModel(this.model);
+      } catch (err) {
+        console.log(err);
+      }
+    },
     async setColumns() {
       try {
-        const file = await SelectFile();
+        const file = await ImportCsv();
         this.csv.columns = file.headers.map((header) => {
           return {
             header,
@@ -199,17 +204,19 @@ export const useStore = defineStore("store", {
       }
     },
     createModel(name: string) {
-      this.model = { name, type: "model", baseSchema: 0, schemas: [] };
+      this.model = new main.Model({ name, type: "model", baseSchema: 0, schemas: [] });
     },
     createSchema(name: string) {
-      this.model?.schemas.push({ name, type: "schema", fields: [] });
+      this.model?.schemas.push(new main.Schema({ name, type: "schema", fields: [] }));
     },
     addField() {
-      this.model?.schemas[this.selectedSchema!].fields.push({
-        name: "",
-        type: "field",
-        dataType: { name: "text (string)", value: "string" },
-      });
+      this.model?.schemas[this.selectedSchema!].fields.push(
+        new main.Field({
+          name: "",
+          type: "field",
+          dataType: { name: "text (string)", value: "string" },
+        })
+      );
     },
   },
   // selectSchema(index: number) {

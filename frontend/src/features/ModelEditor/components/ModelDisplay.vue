@@ -6,6 +6,7 @@ const store = useStore();
 <template>
   <div class="container">
     <h3>{{ store.getCurModelLabel }}</h3>
+    <button @click="store.saveModel">Export Model</button>
     <div class="col">
       <label for="Schema">Model Base Schema</label>
       <select name="Schema" v-model="store.model.baseSchema">

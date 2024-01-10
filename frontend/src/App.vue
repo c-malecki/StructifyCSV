@@ -8,7 +8,7 @@ const store = useStore();
 <template>
   <div class="main">
     <div class="container">
-      <button @click="store.setColumns">select csv file</button>
+      <button @click="store.setColumns">Import CSV</button>
     </div>
 
     <CsvEditor />

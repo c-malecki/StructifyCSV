@@ -9,6 +9,7 @@ const store = useStore();
     <p>
       Selected Schema: <b>{{ store.getSelectedSchemaLabel }}</b>
     </p>
+    <button @click="store.saveSchema">Export Schema</button>
     <pre>{{ JSON.stringify(store.formatSchemaDisplay, null, 2) }}</pre>
 
     <div>

@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -36,6 +38,35 @@ func checkForError(err error) {
 	}
 }
 
+type DataType struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type Field struct {
+	Name     string   `json:"name"`
+	Type     string   `json:"type"`
+	DataType DataType `json:"dataType"`
+}
+
+type Schema struct {
+	Name   string  `json:"name"`
+	Type   string  `json:"type"`
+	Fields []Field `json:"fields"`
+}
+
+type Model struct {
+	Name       string   `json:"name"`
+	Type       string   `json:"type"`
+	Schemas    []Schema `json:"schemas"`
+	BaseSchema int      `json:"baseSchema"`
+}
+
+type SelectFileRes struct {
+	Headers []string `json:"headers"`
+	Err     bool     `json:"error"`
+}
+
 func (a *App) getCsvHeaders(absPath string) []string {
 	file, err := os.Open(absPath)
 	checkForError(err)
@@ -47,30 +78,9 @@ func (a *App) getCsvHeaders(absPath string) []string {
 	return headers
 }
 
-type SelectFileRes struct {
-	Headers []string `json:"headers"`
-	Err     bool     `json:"error"`
-}
-
-type FieldType struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
-
-type Field struct {
-	FieldName string    `json:"fieldName"`
-	FieldType FieldType `json:"fieldType"`
-	Parent    string    `json:"parent"`
-}
-
-type Schema struct {
-	Name   string  `json:"name"`
-	Fields []Field `json:"fields"`
-}
-
-func (a *App) SelectFile() SelectFileRes {
+func (a *App) ImportCsv() SelectFileRes {
 	file, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title: "Select a CSV file",
+		Title: "Import CSV file",
 		Filters: []runtime.FileFilter{
 			{
 				DisplayName: "CSV (*.csv)",
@@ -81,3 +91,48 @@ func (a *App) SelectFile() SelectFileRes {
 
 	return SelectFileRes{a.getCsvHeaders(file), err != nil}
 }
+
+func (a *App) WriteSchema(schema Schema) {
+	fileName := strings.ReplaceAll(schema.Name, " ", "_")
+	file, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		DefaultDirectory: ".",
+		DefaultFilename:  fileName + "_Schema.json",
+		Title:            "Save" + " " + schema.Name + " " + "Schema",
+	})
+	if err != nil {
+		print(err)
+	}
+	if len(file) > 0 {
+		b, _ := json.MarshalIndent(schema, "", "  ")
+		err := os.WriteFile(file, b, 0666)
+		if err != nil {
+			print(err)
+		}
+	}
+}
+
+func (a *App) WriteModel(model Model) {
+	fileName := strings.ReplaceAll(model.Name, " ", "_")
+	file, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		DefaultDirectory: ".",
+		DefaultFilename:  fileName + "_Model.json",
+		Title:            "Save" + " " + model.Name + " " + "Model",
+	})
+	if err != nil {
+		print(err)
+	}
+	if len(file) > 0 {
+		b, _ := json.MarshalIndent(model, "", "  ")
+		err := os.WriteFile(file, b, 0666)
+		if err != nil {
+			print(err)
+		}
+	}
+}
+
+// save schema
+// save model
+
+// need to validate json
+// import schema
+// import model
