@@ -1,5 +1,19 @@
 export namespace main {
 	
+	export class CsvData {
+	    fileName: string;
+	    headers: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new CsvData(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.fileName = source["fileName"];
+	        this.headers = source["headers"];
+	    }
+	}
 	export class DataType {
 	    name: string;
 	    value: string;
@@ -117,21 +131,6 @@ export namespace main {
 		    }
 		    return a;
 		}
-	}
-	
-	export class SelectFileRes {
-	    headers: string[];
-	    error: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new SelectFileRes(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.headers = source["headers"];
-	        this.error = source["error"];
-	    }
 	}
 
 }

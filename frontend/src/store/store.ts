@@ -1,13 +1,30 @@
 import { defineStore } from "pinia";
-import { ImportCsv, WriteModel, WriteSchema } from "../../wailsjs/go/main/App";
+import {
+  ImportCsvFile,
+  ImportModelJson,
+  ImportSchemaJson,
+  ExportModelToJson,
+  ExportSchemaToJson,
+} from "../../wailsjs/go/main/App";
 import { main } from "../../wailsjs/go/models";
 
 export type EntityTypes = "model" | "schema" | "field";
+
+export type NewModelValues = {
+  name: string;
+  baseSchema: number;
+};
 
 export type DataTypes = main.DataType;
 export type Field = main.Field;
 export type Schema = main.Schema;
 export type Model = main.Model;
+
+export const fieldOptions: DataTypes[] = [
+  { name: "text", value: "text" },
+  { name: "number", value: "number" },
+  { name: "boolean", value: "boolean" },
+];
 
 export type CsvColumn = {
   header: string;
@@ -22,12 +39,20 @@ export type SelectedColumn = {
 
 type StoreState = {
   csv: {
-    fileName: string | null;
+    fileName: string;
     columns: CsvColumn[];
+  } | null;
+  modelEditor: {
+    curForm: "new" | "edit" | null;
+  };
+  schemaEditor: {
+    curForm: "new" | "edit" | null;
+    curSelected: number;
   };
   selectedColumns: SelectedColumn[];
-  model: Model;
-  selectedSchema: number;
+  model: Model | null;
+  schemas: Schema[];
+  selectedSchema: number | null;
 };
 
 const formatFieldJson = (field: Field, acc?: Record<string, any>) => {
@@ -53,146 +78,84 @@ const formatSchemaJson = (schema: Schema, acc?: Record<string, any>) => {
 
 export const useStore = defineStore("store", {
   state: (): StoreState => ({
-    csv: {
-      fileName: "test.csv",
-      columns: [
-        { header: "First Name", isSelected: true },
-        { header: "Last Name", isSelected: true },
-        { header: "Email", isSelected: true },
-        { header: "Place of Work", isSelected: true },
-        { header: "Age", isSelected: false },
-      ],
+    csv: null,
+    selectedColumns: [],
+    modelEditor: {
+      curForm: null,
     },
-    selectedColumns: [
-      {
-        name: "First Name",
-        schema: 0,
-        field: 1,
-      },
-      {
-        name: "Last Name",
-        schema: 0,
-        field: 1,
-      },
-      {
-        name: "Email",
-        schema: 1,
-        field: 0,
-      },
-      {
-        name: "Place of Work",
-        schema: 2,
-        field: 0,
-      },
-    ],
-    model: new main.Model({
-      name: "Example Model",
-      type: "model",
-      baseSchema: 0,
-      schemas: [
-        {
-          name: "Person",
-          type: "schema",
-          fields: [
-            { name: "firstName", type: "field", dataType: { name: "text (string)", value: "string" } },
-            { name: "lastName", type: "field", dataType: { name: "text (string)", value: "string" } },
-          ],
-        },
-        {
-          name: "Person",
-          type: "schema",
-          fields: [
-            { name: "firstName", type: "field", dataType: { name: "text (string)", value: "string" } },
-            { name: "lastName", type: "field", dataType: { name: "text (string)", value: "string" } },
-          ],
-        },
-        {
-          name: "User",
-          type: "schema",
-          fields: [{ name: "email", type: "field", dataType: { name: "text (string)", value: "string" } }],
-        },
-        {
-          name: "Organization",
-          type: "schema",
-          fields: [{ name: "name", type: "field", dataType: { name: "text (string)", value: "string" } }],
-        },
-      ],
-    }),
-    selectedSchema: 0,
+    schemaEditor: {
+      curForm: null,
+      curSelected: 0,
+    },
+    model: null,
+    schemas: [],
+    selectedSchema: null,
   }),
   getters: {
-    getCurModelLabel(state) {
-      return state.model.name;
-    },
-    getCurModelSchemas(state) {
-      return state.model.schemas;
-    },
-    getSelectedSchemaLabel(state) {
-      return state.model.schemas[state.selectedSchema].name;
-    },
-    getSelectedSchemaFields(state) {
-      return state.model.schemas[state.selectedSchema].fields;
-    },
     formatModelDisplay(state) {
       const display = {};
       const base = {};
-      const baseSchema = state.model.schemas[state.model.baseSchema];
-      for (let j = 0; j < baseSchema.fields.length; j++) {
-        const field = baseSchema.fields[j];
-        Object.assign(base, formatFieldJson(field));
-      }
-      Object.assign(display, base);
 
-      for (let i = 0; i < this.getCurModelSchemas.length; i++) {
-        const schema = this.getCurModelSchemas[i];
-        if (state.model.baseSchema !== i) {
-          Object.assign(display, formatSchemaJson(schema));
+      if (state.model !== null) {
+        const baseSchema = state.model.baseSchema !== null ? state.model.schemas[state.model.baseSchema] : null;
+        if (baseSchema) {
+          for (let j = 0; j < baseSchema.fields.length; j++) {
+            const field = baseSchema.fields[j];
+            Object.assign(base, formatFieldJson(field));
+          }
+          Object.assign(display, base);
+        }
+
+        for (let i = 0; i < state.model.schemas.length; i++) {
+          const schema = state.model.schemas[i];
+          if (state.model.baseSchema !== i) {
+            Object.assign(display, formatSchemaJson(schema));
+          }
         }
       }
+
       return display;
     },
     formatSchemaDisplay() {
       const display = {};
-      for (let i = 0; i < this.getSelectedSchemaFields.length; i++) {
-        const field = this.getSelectedSchemaFields[i];
-        Object.assign(display, formatFieldJson(field));
+      if (this.model && this.selectedSchema !== null) {
+        const schema = this.model.schemas[this.selectedSchema];
+        for (let i = 0; i < schema.fields.length; i++) {
+          const field = schema.fields[i];
+          Object.assign(display, formatFieldJson(field));
+        }
       }
+
       return display;
     },
   },
   actions: {
-    async saveSchema() {
-      try {
-        await WriteSchema(this.model.schemas[this.selectedSchema]);
-      } catch (err) {
-        console.log(err);
-      }
+    changeModelEditorForm(val: "new" | "edit" | null) {
+      this.modelEditor.curForm = val;
     },
-    async saveModel() {
-      try {
-        await WriteModel(this.model);
-      } catch (err) {
-        console.log(err);
-      }
+    changeSchemaEditorForm(val: "new" | "edit" | null) {
+      this.schemaEditor.curForm = val;
     },
-    async setColumns() {
-      try {
-        const file = await ImportCsv();
-        this.csv.columns = file.headers.map((header) => {
-          return {
-            header,
-            isSelected: false,
-          };
-        });
-      } catch (err) {
-        console.log(err);
+    updateLocalModel(model: Model) {
+      this.model = model;
+      this.schemaEditor.curSelected = model.baseSchema;
+    },
+    createLocalSchema(schema: Schema) {
+      this.model!.schemas.push(schema);
+      this.schemaEditor.curSelected = this.model!.schemas.length - 1;
+    },
+    updateLocalSchema(schema: Schema) {
+      if (this.schemaEditor.curSelected === 0 && this.model!.schemas.length === 1) {
+        this.model!.schemas = [schema];
+      } else {
+        this.model!.schemas[this.schemaEditor.curSelected] = schema;
       }
     },
     toggleSelectColumn(index: number) {
       // Column headers should be unique. Will have to ensure no duplicates when parsing CSV
-      const isSelected = !this.csv.columns[index].isSelected;
-      this.csv.columns[index].isSelected = isSelected;
-      const name = this.csv.columns[index].header;
+      const isSelected = !this.csv!.columns[index].isSelected;
+      this.csv!.columns[index].isSelected = isSelected;
+      const name = this.csv!.columns[index].header;
       if (isSelected) {
         this.selectedColumns.push({
           name,
@@ -203,26 +166,57 @@ export const useStore = defineStore("store", {
         this.selectedColumns = this.selectedColumns.filter((col) => col.name !== name);
       }
     },
-    createModel(name: string) {
-      this.model = new main.Model({ name, type: "model", baseSchema: 0, schemas: [] });
+    async exportSchema() {
+      try {
+        await ExportSchemaToJson(this.model!.schemas[this.selectedSchema!]);
+      } catch (err) {
+        console.log(err);
+      }
     },
-    createSchema(name: string) {
-      this.model?.schemas.push(new main.Schema({ name, type: "schema", fields: [] }));
+    async importSchema() {
+      try {
+        const schema = await ImportSchemaJson();
+        this.model!.schemas.push(schema);
+      } catch (err) {
+        console.log(err);
+      }
     },
-    addField() {
-      this.model?.schemas[this.selectedSchema!].fields.push(
-        new main.Field({
-          name: "",
-          type: "field",
-          dataType: { name: "text (string)", value: "string" },
-        })
-      );
+    async exportModel() {
+      try {
+        await ExportModelToJson(this.model!);
+      } catch (err) {
+        console.log(err);
+      }
+    },
+    async importModel() {
+      try {
+        const model = await ImportModelJson();
+        this.model = model;
+        this.modelEditor.curForm = null;
+      } catch (err) {
+        console.log(err);
+      }
+    },
+    async importCsv() {
+      try {
+        const csvData = await ImportCsvFile();
+        if (csvData.headers !== null) {
+          this.selectedColumns = [];
+          this.csv = {
+            fileName: csvData.fileName,
+            columns: csvData.headers.map((header) => {
+              return {
+                header,
+                isSelected: false,
+              };
+            }),
+          };
+        } else {
+          console.log("canceled import");
+        }
+      } catch (err) {
+        console.log(err);
+      }
     },
   },
-  // selectSchema(index: number) {
-  //   this.selectedSchema = this.model!.schemas[index];
-  // },
-  // createSchema(schemaName: string) {
-  //   this.schema = { name: schemaName, fields: [] };
-  // },
 });

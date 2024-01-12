@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -62,23 +63,25 @@ type Model struct {
 	BaseSchema int      `json:"baseSchema"`
 }
 
-type SelectFileRes struct {
-	Headers []string `json:"headers"`
-	Err     bool     `json:"error"`
+type CsvData struct {
+	FileName string   `json:"fileName"`
+	Headers  []string `json:"headers"`
 }
 
-func (a *App) getCsvHeaders(absPath string) []string {
+func (a *App) parseCsv(absPath string) CsvData {
 	file, err := os.Open(absPath)
 	checkForError(err)
 	defer file.Close()
 
+	name := filepath.Base(absPath)
+
 	reader := csv.NewReader(file)
 	headers, err := reader.Read()
 	checkForError(err)
-	return headers
+	return CsvData{name, headers}
 }
 
-func (a *App) ImportCsv() SelectFileRes {
+func (a *App) ImportCsvFile() CsvData {
 	file, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
 		Title: "Import CSV file",
 		Filters: []runtime.FileFilter{
@@ -88,11 +91,16 @@ func (a *App) ImportCsv() SelectFileRes {
 			},
 		},
 	})
-
-	return SelectFileRes{a.getCsvHeaders(file), err != nil}
+	if err != nil {
+		print(err)
+	}
+	if len(file) > 0 {
+		return a.parseCsv(file)
+	}
+	return CsvData{}
 }
 
-func (a *App) WriteSchema(schema Schema) {
+func (a *App) ExportSchemaToJson(schema Schema) {
 	fileName := strings.ReplaceAll(schema.Name, " ", "_")
 	file, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
 		DefaultDirectory: ".",
@@ -111,7 +119,31 @@ func (a *App) WriteSchema(schema Schema) {
 	}
 }
 
-func (a *App) WriteModel(model Model) {
+func (a *App) ImportSchemaJson() Schema {
+	filePath, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Import Schema.json",
+		Filters: []runtime.FileFilter{
+			{
+				DisplayName: "JSON (*.json)",
+				Pattern:     "*.json",
+			},
+		},
+	})
+	if err != nil {
+		print(err)
+	}
+
+	var schema Schema
+	b, err := os.ReadFile(filePath)
+	if err != nil {
+		print(err)
+	}
+	json.Unmarshal(b, &schema)
+
+	return schema
+}
+
+func (a *App) ExportModelToJson(model Model) {
 	fileName := strings.ReplaceAll(model.Name, " ", "_")
 	file, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
 		DefaultDirectory: ".",
@@ -128,6 +160,30 @@ func (a *App) WriteModel(model Model) {
 			print(err)
 		}
 	}
+}
+
+func (a *App) ImportModelJson() Model {
+	filePath, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Import Model.json",
+		Filters: []runtime.FileFilter{
+			{
+				DisplayName: "JSON (*.json)",
+				Pattern:     "*.json",
+			},
+		},
+	})
+	if err != nil {
+		print(err)
+	}
+
+	var model Model
+	b, err := os.ReadFile(filePath)
+	if err != nil {
+		print(err)
+	}
+	json.Unmarshal(b, &model)
+
+	return model
 }
 
 // save schema

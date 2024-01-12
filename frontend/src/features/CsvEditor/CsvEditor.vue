@@ -6,12 +6,15 @@ const store = useStore();
 </script>
 
 <template>
-  <div class="container">
-    <h3>{{ store.csv.fileName }}</h3>
-    <p>CSV Headers</p>
-    <ColumnSelection />
-    <p>Selected Headers: {{ store.selectedColumns.length }}</p>
-    <EditColumn v-for="(column, cIdx) in store.selectedColumns" :column-index="cIdx" />
+  <div class="inner-container">
+    <button @click="store.importCsv">Import CSV</button>
+    <div v-if="store.csv !== null">
+      <h3>{{ store.csv.fileName }}</h3>
+      <p>CSV Headers</p>
+      <ColumnSelection />
+      <p>Selected Headers: {{ store.selectedColumns.length }}</p>
+      <EditColumn v-for="(column, cIdx) in store.selectedColumns" :column-index="cIdx" />
+    </div>
   </div>
 </template>
 

@@ -10,11 +10,16 @@ const props = defineProps({
 });
 
 const store = useStore();
-const fieldOpts = computed(() =>
-  store.selectedColumns[props.columnIndex].schema !== null
-    ? store.model.schemas[store.selectedColumns[props.columnIndex].schema!].fields
-    : []
-);
+
+const modelSchemaOpts = computed(() => (store.model !== null ? store.model.schemas : []));
+
+const fieldOpts = computed(() => {
+  const curColSchemaIdx = store.selectedColumns[props.columnIndex].schema;
+  if (modelSchemaOpts.value.length > 0 && curColSchemaIdx !== null) {
+    return modelSchemaOpts.value[curColSchemaIdx].fields;
+  }
+  return [];
+});
 </script>
 
 <template>
@@ -26,8 +31,12 @@ const fieldOpts = computed(() =>
     <div class="row">
       <div class="col">
         <label for="Schema">Schema</label>
-        <select name="Schema" v-model="store.selectedColumns[props.columnIndex].schema">
-          <option v-for="(opt, sIdx) in store.model.schemas" :key="opt.name" :value="sIdx">
+        <select
+          v-model="store.selectedColumns[props.columnIndex].schema"
+          name="Schema"
+          :disabled="!modelSchemaOpts.length"
+        >
+          <option v-for="(opt, sIdx) in modelSchemaOpts" :key="opt.name" :value="sIdx">
             {{ opt.name }}
           </option>
         </select>
@@ -36,8 +45,8 @@ const fieldOpts = computed(() =>
       <div class="col">
         <label for="Field">Field</label>
         <select
-          name="Field"
           v-model="store.selectedColumns[props.columnIndex].field"
+          name="Field"
           :disabled="store.selectedColumns[props.columnIndex].schema === null"
         >
           <option v-for="(opt, fIdx) in fieldOpts" :key="opt.name" :value="fIdx">

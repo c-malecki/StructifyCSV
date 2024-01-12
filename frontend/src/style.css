@@ -1,6 +1,10 @@
-html {
-    background-color: rgba(27, 38, 54, 1);
+#app {
+    height: 100vh;
+    width: 100vw;
+    background-color: rgb(180, 180, 180);
+    
 }
+
 
 body {
     margin: 0;
@@ -15,10 +19,4 @@ body {
     font-weight: 400;
     src: local(""),
     url("assets/fonts/nunito-v16-latin-regular.woff2") format("woff2");
-}
-
-#app {
-    height: 100vh;
-    width: 100vw;
-    
 }
