@@ -1,24 +1,20 @@
 import { defineStore } from "pinia";
 import {
   ImportCsvFile,
-  ImportModelJson,
-  ImportSchemaJson,
-  ExportModelToJson,
-  ExportSchemaToJson,
+  ImportModel,
+  ImportSchema,
+  ExportModel,
+  ExportSchema,
+  ProcessCsvDescriptor,
 } from "../../wailsjs/go/main/App";
-import { main } from "../../wailsjs/go/models";
+import { entity } from "../../wailsjs/go/models";
 
 export type EntityTypes = "model" | "schema" | "field";
-
-export type NewModelValues = {
-  name: string;
-  baseSchema: number;
-};
-
-export type DataTypes = main.DataType;
-export type Field = main.Field;
-export type Schema = main.Schema;
-export type Model = main.Model;
+export type DataTypes = entity.DataType;
+export type Field = entity.Field;
+export type Schema = entity.Schema;
+export type Model = entity.Model;
+export type HeaderDescriptor = entity.HeaderDescriptor;
 
 export const fieldOptions: DataTypes[] = [
   { name: "text", value: "text" },
@@ -26,22 +22,23 @@ export const fieldOptions: DataTypes[] = [
   { name: "boolean", value: "boolean" },
 ];
 
-export type CsvColumn = {
-  header: string;
-  isSelected: boolean;
-};
-
 export type SelectedColumn = {
-  name: string;
-  schema: number | null;
-  field: number | null;
+  header: string;
+  schemaIdx: number | null;
+  fieldIdx: number | null;
 };
 
 type StoreState = {
   csv: {
     fileName: string;
-    columns: CsvColumn[];
+    location: string;
+    headers: string[];
   } | null;
+  model: Model | null;
+  csvEditor: {
+    curForm: "new" | "edit" | "none";
+    selectedColumns: SelectedColumn[];
+  };
   modelEditor: {
     curForm: "new" | "edit" | null;
   };
@@ -49,37 +46,50 @@ type StoreState = {
     curForm: "new" | "edit" | null;
     curSelected: number;
   };
-  selectedColumns: SelectedColumn[];
-  model: Model | null;
-  schemas: Schema[];
-  selectedSchema: number | null;
-};
-
-const formatFieldJson = (field: Field, acc?: Record<string, any>) => {
-  const obj = acc ?? {};
-  return Object.assign(obj, {
-    [field.name]: field.dataType.value,
-  });
-};
-
-const formatSchemaJson = (schema: Schema, acc?: Record<string, any>) => {
-  const obj = acc ?? {};
-  const reformatName = schema.name.replace(" ", "_").toLowerCase();
-  Object.assign(obj, {
-    [reformatName]: {},
-  });
-  for (let i = 0; i < schema.fields.length; i++) {
-    const field = schema.fields[i];
-    const fieldObj = formatFieldJson(field);
-    Object.assign(obj[reformatName], fieldObj);
-  }
-  return obj;
 };
 
 export const useStore = defineStore("store", {
   state: (): StoreState => ({
-    csv: null,
-    selectedColumns: [],
+    // csv: null,
+    csv: {
+      fileName: "test.csv",
+      location: "/home/meeps/Documents/test.csv",
+      headers: ["First Name", "Last Name", "Age", "Location", "Email", "LinkedIn URL", "Title", "Company"],
+    },
+    // model: null,
+    model: new entity.Model({
+      name: "Person",
+      type: "model",
+      schemas: [
+        {
+          name: "person base",
+          type: "schema",
+          fields: [
+            { name: "first name", type: "field", dataType: { name: "text (string)", value: "string" } },
+            { name: "last name", type: "field", dataType: { name: "text (string)", value: "string" } },
+            { name: "email", type: "field", dataType: { name: "text (string)", value: "string" } },
+            { name: "linkedin", type: "field", dataType: { name: "text (string)", value: "string" } },
+          ],
+        },
+        {
+          name: "location",
+          type: "schema",
+          fields: [{ name: "name", type: "field", dataType: { name: "text (string)", value: "string" } }],
+        },
+      ],
+      baseSchemaIdx: 0,
+    }),
+    csvEditor: {
+      curForm: "none",
+      // selectedColumns: [],
+      selectedColumns: [
+        { header: "First Name", schemaIdx: 0, fieldIdx: 0 },
+        { header: "Last Name", schemaIdx: 0, fieldIdx: 1 },
+        { header: "Location", schemaIdx: 1, fieldIdx: 0 },
+        { header: "Email", schemaIdx: 0, fieldIdx: 2 },
+        { header: "LinkedIn URL", schemaIdx: 0, fieldIdx: 3 },
+      ],
+    },
     modelEditor: {
       curForm: null,
     },
@@ -87,48 +97,7 @@ export const useStore = defineStore("store", {
       curForm: null,
       curSelected: 0,
     },
-    model: null,
-    schemas: [],
-    selectedSchema: null,
   }),
-  getters: {
-    formatModelDisplay(state) {
-      const display = {};
-      const base = {};
-
-      if (state.model !== null) {
-        const baseSchema = state.model.baseSchema !== null ? state.model.schemas[state.model.baseSchema] : null;
-        if (baseSchema) {
-          for (let j = 0; j < baseSchema.fields.length; j++) {
-            const field = baseSchema.fields[j];
-            Object.assign(base, formatFieldJson(field));
-          }
-          Object.assign(display, base);
-        }
-
-        for (let i = 0; i < state.model.schemas.length; i++) {
-          const schema = state.model.schemas[i];
-          if (state.model.baseSchema !== i) {
-            Object.assign(display, formatSchemaJson(schema));
-          }
-        }
-      }
-
-      return display;
-    },
-    formatSchemaDisplay() {
-      const display = {};
-      if (this.model && this.selectedSchema !== null) {
-        const schema = this.model.schemas[this.selectedSchema];
-        for (let i = 0; i < schema.fields.length; i++) {
-          const field = schema.fields[i];
-          Object.assign(display, formatFieldJson(field));
-        }
-      }
-
-      return display;
-    },
-  },
   actions: {
     changeModelEditorForm(val: "new" | "edit" | null) {
       this.modelEditor.curForm = val;
@@ -136,9 +105,12 @@ export const useStore = defineStore("store", {
     changeSchemaEditorForm(val: "new" | "edit" | null) {
       this.schemaEditor.curForm = val;
     },
+    changeCsvEditorForm(val: "new" | "edit" | "none") {
+      this.csvEditor.curForm = val;
+    },
     updateLocalModel(model: Model) {
       this.model = model;
-      this.schemaEditor.curSelected = model.baseSchema;
+      this.schemaEditor.curSelected = model.baseSchemaIdx;
     },
     createLocalSchema(schema: Schema) {
       this.model!.schemas.push(schema);
@@ -151,46 +123,36 @@ export const useStore = defineStore("store", {
         this.model!.schemas[this.schemaEditor.curSelected] = schema;
       }
     },
-    toggleSelectColumn(index: number) {
-      // Column headers should be unique. Will have to ensure no duplicates when parsing CSV
-      const isSelected = !this.csv!.columns[index].isSelected;
-      this.csv!.columns[index].isSelected = isSelected;
-      const name = this.csv!.columns[index].header;
-      if (isSelected) {
-        this.selectedColumns.push({
-          name,
-          schema: null,
-          field: null,
-        });
-      } else {
-        this.selectedColumns = this.selectedColumns.filter((col) => col.name !== name);
-      }
+    updateSelectedColumns(headers: string[]) {
+      const existingColumns: SelectedColumn[] = this.csvEditor.selectedColumns.filter((sc) =>
+        headers.includes(sc.header)
+      );
+      const notExisting = headers.filter((h) => !this.selectedColumnHeaders.includes(h));
+      const newColumns: SelectedColumn[] = notExisting.map((h) => {
+        return {
+          header: h,
+          schemaIdx: null,
+          fieldIdx: null,
+        };
+      });
+      this.csvEditor.selectedColumns = [...existingColumns, ...newColumns];
     },
-    async exportSchema() {
-      try {
-        await ExportSchemaToJson(this.model!.schemas[this.selectedSchema!]);
-      } catch (err) {
-        console.log(err);
-      }
+    runProcessCsvDescriptor() {
+      if (!this.model) return;
+      const validDescs = this.csvEditor.selectedColumns.filter((hd) => hd.schemaIdx !== null && hd.fieldIdx !== null);
+      ProcessCsvDescriptor(this.model, validDescs as HeaderDescriptor[], this.csv?.location!);
     },
-    async importSchema() {
-      try {
-        const schema = await ImportSchemaJson();
-        this.model!.schemas.push(schema);
-      } catch (err) {
-        console.log(err);
-      }
-    },
+    // Go
     async exportModel() {
       try {
-        await ExportModelToJson(this.model!);
+        await ExportModel(this.model!);
       } catch (err) {
         console.log(err);
       }
     },
     async importModel() {
       try {
-        const model = await ImportModelJson();
+        const model = await ImportModel();
         this.model = model;
         this.modelEditor.curForm = null;
       } catch (err) {
@@ -201,15 +163,12 @@ export const useStore = defineStore("store", {
       try {
         const csvData = await ImportCsvFile();
         if (csvData.headers !== null) {
-          this.selectedColumns = [];
+          this.csvEditor.selectedColumns = [];
+          this.csvEditor.curForm = "edit";
           this.csv = {
             fileName: csvData.fileName,
-            columns: csvData.headers.map((header) => {
-              return {
-                header,
-                isSelected: false,
-              };
-            }),
+            location: csvData.location,
+            headers: csvData.headers,
           };
         } else {
           console.log("canceled import");
@@ -218,5 +177,63 @@ export const useStore = defineStore("store", {
         console.log(err);
       }
     },
+    async exportSchema() {
+      try {
+        await ExportSchema(this.model!.schemas[this.schemaEditor.curSelected]);
+      } catch (err) {
+        console.log(err);
+      }
+    },
+    async importSchema() {
+      try {
+        const schema = await ImportSchema();
+        this.model!.schemas.push(schema);
+      } catch (err) {
+        console.log(err);
+      }
+    },
   },
+  getters: {
+    selectedColumnHeaders(state) {
+      return state.csvEditor.selectedColumns.map((sc) => sc.header);
+    },
+  },
+  // getters: {
+  //   formatModelDisplay(state) {
+  //     const display = {};
+  //     const base = {};
+
+  //     if (state.model !== null) {
+  //       const baseSchemaIdx = state.model.baseSchemaIdx !== null ? state.model.schemas[state.model.baseSchemaIdx] : null;
+  //       if (baseSchemaIdx) {
+  //         for (let j = 0; j < baseSchemaIdx.fields.length; j++) {
+  //           const field = baseSchemaIdx.fields[j];
+  //           Object.assign(base, formatFieldJson(field));
+  //         }
+  //         Object.assign(display, base);
+  //       }
+
+  //       for (let i = 0; i < state.model.schemas.length; i++) {
+  //         const schema = state.model.schemas[i];
+  //         if (state.model.baseSchemaIdx !== i) {
+  //           Object.assign(display, formatSchemaJson(schema));
+  //         }
+  //       }
+  //     }
+
+  //     return display;
+  //   },
+  //   formatSchemaDisplay() {
+  //     const display = {};
+  //     if (this.model) {
+  //       const schema = this.model.schemas[this.schemaEditor.curSelected];
+  //       for (let i = 0; i < schema.fields.length; i++) {
+  //         const field = schema.fields[i];
+  //         Object.assign(display, formatFieldJson(field));
+  //       }
+  //     }
+
+  //     return display;
+  //   },
+  // }
 });

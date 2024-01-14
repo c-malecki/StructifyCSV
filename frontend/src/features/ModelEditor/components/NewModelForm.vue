@@ -19,7 +19,7 @@ const formValues = reactive<FormValues>(
   new main.Model({
     name: "Example Model",
     type: "model",
-    baseSchema: 0,
+    baseSchemaIdx: 0,
     schemas: [
       {
         name: "Example Schema",
@@ -79,7 +79,7 @@ const handleSubmit = () => {
 </script>
 
 <template>
-  <v-form @submit.prevent="handleSubmit" ref="formRef" style="max-width: 1200px">
+  <v-form @submit.prevent="handleSubmit" ref="formRef">
     <v-container fluid>
       <v-row>
         <v-col>

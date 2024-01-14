@@ -51,7 +51,7 @@ const handleSubmit = () => {
           <p>
             <i
               ><b>base schema:</b>
-              {{ formValues.model.schemas[formValues.model.baseSchema].name.replaceAll(" ", "_").toLowerCase() }}</i
+              {{ formValues.model.schemas[formValues.model.baseSchemaIdx].name.replaceAll(" ", "_").toLowerCase() }}</i
             >
           </p>
           <v-sheet border class="pa-2">
@@ -60,7 +60,7 @@ const handleSubmit = () => {
         </v-col>
         <v-col>
           <VSelect
-            v-model="formValues.model.baseSchema"
+            v-model="formValues.model.baseSchemaIdx"
             label="Model Base Schema"
             :items="modelBaseOptions"
             item-title="name"

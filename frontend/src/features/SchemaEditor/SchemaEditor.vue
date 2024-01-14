@@ -57,10 +57,14 @@ const schemaOpts = computed(() =>
           item-value="value"
         />
 
-        <div class="d-flex">
-          <h3>{{ store.model!.schemas[store.schemaEditor.curSelected!].name.replaceAll(" ", "_").toLowerCase() }}</h3>
-          <v-btn @click="store.changeSchemaEditorForm('edit')" size="x-small">edit</v-btn>
-        </div>
+        <v-sheet border class="pa-2">
+          <div class="d-flex">
+            <v-btn @click="store.changeSchemaEditorForm('edit')" size="x-small" class="mr-4">edit</v-btn>
+            <h3>
+              {{ store.model!.schemas[store.schemaEditor.curSelected!].name.replaceAll(" ", "_").toLowerCase() }}
+            </h3>
+          </div>
+        </v-sheet>
 
         <v-sheet border class="pa-2">
           <pre>{{
@@ -77,9 +81,4 @@ const schemaOpts = computed(() =>
   </v-card>
 </template>
 
-<style scoped>
-pre {
-  padding: 0.2rem;
-  border: 1px solid black;
-}
-</style>
+<style scoped></style>

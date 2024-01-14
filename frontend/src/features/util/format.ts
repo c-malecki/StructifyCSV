@@ -22,7 +22,7 @@ export const formatSchemaJson = (schema: Schema, acc?: Record<string, any>) => {
 export const formatModelJson = (model: Model) => {
   const display = {};
   const base = {};
-  const baseSchema = model.schemas[model.baseSchema];
+  const baseSchema = model.schemas[model.baseSchemaIdx];
 
   for (let i = 0; i < baseSchema.fields.length; i++) {
     const field = baseSchema.fields[i];
@@ -32,7 +32,7 @@ export const formatModelJson = (model: Model) => {
   for (let i = 0; i < model.schemas.length; i++) {
     const schema = model.schemas[i];
     const reformatName = schema.name.replaceAll(" ", "_").toLowerCase();
-    if (model.baseSchema !== i) {
+    if (model.baseSchemaIdx !== i) {
       Object.assign(display, { [reformatName]: formatSchemaJson(schema) });
     }
   }

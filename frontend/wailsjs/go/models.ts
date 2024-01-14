@@ -1,7 +1,8 @@
-export namespace main {
+export namespace entity {
 	
 	export class CsvData {
 	    fileName: string;
+	    location: string;
 	    headers: string[];
 	
 	    static createFrom(source: any = {}) {
@@ -11,6 +12,7 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.fileName = source["fileName"];
+	        this.location = source["location"];
 	        this.headers = source["headers"];
 	    }
 	}
@@ -62,6 +64,22 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class HeaderDescriptor {
+	    header: string;
+	    schemaIdx: number;
+	    fieldIdx: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new HeaderDescriptor(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.header = source["header"];
+	        this.schemaIdx = source["schemaIdx"];
+	        this.fieldIdx = source["fieldIdx"];
+	    }
+	}
 	export class Schema {
 	    name: string;
 	    type: string;
@@ -100,7 +118,7 @@ export namespace main {
 	    name: string;
 	    type: string;
 	    schemas: Schema[];
-	    baseSchema: number;
+	    baseSchemaIdx: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Model(source);
@@ -111,7 +129,7 @@ export namespace main {
 	        this.name = source["name"];
 	        this.type = source["type"];
 	        this.schemas = this.convertValues(source["schemas"], Schema);
-	        this.baseSchema = source["baseSchema"];
+	        this.baseSchemaIdx = source["baseSchemaIdx"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

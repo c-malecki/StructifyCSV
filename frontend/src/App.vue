@@ -8,23 +8,13 @@ const store = useStore();
 
 <template>
   <v-app id="app">
-    <v-main>
+    <v-main style="max-width: 1200px">
       <ModelEditor />
       <SchemaEditor v-if="store.model" />
+
       <CsvEditor />
     </v-main>
   </v-app>
 </template>
 
-<style>
-.error {
-  font-size: 14px;
-  margin-block-start: 0.2em;
-  margin-block-end: 0.2em;
-  color: red;
-}
-
-.is-selected {
-  background-color: aquamarine;
-}
-</style>
+<style></style>

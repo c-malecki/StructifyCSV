@@ -28,9 +28,10 @@ const header = computed(() => {
         </template>
 
         <v-list variant="flat" border density="compact" elevation="0">
-          <v-list-item density="compact" title="New Model" @click="store.changeModelEditorForm('new')" />
-          <v-list-item density="compact" title="Import Model" @click="store.importModel()" />
-          <v-list-item density="compact" title="Export Model" @click="store.exportModel()" />
+          <v-list-item density="compact" title="New" @click="store.changeModelEditorForm('new')" />
+          <v-list-item density="compact" title="Open..." @click="store.importModel()" />
+          <v-list-item density="compact" title="Save" />
+          <v-list-item density="compact" title="Save As" @click="store.exportModel()" />
         </v-list>
       </v-menu>
 
@@ -41,16 +42,18 @@ const header = computed(() => {
       <NewModelForm v-if="curForm === 'new'" @close-form="store.changeModelEditorForm(null)" />
 
       <div v-if="store.model">
-        <div v-if="!curForm" class="d-flex">
-          <h3>{{ store.model.name.replaceAll(" ", "_").toLowerCase() }}</h3>
-          <v-btn @click="store.changeModelEditorForm('edit')" size="x-small">edit</v-btn>
-        </div>
+        <v-sheet v-if="!curForm" border class="pa-2">
+          <div class="d-flex">
+            <v-btn @click="store.changeModelEditorForm('edit')" size="x-small" class="mr-4">edit</v-btn>
+            <h3>{{ store.model.name.replaceAll(" ", "_").toLowerCase() }}</h3>
+          </div>
+        </v-sheet>
 
         <v-sheet v-if="!curForm" border class="pa-2">
           <p>
             <i>
               <b>base schema:</b>
-              {{ store.model.schemas[store.model.baseSchema].name.replaceAll(" ", "_").toLowerCase() }}</i
+              {{ store.model.schemas[store.model.baseSchemaIdx].name.replaceAll(" ", "_").toLowerCase() }}</i
             >
           </p>
           <pre>{{ JSON.stringify(formatModelJson(store.model), null, 2).replaceAll('"', "") }}</pre>

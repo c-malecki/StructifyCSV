@@ -35,6 +35,9 @@ const vuetify = createVuetify({
       density: "compact",
       bgColor: "#ffffff",
     },
+    VBtn: {
+      color: "secondary",
+    },
   },
 });
 const app = createApp(App);
