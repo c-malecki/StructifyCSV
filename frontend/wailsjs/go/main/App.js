@@ -10,8 +10,8 @@ export function ExportSchema(arg1) {
   return window['go']['main']['App']['ExportSchema'](arg1);
 }
 
-export function ImportCsvFile() {
-  return window['go']['main']['App']['ImportCsvFile']();
+export function ImportCsvData() {
+  return window['go']['main']['App']['ImportCsvData']();
 }
 
 export function ImportModel() {

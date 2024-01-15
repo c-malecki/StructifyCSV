@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import {
-  ImportCsvFile,
+  ImportCsvData,
   ImportModel,
   ImportSchema,
   ExportModel,
@@ -161,7 +161,7 @@ export const useStore = defineStore("store", {
     },
     async importCsv() {
       try {
-        const csvData = await ImportCsvFile();
+        const csvData = await ImportCsvData();
         if (csvData.headers !== null) {
           this.csvEditor.selectedColumns = [];
           this.csvEditor.curForm = "edit";

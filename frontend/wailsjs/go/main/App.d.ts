@@ -6,7 +6,7 @@ export function ExportModel(arg1:entity.Model):Promise<void>;
 
 export function ExportSchema(arg1:entity.Schema):Promise<void>;
 
-export function ImportCsvFile():Promise<entity.CsvData>;
+export function ImportCsvData():Promise<entity.CsvData>;
 
 export function ImportModel():Promise<entity.Model>;
 

@@ -6,13 +6,13 @@ import { type VForm } from "vuetify/lib/components/index.mjs";
 const emit = defineEmits(["closeForm"]);
 const store = useStore();
 const formValues = reactive({
-  headers: [],
+  selectedHeaders: [],
 });
 
 const headerOpts = computed(() => (store.csv ? store.csv.headers : []));
 
 const handleSubmit = () => {
-  store.updateSelectedColumns(formValues.headers);
+  store.updateSelectedColumns(formValues.selectedHeaders);
   store.changeCsvEditorForm("none");
 };
 </script>
@@ -21,7 +21,7 @@ const handleSubmit = () => {
   <v-form @submit.prevent="handleSubmit">
     <p><b>Total Headers:</b> {{ headerOpts.length }}</p>
     <VAutocomplete
-      v-model="formValues.headers"
+      v-model="formValues.selectedHeaders"
       label="Select CSV Headers"
       :items="headerOpts"
       multiple

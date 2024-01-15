@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import { ref, computed, reactive } from "vue";
 import { useStore } from "../../../store/store";
-import { main } from "../../../../wailsjs/go/models";
+import { entity } from "../../../../wailsjs/go/models";
 import { formatModelJson } from "../../util/format";
 import { type VForm } from "vuetify/lib/components/index.mjs";
 
 type FormValues = {
-  model: main.Model;
+  model: entity.Model;
 };
 type FormControl = {
   nameRules: ((val: string) => string | boolean)[];

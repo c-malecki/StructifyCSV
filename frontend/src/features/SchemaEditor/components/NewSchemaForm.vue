@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { ref, reactive } from "vue";
 import { useStore, fieldOptions } from "../../../store/store";
-import { main } from "../../../../wailsjs/go/models";
+import { entity } from "../../../../wailsjs/go/models";
 import { formatSchemaJson } from "../../util/format";
 import { type VForm, type VSelect } from "vuetify/lib/components/index.mjs";
 
-type FormValues = main.Schema;
+type FormValues = entity.Schema;
 type FormControl = {
   nameRules: ((val: string) => string | boolean)[];
 };
@@ -16,7 +16,7 @@ const formRef = ref<VForm | null>(null);
 const hiddenRef = ref<VSelect | null>(null);
 const hiddenError = ref(false);
 const formValues = reactive<FormValues>(
-  new main.Schema({
+  new entity.Schema({
     name: "",
     type: "schema",
     fields: [
@@ -34,7 +34,7 @@ const formControl: FormControl = {
 
 const addFieldToSchema = () => {
   formValues.fields.push(
-    new main.Field({
+    new entity.Field({
       name: "",
       type: "field",
       dataType: { name: "text (string)", value: "string" },
