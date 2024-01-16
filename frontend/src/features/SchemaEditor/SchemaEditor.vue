@@ -1,35 +1,22 @@
 <script lang="ts" setup>
 import { ImportSchema, ExportSchema } from "../../../wailsjs/go/main/App";
 import { reactive, ref } from "vue";
-import { type SchemaValues } from "../../store/store";
 import SchemaTree from "./components/SchemaTree.vue";
 
+export type FormValues = {
+  title: string;
+  description: string;
+};
 type FormControl = {
   titleRules: ((val: string) => string | boolean)[];
   descriptionRules: ((val: string) => string | boolean)[];
 };
 
 const isEdit = ref(false);
-// convert properties to map
-const schemaValues = reactive<SchemaValues>({
+
+const schemaValues = reactive<FormValues>({
   title: "Test Schema",
   description: "Just a test schema to build out the editor UI with.",
-  properties: {
-    first_name: "string",
-    last_name: "string",
-    email: "string",
-    location: {
-      name: "string",
-      longitude: "number",
-      latitude: "number",
-    },
-    user: {
-      id: "string",
-      member: {
-        id: "string",
-      },
-    },
-  },
 });
 const formControl: FormControl = {
   titleRules: [
@@ -40,7 +27,8 @@ const formControl: FormControl = {
 };
 
 const clearValues = () => {
-  (schemaValues.title = ""), (schemaValues.description = ""), (schemaValues.properties = {});
+  schemaValues.title = "";
+  schemaValues.description = "";
 };
 
 const handleSubmit = () => {};
@@ -103,7 +91,7 @@ const handleExportSchema = () => {
           </div>
         </VForm>
       </v-sheet>
-      <SchemaTree :schema="schemaValues.properties" />
+      <SchemaTree />
     </v-card-text>
   </v-card>
 </template>

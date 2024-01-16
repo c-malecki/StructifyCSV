@@ -2,30 +2,15 @@ import { defineStore } from "pinia";
 import { ImportCsvData, ProcessCsvDescriptor } from "../../wailsjs/go/main/App";
 import { entity } from "../../wailsjs/go/models";
 
-export type DataTypes = { name: string; value: string };
-export type Schema = entity.JsonSchema;
 export type HeaderDescriptor = entity.HeaderDescriptor;
-
-export const dataTypes: DataTypes[] = [
-  { name: "string (text)", value: "string" },
-  { name: "float (decimal)", value: "number" },
-  { name: "integer", value: "integer" },
-  { name: "object ", value: "object" },
-  { name: "array", value: "array" },
-  { name: "boolean", value: "boolean" },
-  { name: "null", value: "null" },
-];
 
 export type SelectedColumn = {
   header: string;
-  schemaIdx: number | null;
-  fieldIdx: number | null;
 };
 
 export type SchemaValues = {
   title: string;
   description: string;
-  properties: Record<string, any>;
 };
 
 type StoreState = {
@@ -38,7 +23,6 @@ type StoreState = {
     curForm: "new" | "edit" | "none";
     selectedColumns: SelectedColumn[];
   };
-  schema: SchemaValues;
 };
 
 export const useStore = defineStore("store", {
@@ -51,52 +35,36 @@ export const useStore = defineStore("store", {
     },
     csvEditor: {
       curForm: "none",
-      selectedColumns: [],
-    },
-    schema: {
-      title: "",
-      description: "",
-      properties: {
-        first_name: "string",
-        last_name: "string",
-        email: "string",
-        location: {
-          name: "string",
-          longitude: "number",
-          latitude: "number",
+      selectedColumns: [
+        {
+          header: "First Name",
         },
-        user: {
-          id: "string",
-          member: {
-            id: "string",
-          },
-        },
-      },
+      ],
     },
   }),
   actions: {
     changeCsvEditorForm(val: "new" | "edit" | "none") {
       this.csvEditor.curForm = val;
     },
-    updateSelectedColumns(headers: string[]) {
-      const existingColumns: SelectedColumn[] = this.csvEditor.selectedColumns.filter((sc) =>
-        headers.includes(sc.header)
-      );
-      const notExisting = headers.filter((h) => !this.selectedColumnHeaders.includes(h));
-      const newColumns: SelectedColumn[] = notExisting.map((h) => {
-        return {
-          header: h,
-          schemaIdx: null,
-          fieldIdx: null,
-        };
-      });
-      this.csvEditor.selectedColumns = [...existingColumns, ...newColumns];
-    },
-    runProcessCsvDescriptor() {
-      if (!this.schema) return;
-      const validDescs = this.csvEditor.selectedColumns.filter((hd) => hd.schemaIdx !== null && hd.fieldIdx !== null);
-      ProcessCsvDescriptor(this.schema, validDescs as HeaderDescriptor[], this.csv?.location!);
-    },
+    // updateSelectedColumns(headers: string[]) {
+    //   const existingColumns: SelectedColumn[] = this.csvEditor.selectedColumns.filter((sc) =>
+    //     headers.includes(sc.header)
+    //   );
+    //   const notExisting = headers.filter((h) => !this.selectedColumnHeaders.includes(h));
+    //   const newColumns: SelectedColumn[] = notExisting.map((h) => {
+    //     return {
+    //       header: h,
+    //       schemaIdx: null,
+    //       fieldIdx: null,
+    //     };
+    //   });
+    //   this.csvEditor.selectedColumns = [...existingColumns, ...newColumns];
+    // },
+    // runProcessCsvDescriptor() {
+    //   if (!this.schema) return;
+    //   const validDescs = this.csvEditor.selectedColumns.filter((hd) => hd.schemaIdx !== null && hd.fieldIdx !== null);
+    //   ProcessCsvDescriptor(this.schema, validDescs as HeaderDescriptor[], this.csv?.location!);
+    // },
     // Go
     async importCsv() {
       try {
