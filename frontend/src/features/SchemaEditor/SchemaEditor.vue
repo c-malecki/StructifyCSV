@@ -1,30 +1,59 @@
 <script lang="ts" setup>
-import { computed } from "vue";
-import { useStore } from "../../store/store";
-import { formatSchemaJson } from "../util/format";
-import NewSchemaForm from "./components/NewSchemaForm.vue";
-import EditSchemaForm from "./components/EditSchemaForm.vue";
+import { ImportSchema, ExportSchema } from "../../../wailsjs/go/main/App";
+import { reactive, ref } from "vue";
+import { type SchemaValues } from "../../store/store";
+import SchemaTree from "./components/SchemaTree.vue";
 
-const store = useStore();
-const curForm = computed(() => store.schemaEditor.curForm);
-const header = computed(() => {
-  switch (curForm.value) {
-    case "new":
-      return "New Schema";
-    case "edit":
-      return "Edit Schema";
-    case null:
-      return `Schema: ${store.model!.schemas[store.schemaEditor.curSelected].name}`;
-  }
+type FormControl = {
+  titleRules: ((val: string) => string | boolean)[];
+  descriptionRules: ((val: string) => string | boolean)[];
+};
+
+const isEdit = ref(false);
+// convert properties to map
+const schemaValues = reactive<SchemaValues>({
+  title: "Test Schema",
+  description: "Just a test schema to build out the editor UI with.",
+  properties: {
+    first_name: "string",
+    last_name: "string",
+    email: "string",
+    location: {
+      name: "string",
+      longitude: "number",
+      latitude: "number",
+    },
+    user: {
+      id: "string",
+      member: {
+        id: "string",
+      },
+    },
+  },
 });
-const schemaOpts = computed(() =>
-  store.model?.schemas.map((s, i) => {
-    return {
-      name: s.name,
-      value: i,
-    };
-  })
-);
+const formControl: FormControl = {
+  titleRules: [
+    (v: string) => v.length > 0 || "Schema Name is required.",
+    (v: string) => [...v].length <= 150 || "Schema Name cannot be longer than 150 characters.",
+  ],
+  descriptionRules: [(v: string) => [...v].length <= 1000 || "Description cannot be longer than 1000 characters."],
+};
+
+const clearValues = () => {
+  (schemaValues.title = ""), (schemaValues.description = ""), (schemaValues.properties = {});
+};
+
+const handleSubmit = () => {};
+const handleImportSchema = () => {
+  ImportSchema()
+    .then(() => {})
+    .catch((err) => {});
+};
+const handleExportSchema = () => {
+  // ExportSchema()
+  // .then(() => {})
+  // .catch((err) => {})
+};
 </script>
 
 <template>
@@ -36,49 +65,51 @@ const schemaOpts = computed(() =>
         </template>
 
         <v-list variant="flat" border density="compact" elevation="0">
-          <v-list-item density="compact" title="New Schema" @click="store.changeSchemaEditorForm('new')" />
-          <v-list-item density="compact" title="Import Schema" @click="store.importModel()" />
-          <v-list-item density="compact" title="Export Schema" @click="store.exportModel()" />
+          <v-list-item density="compact" title="New Schema" @click="clearValues" />
+          <v-list-item density="compact" title="Import Schema" @click="handleImportSchema" />
+          <v-list-item density="compact" title="Export Schema" @click="handleExportSchema" />
         </v-list>
       </v-menu>
 
-      <v-toolbar-title> {{ header }}</v-toolbar-title>
+      <v-toolbar-title> Schema Editor</v-toolbar-title>
     </v-toolbar>
 
     <v-card-text>
-      <NewSchemaForm v-if="curForm === 'new'" @close-form="store.changeSchemaEditorForm(null)" />
+      <v-sheet border class="pa-2 mb-2">
+        <div v-if="!isEdit" class="relative">
+          <h3>{{ schemaValues.title }}</h3>
+          <p>{{ schemaValues.description }}</p>
+          <v-btn position="absolute" size="small" location="top right" @click="isEdit = true">edit</v-btn>
+        </div>
 
-      <div v-if="!curForm">
-        <VSelect
-          v-model="store.schemaEditor.curSelected"
-          label="Schemas"
-          :items="schemaOpts"
-          item-title="name"
-          item-value="value"
-        />
-
-        <v-sheet border class="pa-2">
-          <div class="d-flex">
-            <v-btn @click="store.changeSchemaEditorForm('edit')" size="x-small" class="mr-4">edit</v-btn>
-            <h3>
-              {{ store.model!.schemas[store.schemaEditor.curSelected!].name.replaceAll(" ", "_").toLowerCase() }}
-            </h3>
+        <VForm @submit.prevent="handleSubmit" v-else>
+          <VTextField
+            v-model="schemaValues.title"
+            label="Schema Name"
+            :rules="formControl.titleRules"
+            :counter="150"
+            persistent-counter
+          />
+          <VTextarea
+            v-model="schemaValues.description"
+            label="Description"
+            :rules="formControl.descriptionRules"
+            :counter="1000"
+            persistent-counter
+          />
+          <div class="d-flex mt-2">
+            <v-btn type="button" size="small" @click="isEdit = false" class="ml-auto mr-4">cancel</v-btn>
+            <v-btn type="submit" size="small">save</v-btn>
           </div>
-        </v-sheet>
-
-        <v-sheet border class="pa-2">
-          <pre>{{
-            JSON.stringify(formatSchemaJson(store.model!.schemas[store.schemaEditor.curSelected!]), null, 2).replaceAll(
-              '"',
-              ""
-            )
-          }}</pre>
-        </v-sheet>
-      </div>
-
-      <EditSchemaForm v-if="curForm === 'edit'" @close-form="store.changeSchemaEditorForm(null)" />
+        </VForm>
+      </v-sheet>
+      <SchemaTree :schema="schemaValues.properties" />
     </v-card-text>
   </v-card>
 </template>
 
-<style scoped></style>
+<style scoped>
+.relative {
+  position: relative;
+}
+</style>

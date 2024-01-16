@@ -42,7 +42,7 @@ func ProcessCsvFile(csvLocation string, headerDescriptors []entity.HeaderDescrip
 			print(err)
 		}
 
-		record, err := processLine(headers, line, headerIndexes)
+		record, err := processCsvLine(headers, line, headerIndexes)
 
 		if err != nil {
 			// need to return array of lines which were not processed to frontend
@@ -58,7 +58,7 @@ func WriteDescriptorJson(filePath string, csvLocation string, writerCh <-chan ma
 		jsonData, _ := json.MarshalIndent(record, "  ", "  ")
 		return "  " + string(jsonData)
 	}
-	writeString := createStringWriter(filePath, csvLocation)
+	writeString := createStringWriter(filePath)
 	writeString("[\n", false)
 
 	first := true
@@ -81,7 +81,7 @@ func WriteDescriptorJson(filePath string, csvLocation string, writerCh <-chan ma
 	}
 }
 
-func createStringWriter(filePath string, csvLocation string) func(string, bool) {
+func createStringWriter(filePath string) func(string, bool) {
 	file, err := os.Create(filePath)
 	if err != nil {
 		print(err)
@@ -101,7 +101,7 @@ func createStringWriter(filePath string, csvLocation string) func(string, bool) 
 
 // need to add nesting and data type conversions
 
-func processLine(headers []string, lineData []string, headerIndexes []int) (map[string]string, error) {
+func processCsvLine(headers []string, lineData []string, headerIndexes []int) (map[string]string, error) {
 	if len(lineData) != len(headers) {
 		return nil, errors.New("line doesn't match headers format. skipping")
 	}

@@ -3,55 +3,46 @@ package core
 import (
 	"context"
 	"csvtoschema/backend/entity"
+	"csvtoschema/backend/ui"
 	"encoding/json"
-	"os"
+	"fmt"
 	"strings"
-
-	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-func buildSaveDialogOpts(entityName string, entityType string) runtime.SaveDialogOptions {
-	fileName := strings.ReplaceAll(entityName, " ", "_")
-	return runtime.SaveDialogOptions{
-		DefaultDirectory: ".",
-		DefaultFilename:  fileName + "_" + entityType + ".json",
-		Title:            "Save " + entityName + " " + entityType,
-	}
+func createSchemaBoiler(indent string, schema entity.JsonSchema) string {
+	title := schema.Title
+	description := schema.Description
+	// todo: doesn't account for anything other than " " literal
+	replaceInner := strings.ReplaceAll(title, " ", "_")
+	trim := strings.TrimSpace(replaceInner)
+	idText := strings.ToLower(trim)
+	return fmt.Sprintf("{\n%[1]v\"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n%[1]v\"$id\": \"https://example.com/%[3]v.schema.json\",\n%[1]v\"title\": \"%[2]v\",\n%[1]v\"description\": \"%[4]v\",\n%[1]v\"type\": \"object\",\n%[1]v\"properties\": {\n", indent, title, idText, description)
 }
 
-func prepareSaveFileDialog(c context.Context, entityName string, entityType string) string {
-	opts := buildSaveDialogOpts(entityName, entityType)
-	filePath, err := runtime.SaveFileDialog(c, opts)
+func createReqProps(indent string, required []string) string {
+	j, err := json.Marshal(required)
 	if err != nil {
 		print(err)
 	}
-	return filePath
+	reqsStr := string(j)
+	return fmt.Sprintf("\n%[1]v},\n%[1]v\"required\": %[2]v", indent, reqsStr)
 }
 
-func ExportSchemaToJson(c context.Context, schema entity.Schema) {
-	filePath := prepareSaveFileDialog(c, schema.Name, "Schema")
-	if len(filePath) > 0 {
-		b, _ := json.MarshalIndent(schema, "", "  ")
-		err := os.WriteFile(filePath, b, 0666)
-		if err != nil {
-			print(err)
-		}
-	}
+func WriteJsonSchema(c context.Context, schema entity.JsonSchema) {
+	outPath := ui.PrepareSaveFileDialog(c, schema.Title)
+	const indent = "  "
+	writeString := createStringWriter(outPath)
+	boiler := createSchemaBoiler(indent, schema)
+	writeString(boiler, false)
+	reqs := []string{"test", "the", "reqs"}
+	required := createReqProps(indent, reqs)
+	// write each property in "properties": { }
+	writeString(required, false)
+	writeString("\n}", true)
 }
 
-func ExportModelToJson(c context.Context, model entity.Model) {
-	filePath := prepareSaveFileDialog(c, model.Name, "Model")
-	if len(filePath) > 0 {
-		b, _ := json.MarshalIndent(model, "", "  ")
-		err := os.WriteFile(filePath, b, 0666)
-		if err != nil {
-			print(err)
-		}
-	}
-}
-
-func ExportCsvDescriptor(c context.Context, model entity.Model, hd []entity.HeaderDescriptor, csvPath string) {
-	filePath := prepareSaveFileDialog(c, model.Name, "Batch")
+func ExportCsvDescriptor(c context.Context, schema entity.JsonSchema, hd []entity.HeaderDescriptor, csvPath string) {
+	filePath := ui.PrepareSaveFileDialog(c, schema.Title)
 	writerCh := make(chan map[string]string)
 	doneCh := make(chan bool)
 
