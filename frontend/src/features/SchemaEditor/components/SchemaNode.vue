@@ -1,6 +1,11 @@
 <script lang="ts" setup>
-import { reactive, ref } from "vue";
+import { reactive, ref, toRef, inject, type PropType } from "vue";
 import { computed } from "vue";
+import type { DataTypes, Node, UpdateValueArgs } from "./SchemaTree.vue";
+
+const emit = defineEmits(["updateParentNode", "updateNodeValue"]);
+const dataTypes: DataTypes[] = inject("dataTypes")!;
+
 const nodeProps = defineProps({
   label: {
     type: String,
@@ -8,24 +13,13 @@ const nodeProps = defineProps({
   },
   val: {
     type: [String, Object],
+    required: true,
   },
   level: {
     type: Number,
     default: 1,
   },
 });
-
-type DataTypes = { name: string; value: string };
-
-const dataTypes: DataTypes[] = [
-  { name: "string (text)", value: "string" },
-  { name: "float (decimal)", value: "number" },
-  { name: "integer", value: "integer" },
-  { name: "object", value: "object" },
-  { name: "array", value: "array" },
-  { name: "boolean", value: "boolean" },
-  { name: "null", value: "null" },
-];
 
 const colorScale = {
   1: { hover: "blue-lighten-5", font: "black" },
@@ -41,11 +35,53 @@ const colorScale = {
 const marginStyle = computed(() => `margin-left: ${nodeProps.level * 16}px`);
 const color = computed(() => colorScale[nodeProps.level as keyof typeof colorScale]);
 
-const isEdit = ref(false);
-const element = reactive({
-  name: nodeProps.label,
-  value: typeof nodeProps.val,
+const showAdd = ref(false);
+const showEdit = ref(false);
+
+const copyVal = ref(nodeProps.val);
+const editProperty = reactive({
+  key: nodeProps.label,
+  value: typeof nodeProps.val === "object" ? "object" : nodeProps.val,
 });
+
+const cancelEdit = () => {
+  showEdit.value = false;
+  editProperty.key = nodeProps.label;
+  editProperty.value = typeof nodeProps.val;
+};
+
+const handleUpdateProperty = () => {
+  // no change
+  if (editProperty.value === copyVal.value && editProperty.key === nodeProps.label) {
+    cancelEdit();
+  }
+  // if value is object and copyVal is object, don't change the properties
+  if (editProperty.value === "object" && typeof copyVal.value === "object") {
+    emit("updateParentNode", editProperty.key, copyVal.value, nodeProps.label);
+    showEdit.value = false;
+  } else {
+    emit("updateParentNode", editProperty.key, editProperty.value, nodeProps.label);
+    showEdit.value = false;
+  }
+};
+
+const handleUpdateParentNode = (key: string, value: string, originalKey: string) => {
+  if (typeof copyVal.value === "object") {
+    if (key !== originalKey) {
+      (copyVal.value as Node).delete(originalKey);
+    }
+    (copyVal.value as Node).set(key, value === "object" ? new Map() : value);
+    emit("updateParentNode", nodeProps.label, copyVal.value, nodeProps.label);
+  } else {
+    emit("updateParentNode", editProperty.key, editProperty.value, nodeProps.label);
+  }
+};
+// const handleAddProperty = () => {
+//   showAdd.value = false;
+//   p.set(editProperty.key, editProperty.value === "object" ? new Map() : editProperty.value);
+//   editProperty.key = "";
+//   editProperty.value = "string";
+// };
 </script>
 
 <template>
@@ -58,60 +94,62 @@ const element = reactive({
           class="pt-1 pb-1"
         >
           <div v-if="typeof nodeProps.val === 'string'" class="d-flex">
-            <p v-if="!isEdit">
+            <p v-if="!showEdit">
               <b>{{ label }}:</b> {{ val }}
             </p>
-            <div v-if="isHovering && !isEdit" class="d-flex">
-              <v-btn size="x-small" class="ml-4" @click="isEdit = true">edit</v-btn>
+            <div v-if="isHovering && !showEdit" class="d-flex">
+              <v-btn size="x-small" class="ml-4" @click="showEdit = true">edit</v-btn>
               <v-btn size="x-small" class="ml-4">delete</v-btn>
             </div>
 
-            <VForm v-if="isEdit">
+            <VForm v-if="showEdit">
               <div class="d-flex">
-                <VTextField v-model="element.name" label="Property Name" style="width: 200px" />
+                <VTextField v-model="editProperty.key" label="Property Name" style="width: 200px" />
                 <VSelect
-                  v-model="element.value"
+                  v-model="editProperty.value"
                   :items="dataTypes"
                   item-title="name"
                   item-value="value"
                   style="width: 200px"
                 />
-                <v-btn size="x-small" class="ml-4">save</v-btn>
-                <v-btn size="x-small" class="ml-4" @click="isEdit = false">cancel</v-btn>
+                <v-btn size="x-small" class="ml-4" @click="handleUpdateProperty">save</v-btn>
+                <v-btn size="x-small" class="ml-4" @click="cancelEdit">cancel</v-btn>
               </div>
             </VForm>
           </div>
+
           <div v-else>
             <div class="d-flex opening_bracket pb-1">
               <p>
                 <b>{{ label }}:</b>
               </p>
-              <div v-if="isHovering && !isEdit" class="d-flex">
+              <div v-if="isHovering && !showEdit" class="d-flex">
                 <v-btn size="x-small" class="ml-4">add property</v-btn>
-                <v-btn size="x-small" class="ml-4" @click="isEdit = true">edit</v-btn>
+                <v-btn size="x-small" class="ml-4" @click="showEdit = true">edit</v-btn>
                 <v-btn size="x-small" class="ml-4">delete</v-btn>
               </div>
-              <VForm v-if="isEdit">
+              <VForm v-if="showEdit">
                 <div class="d-flex">
-                  <VTextField v-model="element.name" label="Property Name" style="width: 200px" />
+                  <VTextField v-model="editProperty.key" label="Property Name" style="width: 200px" />
                   <VSelect
-                    v-model="element.value"
+                    v-model="editProperty.value"
                     :items="dataTypes"
                     item-title="name"
                     item-value="value"
                     style="width: 200px"
                   />
-                  <v-btn size="x-small" class="ml-4">save</v-btn>
-                  <v-btn size="x-small" class="ml-4" @click="isEdit = false">cancel</v-btn>
+                  <v-btn size="x-small" class="ml-4" @click="handleUpdateProperty">save</v-btn>
+                  <v-btn size="x-small" class="ml-4" @click="cancelEdit">cancel</v-btn>
                 </div>
               </VForm>
             </div>
             <SchemaNode
               v-for="(el, i) in nodeProps.val"
-              :key="`${nodeProps.level + 1}`"
+              :key="`${nodeProps.level + 1}-${i}-${typeof el[1]}`"
               :label="el[0]"
               :val="el[1]"
               :level="nodeProps.level + 1"
+              @updateParentNode="handleUpdateParentNode"
             />
           </div>
         </div>
