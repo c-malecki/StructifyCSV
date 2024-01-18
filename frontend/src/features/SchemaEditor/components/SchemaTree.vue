@@ -1,22 +1,20 @@
 <script lang="ts" setup>
-import { ref, reactive, provide } from "vue";
+import { ref, reactive } from "vue";
 import SchemaNode from "./SchemaNode.vue";
+import { dataTypes } from "../../../util";
+import { type VForm } from "vuetify/lib/components/index.mjs";
 
-export type DataTypes = { name: string; value: string };
-export type Node = Map<string, string | Map<any, any>>;
-export type UpdateValueArgs = { key: string; value: string; originalKey: string };
-export type UpdateNode = ({ key, value, originalKey }: UpdateValueArgs) => void;
+type MapValue = Map<string, string | Map<any, any>>;
 
-const dataTypes: DataTypes[] = [
-  { name: "string (text)", value: "string" },
-  { name: "float (decimal)", value: "number" },
-  { name: "integer", value: "integer" },
-  { name: "object", value: "object" },
-  // { name: "array", value: "array" },
-  { name: "boolean", value: "boolean" },
-  { name: "null", value: "null" },
-];
-provide("dataTypes", dataTypes);
+type FormControl = {
+  showAdd: boolean;
+  keyRules: ((val: string) => string | boolean)[];
+};
+const formControl = reactive<FormControl>({
+  showAdd: false,
+  keyRules: [(val: string) => val.length > 0 || "Key name is required."],
+});
+const formRef = ref<VForm | null>(null);
 
 const location = new Map<string, string | Map<any, any>>([
   ["name", "string"],
@@ -39,59 +37,71 @@ const testMap = new Map<string, string | Map<any, any>>([
   ["user", user],
 ]);
 
-const editNode = reactive({
+const newProperty = reactive({
   key: "",
   value: "string",
 });
-const showAdd = ref(false);
+
 // const nodeMap = ref(new Map<string, string | Map<any, any>>());
 const nodeMap = ref(testMap);
 
-const handleAddProperty = () => {
-  showAdd.value = false;
-  nodeMap.value.set(editNode.key, editNode.value === "object" ? new Map() : editNode.value);
-  editNode.key = "";
-  editNode.value = "string";
+const resetAddProperty = () => {
+  formControl.showAdd = false;
+  newProperty.key = "";
+  newProperty.value = "string";
 };
-const updateNode = (key: string, value: string, originalKey: string) => {
+
+const addProperty = () => {
+  formRef.value!.validate().then(({ valid }) => {
+    if (valid) {
+      nodeMap.value.set(newProperty.key, newProperty.value === "object" ? new Map() : newProperty.value);
+      resetAddProperty();
+    }
+  });
+};
+
+const handleAddProperty = (key: string, value: MapValue) => {
+  nodeMap.value.set(key, value);
+};
+
+const handleUpdateNode = (key: string, value: string, originalKey: string) => {
   if (key !== originalKey) {
     nodeMap.value.delete(originalKey);
   }
-  console.log(value);
   nodeMap.value.set(key, value === "object" ? new Map() : value);
 };
-// const updateNode: UpdateNode = ({ key, value, originalKey }) => {
-//   if (key !== originalKey) {
-//     nodeMap.value.delete(originalKey);
-//   }
-//   nodeMap.value.set(key, value === "object" ? new Map() : value);
-// };
 </script>
 
 <template>
   <v-sheet border class="schema_tree pa-2">
     <SchemaNode
-      v-for="(el, i) in nodeMap"
-      :key="`1-${i}-${typeof el[1]}`"
-      :label="el[0]"
-      :val="el[1]"
+      v-for="(node, i) in nodeMap"
+      :key="`1-${i}-${typeof node[1]}`"
+      :nodeKey="node[0]"
+      :nodeValue="node[1]"
       :level="1"
-      @updateParentNode="updateNode"
+      @updateParentNode="handleUpdateNode"
+      @addPropertyToNode="handleAddProperty"
     />
     <div>
-      <v-btn v-if="!showAdd" size="x-small" @click="showAdd = true" class="ml-2">add property</v-btn>
-      <VForm v-else>
+      <v-btn v-if="!formControl.showAdd" size="x-small" @click="formControl.showAdd = true" class="ml-2"> add </v-btn>
+      <VForm v-else @submit.prevent="addProperty" ref="formRef">
         <div class="d-flex">
-          <VTextField v-model="editNode.key" label="Property Name" style="max-width: 200px" />
+          <VTextField
+            v-model="newProperty.key"
+            label="Property Name"
+            :rules="formControl.keyRules"
+            style="max-width: 200px"
+          />
           <VSelect
-            v-model="editNode.value"
+            v-model="newProperty.value"
             :items="dataTypes"
             item-title="name"
             item-value="value"
             style="max-width: 200px"
           />
-          <v-btn size="x-small" class="ml-4" @click="showAdd = false">cancel</v-btn>
-          <v-btn size="x-small" class="ml-4" @click="handleAddProperty">save</v-btn>
+          <v-btn type="button" size="x-small" class="ml-4" @click="resetAddProperty">cancel</v-btn>
+          <v-btn type="submit" size="x-small" class="ml-4">save</v-btn>
         </div>
       </VForm>
     </div>

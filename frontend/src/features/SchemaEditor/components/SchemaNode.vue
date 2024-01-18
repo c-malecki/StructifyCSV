@@ -1,18 +1,24 @@
 <script lang="ts" setup>
-import { reactive, ref, toRef, inject, type PropType } from "vue";
+import { reactive, ref, type PropType } from "vue";
 import { computed } from "vue";
-import type { DataTypes, Node, UpdateValueArgs } from "./SchemaTree.vue";
+import { getHoverColorScheme, getLeftIndent, dataTypes } from "../../../util";
+import { type VForm } from "vuetify/lib/components/index.mjs";
 
-const emit = defineEmits(["updateParentNode", "updateNodeValue"]);
-const dataTypes: DataTypes[] = inject("dataTypes")!;
+type MapValue = Map<string, string | Map<any, any>>;
+
+type FormControl = {
+  showAdd: boolean;
+  showEdit: boolean;
+  keyRules: ((val: string) => string | boolean)[];
+};
 
 const nodeProps = defineProps({
-  label: {
+  nodeKey: {
     type: String,
     required: true,
   },
-  val: {
-    type: [String, Object],
+  nodeValue: {
+    type: [String, Object] as PropType<string | MapValue>,
     required: true,
   },
   level: {
@@ -20,91 +26,111 @@ const nodeProps = defineProps({
     default: 1,
   },
 });
+const emit = defineEmits(["updateParentNode", "addPropertyToNode"]);
 
-const colorScale = {
-  1: { hover: "blue-lighten-5", font: "black" },
-  2: { hover: "blue-lighten-4", font: "black" },
-  3: { hover: "blue-lighten-3", font: "black" },
-  4: { hover: "blue-lighten-2", font: "black" },
-  5: { hover: "blue-lighten-1", font: "white" },
-  6: { hover: "blue-darken-1", font: "white" },
-  7: { hover: "blue-darken-2", font: "white" },
-  8: { hover: "blue-darken-3", font: "white" },
-  9: { hover: "blue-darken-4", font: "white" },
-};
-const marginStyle = computed(() => `margin-left: ${nodeProps.level * 16}px`);
-const color = computed(() => colorScale[nodeProps.level as keyof typeof colorScale]);
+const leftIndent = computed(() => getLeftIndent(nodeProps.level));
+const colorScheme = computed(() => getHoverColorScheme(nodeProps.level));
 
-const showAdd = ref(false);
-const showEdit = ref(false);
+const addFormRef = ref<VForm | null>(null);
+const editFormRef = ref<VForm | null>(null);
 
-const copyVal = ref(nodeProps.val);
-const editProperty = reactive({
-  key: nodeProps.label,
-  value: typeof nodeProps.val === "object" ? "object" : nodeProps.val,
+const formControl = reactive<FormControl>({
+  showAdd: false,
+  showEdit: false,
+  keyRules: [(val: string) => val.length > 0 || "Key name is required."],
 });
 
-const cancelEdit = () => {
-  showEdit.value = false;
-  editProperty.key = nodeProps.label;
-  editProperty.value = typeof nodeProps.val;
+const copyNodeValue = ref(nodeProps.nodeValue);
+const newProperty = reactive({
+  key: "",
+  value: "string",
+});
+
+const editProperty = reactive({
+  key: nodeProps.nodeKey,
+  value: typeof nodeProps.nodeValue === "object" ? "object" : nodeProps.nodeValue,
+});
+
+const resetEditProperty = () => {
+  formControl.showEdit = false;
+  editProperty.key = nodeProps.nodeKey;
+  editProperty.value = typeof nodeProps.nodeValue;
+};
+
+const resetAddProperty = () => {
+  formControl.showAdd = false;
+  newProperty.key = "";
+  newProperty.value = "string";
 };
 
 const handleUpdateProperty = () => {
   // no change
-  if (editProperty.value === copyVal.value && editProperty.key === nodeProps.label) {
-    cancelEdit();
+  if (editProperty.value === copyNodeValue.value && editProperty.key === nodeProps.nodeKey) {
+    resetEditProperty();
   }
-  // if value is object and copyVal is object, don't change the properties
-  if (editProperty.value === "object" && typeof copyVal.value === "object") {
-    emit("updateParentNode", editProperty.key, copyVal.value, nodeProps.label);
-    showEdit.value = false;
+  // if value is object and copyNodeValue is object, don't change the properties
+  if (editProperty.value === "object" && typeof copyNodeValue.value === "object") {
+    emit("updateParentNode", editProperty.key, copyNodeValue.value, nodeProps.nodeKey);
+    formControl.showEdit = false;
   } else {
-    emit("updateParentNode", editProperty.key, editProperty.value, nodeProps.label);
-    showEdit.value = false;
+    emit("updateParentNode", editProperty.key, editProperty.value, nodeProps.nodeKey);
+    formControl.showEdit = false;
   }
 };
 
+const addProperty = () => {
+  (copyNodeValue.value as MapValue).set(
+    newProperty.key,
+    newProperty.value === "object" ? new Map() : newProperty.value
+  );
+  emit("addPropertyToNode", nodeProps.nodeKey, copyNodeValue.value);
+  resetAddProperty();
+};
+
+const handleAddProperty = (key: string, value: MapValue) => {
+  (copyNodeValue.value as MapValue).set(key, value);
+  emit("addPropertyToNode", nodeProps.nodeKey, copyNodeValue.value);
+};
+
 const handleUpdateParentNode = (key: string, value: string, originalKey: string) => {
-  if (typeof copyVal.value === "object") {
+  if (typeof copyNodeValue.value === "object") {
     if (key !== originalKey) {
-      (copyVal.value as Node).delete(originalKey);
+      copyNodeValue.value.delete(originalKey);
     }
-    (copyVal.value as Node).set(key, value === "object" ? new Map() : value);
-    emit("updateParentNode", nodeProps.label, copyVal.value, nodeProps.label);
+    copyNodeValue.value.set(key, value === "object" ? new Map() : value);
+    emit("updateParentNode", nodeProps.nodeKey, copyNodeValue.value, nodeProps.nodeKey);
   } else {
-    emit("updateParentNode", editProperty.key, editProperty.value, nodeProps.label);
+    emit("updateParentNode", editProperty.key, editProperty.value, nodeProps.nodeKey);
   }
 };
-// const handleAddProperty = () => {
-//   showAdd.value = false;
-//   p.set(editProperty.key, editProperty.value === "object" ? new Map() : editProperty.value);
-//   editProperty.key = "";
-//   editProperty.value = "string";
-// };
 </script>
 
 <template>
   <v-hover>
     <template v-slot:default="{ isHovering, props }">
-      <v-card v-bind="props" :color="isHovering ? color.hover : undefined" variant="flat" :style="marginStyle">
+      <v-card v-bind="props" :color="isHovering ? colorScheme.hover : undefined" variant="flat" :style="leftIndent">
         <div
-          :class="{ closing_bracket: typeof nodeProps.val === 'object' }"
-          :style="`color: ${isHovering ? color.font : 'black'}`"
+          :class="{ closing_bracket: typeof nodeValue === 'object' }"
+          :style="`color: ${isHovering ? colorScheme.font : 'black'}`"
           class="pt-1 pb-1"
         >
-          <div v-if="typeof nodeProps.val === 'string'" class="d-flex">
-            <p v-if="!showEdit">
-              <b>{{ label }}:</b> {{ val }}
+          <div v-if="typeof nodeValue === 'string'" class="d-flex">
+            <p v-if="!formControl.showEdit">
+              <b>{{ nodeKey }}:</b> {{ nodeValue }}
             </p>
-            <div v-if="isHovering && !showEdit" class="d-flex">
-              <v-btn size="x-small" class="ml-4" @click="showEdit = true">edit</v-btn>
+            <div v-if="isHovering && !formControl.showEdit" class="d-flex">
+              <v-btn size="x-small" class="ml-4" @click="formControl.showEdit = true">edit</v-btn>
               <v-btn size="x-small" class="ml-4">delete</v-btn>
             </div>
 
-            <VForm v-if="showEdit">
+            <VForm v-if="formControl.showEdit" ref="editFormRef">
               <div class="d-flex">
-                <VTextField v-model="editProperty.key" label="Property Name" style="width: 200px" />
+                <VTextField
+                  v-model="editProperty.key"
+                  label="Property Name"
+                  :rules="formControl.keyRules"
+                  style="width: 200px"
+                />
                 <VSelect
                   v-model="editProperty.value"
                   :items="dataTypes"
@@ -113,24 +139,29 @@ const handleUpdateParentNode = (key: string, value: string, originalKey: string)
                   style="width: 200px"
                 />
                 <v-btn size="x-small" class="ml-4" @click="handleUpdateProperty">save</v-btn>
-                <v-btn size="x-small" class="ml-4" @click="cancelEdit">cancel</v-btn>
+                <v-btn size="x-small" class="ml-4" @click="resetEditProperty">cancel</v-btn>
               </div>
             </VForm>
           </div>
 
           <div v-else>
             <div class="d-flex opening_bracket pb-1">
-              <p>
-                <b>{{ label }}:</b>
+              <p v-if="!formControl.showEdit">
+                <b>{{ nodeKey }}:</b>
               </p>
-              <div v-if="isHovering && !showEdit" class="d-flex">
-                <v-btn size="x-small" class="ml-4">add property</v-btn>
-                <v-btn size="x-small" class="ml-4" @click="showEdit = true">edit</v-btn>
+              <div v-if="isHovering && !formControl.showEdit" class="d-flex">
+                <v-btn size="x-small" class="ml-4" @click="formControl.showAdd = true">add</v-btn>
+                <v-btn size="x-small" class="ml-4" @click="formControl.showEdit = true">edit</v-btn>
                 <v-btn size="x-small" class="ml-4">delete</v-btn>
               </div>
-              <VForm v-if="showEdit">
+              <VForm v-if="formControl.showEdit" ref="editFormRef">
                 <div class="d-flex">
-                  <VTextField v-model="editProperty.key" label="Property Name" style="width: 200px" />
+                  <VTextField
+                    v-model="editProperty.key"
+                    label="Property Name"
+                    :rules="formControl.keyRules"
+                    style="width: 200px"
+                  />
                   <VSelect
                     v-model="editProperty.value"
                     :items="dataTypes"
@@ -139,17 +170,37 @@ const handleUpdateParentNode = (key: string, value: string, originalKey: string)
                     style="width: 200px"
                   />
                   <v-btn size="x-small" class="ml-4" @click="handleUpdateProperty">save</v-btn>
-                  <v-btn size="x-small" class="ml-4" @click="cancelEdit">cancel</v-btn>
+                  <v-btn size="x-small" class="ml-4" @click="resetEditProperty">cancel</v-btn>
                 </div>
               </VForm>
             </div>
+            <VForm v-if="formControl.showAdd" @submit.prevent="addProperty" ref="addFormRef">
+              <div class="d-flex">
+                <VTextField
+                  v-model="newProperty.key"
+                  label="Property Name"
+                  :rules="formControl.keyRules"
+                  style="max-width: 200px"
+                />
+                <VSelect
+                  v-model="newProperty.value"
+                  :items="dataTypes"
+                  item-title="name"
+                  item-value="value"
+                  style="max-width: 200px"
+                />
+                <v-btn type="button" size="x-small" class="ml-4" @click="resetAddProperty">cancel</v-btn>
+                <v-btn type="submit" size="x-small" class="ml-4">save</v-btn>
+              </div>
+            </VForm>
             <SchemaNode
-              v-for="(el, i) in nodeProps.val"
-              :key="`${nodeProps.level + 1}-${i}-${typeof el[1]}`"
-              :label="el[0]"
-              :val="el[1]"
+              v-for="(node, i) in nodeValue"
+              :key="`${nodeProps.level + 1}-${i}-${typeof node[1]}`"
+              :nodeKey="node[0]"
+              :nodeValue="node[1]"
               :level="nodeProps.level + 1"
               @updateParentNode="handleUpdateParentNode"
+              @addPropertyToNode="handleAddProperty"
             />
           </div>
         </div>
