@@ -36,7 +36,7 @@ const editFormRef = ref<VForm | null>(null);
 const formControl = reactive<FormControl>({
   showAdd: false,
   showEdit: false,
-  keyRules: [(val: string) => val.length > 0 || "Key name is required."],
+  keyRules: [(val: string) => val.length > 0 || "Property Name is required."],
 });
 
 const copyNodeValue = ref(nodeProps.nodeValue);
@@ -67,19 +67,14 @@ const deleteProperty = (keyToDelete: string) => {
 };
 
 const handleDeleteProperty = (keyToDelete: string) => {
-  const propertyType = typeof (copyNodeValue.value as MapValue).get(keyToDelete);
-  if (propertyType === "object") {
-    if (
-      confirm(`Deleting "${keyToDelete}" will also delete any descendents of "${keyToDelete}." Do you wish to proceed?`)
-    ) {
-      (copyNodeValue.value as MapValue).delete(keyToDelete);
-      emit("updateAfterDelete", nodeProps.nodeKey, copyNodeValue.value);
-    }
-  } else {
-    if (confirm(`Deleting "${keyToDelete}" cannot be undone. Do you wish to proceed?`)) {
-      (copyNodeValue.value as MapValue).delete(keyToDelete);
-      emit("updateAfterDelete", nodeProps.nodeKey, copyNodeValue.value);
-    }
+  const message =
+    typeof (copyNodeValue.value as MapValue).get(keyToDelete) === "object"
+      ? `Deleting "${keyToDelete}" will also delete any descendents of "${keyToDelete}." Do you wish to proceed?`
+      : `Deleting "${keyToDelete}" cannot be undone. Do you wish to proceed?`;
+
+  if (confirm(message)) {
+    (copyNodeValue.value as MapValue).delete(keyToDelete);
+    emit("updateAfterDelete", nodeProps.nodeKey, copyNodeValue.value);
   }
 };
 

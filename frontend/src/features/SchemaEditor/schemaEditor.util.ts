@@ -5,7 +5,7 @@ export const dataTypes: DataTypes[] = [
   { name: "float (decimal)", value: "number" },
   { name: "integer", value: "integer" },
   { name: "object", value: "object" },
-  // { name: "array", value: "array" },
+  { name: "array", value: "array" },
   { name: "boolean", value: "boolean" },
   { name: "null", value: "null" },
 ];
@@ -29,3 +29,33 @@ export const getHoverColorScheme = (schemaNodeLevel: number) => {
 export const getLeftIndent = (schemaNodeLevel: number) => {
   return `margin-left: ${schemaNodeLevel * 16}px`;
 };
+
+const address = new Map<string, string | Map<any, any>>([
+  ["line_one", "string"],
+  ["line_two", "string"],
+  ["city", "string"],
+  ["state", "string"],
+  ["country", "string"],
+  ["postal_code", "string"],
+]);
+
+const bids = new Map<string, string | Map<any, any>>([
+  ["initial_price", "number"],
+  ["last_bid", "null"],
+  ["total_bids", "integer"],
+]);
+
+const seller = new Map<string, string | Map<any, any>>([
+  ["name", "string"],
+  ["address", address],
+]);
+
+export const exampleSchema = new Map<string, string | Map<any, any>>([
+  ["id", "integer"],
+  ["name", "string"],
+  ["description", "string"],
+  ["featured", "boolean"],
+  ["images", "array"],
+  ["bids", bids],
+  ["seller", seller],
+]);

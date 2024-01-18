@@ -13,9 +13,10 @@ type FormControl = {
 };
 
 const isEdit = ref(false);
+const schemaTree = ref<typeof SchemaTree | null>(null);
 
-const schemaValues = reactive<FormValues>({
-  title: "Test Schema",
+const formValues = reactive<FormValues>({
+  title: "Product Example Schema",
   description: "Just a test schema to build out the editor UI with.",
 });
 const formControl: FormControl = {
@@ -26,9 +27,13 @@ const formControl: FormControl = {
   descriptionRules: [(v: string) => [...v].length <= 1000 || "Description cannot be longer than 1000 characters."],
 };
 
-const clearValues = () => {
-  schemaValues.title = "";
-  schemaValues.description = "";
+const handleNewSchema = () => {
+  if (schemaTree.value) {
+    schemaTree.value.nodeMap = new Map<string, string | Map<any, any>>();
+    formValues.title = "New Schema";
+    formValues.description =
+      "To change the name and description of this Schema, use the EDIT button to the right. \nTo begin building your Schema, click the ADD button below.";
+  }
 };
 
 const handleSubmit = () => {};
@@ -53,33 +58,33 @@ const handleExportSchema = () => {
         </template>
 
         <v-list variant="flat" border density="compact" elevation="0">
-          <v-list-item density="compact" title="New Schema" @click="clearValues" />
+          <v-list-item density="compact" title="New Schema" @click="handleNewSchema" />
           <v-list-item density="compact" title="Import Schema" @click="handleImportSchema" />
           <v-list-item density="compact" title="Export Schema" @click="handleExportSchema" />
         </v-list>
       </v-menu>
 
-      <v-toolbar-title> Schema Editor</v-toolbar-title>
+      <v-toolbar-title>Schema Editor</v-toolbar-title>
     </v-toolbar>
 
     <v-card-text>
       <v-sheet border class="pa-2 mb-2">
         <div v-if="!isEdit" class="relative">
-          <h3>{{ schemaValues.title }}</h3>
-          <p>{{ schemaValues.description }}</p>
+          <h3>{{ formValues.title }}</h3>
+          <p>{{ formValues.description }}</p>
           <v-btn position="absolute" size="small" location="top right" @click="isEdit = true">edit</v-btn>
         </div>
 
         <VForm @submit.prevent="handleSubmit" v-else>
           <VTextField
-            v-model="schemaValues.title"
+            v-model="formValues.title"
             label="Schema Name"
             :rules="formControl.titleRules"
             :counter="150"
             persistent-counter
           />
           <VTextarea
-            v-model="schemaValues.description"
+            v-model="formValues.description"
             label="Description"
             :rules="formControl.descriptionRules"
             :counter="1000"
@@ -91,12 +96,15 @@ const handleExportSchema = () => {
           </div>
         </VForm>
       </v-sheet>
-      <SchemaTree />
+      <SchemaTree ref="schemaTree" />
     </v-card-text>
   </v-card>
 </template>
 
 <style scoped>
+p {
+  white-space: pre;
+}
 .relative {
   position: relative;
 }

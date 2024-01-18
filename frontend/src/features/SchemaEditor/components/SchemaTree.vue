@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref, reactive } from "vue";
 import SchemaNode from "./SchemaNode.vue";
-import { dataTypes } from "../schemaEditor.util";
+import { dataTypes, exampleSchema } from "../schemaEditor.util";
 import type { MapValue } from "../schemaEditor.types";
 import type { VForm } from "vuetify/lib/components/index.mjs";
 
@@ -11,38 +11,17 @@ type FormControl = {
 };
 const formControl = reactive<FormControl>({
   showAdd: false,
-  keyRules: [(val: string) => val.length > 0 || "Key name is required."],
+  keyRules: [(val: string) => val.length > 0 || "Property Name is required."],
 });
 const formRef = ref<VForm | null>(null);
-
-const location = new Map<string, string | Map<any, any>>([
-  ["name", "string"],
-  ["longitude", "number"],
-  ["latitude", "number"],
-]);
-
-const member = new Map<string, string | Map<any, any>>([["id", "string"]]);
-
-const user = new Map<string, string | Map<any, any>>([
-  ["id", "string"],
-  ["member", member],
-]);
-
-const testMap = new Map<string, string | Map<any, any>>([
-  ["first_name", "string"],
-  ["last_name", "string"],
-  ["email", "string"],
-  ["location", location],
-  ["user", user],
-]);
 
 const newProperty = reactive({
   key: "",
   value: "string",
 });
 
-// const nodeMap = ref(new Map<string, string | Map<any, any>>());
-const nodeMap = ref(testMap);
+const nodeMap = ref(exampleSchema);
+defineExpose({ nodeMap });
 
 const resetAddProperty = () => {
   formControl.showAdd = false;
@@ -60,17 +39,12 @@ const addProperty = () => {
 };
 
 const handleDeleteProperty = (keyToDelete: string) => {
-  const propertyType = typeof nodeMap.value.get(keyToDelete);
-  if (propertyType === "object") {
-    if (
-      confirm(`Deleting "${keyToDelete}" will also delete any descendents of "${keyToDelete}." Do you wish to proceed?`)
-    ) {
-      nodeMap.value.delete(keyToDelete);
-    }
-  } else {
-    if (confirm(`Deleting "${keyToDelete}" cannot be undone. Do you wish to proceed?`)) {
-      nodeMap.value.delete(keyToDelete);
-    }
+  const message =
+    typeof nodeMap.value.get(keyToDelete) === "object"
+      ? `Deleting "${keyToDelete}" will also delete any descendents of "${keyToDelete}." Do you wish to proceed?`
+      : `Deleting "${keyToDelete}" cannot be undone. Do you wish to proceed?`;
+  if (confirm(message)) {
+    nodeMap.value.delete(keyToDelete);
   }
 };
 
