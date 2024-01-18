@@ -1,4 +1,5 @@
-export type DataTypes = { name: string; value: string };
+import type { DataTypes } from "./schemaEditor.types";
+
 export const dataTypes: DataTypes[] = [
   { name: "string (text)", value: "string" },
   { name: "float (decimal)", value: "number" },

@@ -1,10 +1,9 @@
 <script lang="ts" setup>
 import { reactive, ref, type PropType } from "vue";
 import { computed } from "vue";
-import { getHoverColorScheme, getLeftIndent, dataTypes } from "../../../util";
-import { type VForm } from "vuetify/lib/components/index.mjs";
-
-type MapValue = Map<string, string | Map<any, any>>;
+import { dataTypes, getHoverColorScheme, getLeftIndent } from "../schemaEditor.util";
+import type { MapValue } from "../schemaEditor.types";
+import type { VForm } from "vuetify/lib/components/index.mjs";
 
 type FormControl = {
   showAdd: boolean;
@@ -26,7 +25,7 @@ const nodeProps = defineProps({
     default: 1,
   },
 });
-const emit = defineEmits(["updateParentNode", "addPropertyToNode"]);
+const emit = defineEmits(["updateParentNode", "addPropertyToNode", "deletePropertyFromNode", "updateAfterDelete"]);
 
 const leftIndent = computed(() => getLeftIndent(nodeProps.level));
 const colorScheme = computed(() => getHoverColorScheme(nodeProps.level));
@@ -63,6 +62,46 @@ const resetAddProperty = () => {
   newProperty.value = "string";
 };
 
+const deleteProperty = (keyToDelete: string) => {
+  emit("deletePropertyFromNode", keyToDelete);
+};
+
+const handleDeleteProperty = (keyToDelete: string) => {
+  const propertyType = typeof (copyNodeValue.value as MapValue).get(keyToDelete);
+  if (propertyType === "object") {
+    if (
+      confirm(`Deleting "${keyToDelete}" will also delete any descendents of "${keyToDelete}." Do you wish to proceed?`)
+    ) {
+      (copyNodeValue.value as MapValue).delete(keyToDelete);
+      emit("updateAfterDelete", nodeProps.nodeKey, copyNodeValue.value);
+    }
+  } else {
+    if (confirm(`Deleting "${keyToDelete}" cannot be undone. Do you wish to proceed?`)) {
+      (copyNodeValue.value as MapValue).delete(keyToDelete);
+      emit("updateAfterDelete", nodeProps.nodeKey, copyNodeValue.value);
+    }
+  }
+};
+
+const updateAfterDelete = (keyToUpdate: string, value: MapValue) => {
+  (copyNodeValue.value as MapValue).set(keyToUpdate, value);
+  emit("updateAfterDelete", nodeProps.nodeKey, copyNodeValue.value);
+};
+
+const addProperty = () => {
+  (copyNodeValue.value as MapValue).set(
+    newProperty.key,
+    newProperty.value === "object" ? new Map() : newProperty.value
+  );
+  emit("addPropertyToNode", nodeProps.nodeKey, copyNodeValue.value);
+  resetAddProperty();
+};
+
+const handleAddPropertyToNode = (key: string, value: MapValue) => {
+  (copyNodeValue.value as MapValue).set(key, value);
+  emit("addPropertyToNode", nodeProps.nodeKey, copyNodeValue.value);
+};
+
 const handleUpdateProperty = () => {
   // no change
   if (editProperty.value === copyNodeValue.value && editProperty.key === nodeProps.nodeKey) {
@@ -76,20 +115,6 @@ const handleUpdateProperty = () => {
     emit("updateParentNode", editProperty.key, editProperty.value, nodeProps.nodeKey);
     formControl.showEdit = false;
   }
-};
-
-const addProperty = () => {
-  (copyNodeValue.value as MapValue).set(
-    newProperty.key,
-    newProperty.value === "object" ? new Map() : newProperty.value
-  );
-  emit("addPropertyToNode", nodeProps.nodeKey, copyNodeValue.value);
-  resetAddProperty();
-};
-
-const handleAddProperty = (key: string, value: MapValue) => {
-  (copyNodeValue.value as MapValue).set(key, value);
-  emit("addPropertyToNode", nodeProps.nodeKey, copyNodeValue.value);
 };
 
 const handleUpdateParentNode = (key: string, value: string, originalKey: string) => {
@@ -120,7 +145,7 @@ const handleUpdateParentNode = (key: string, value: string, originalKey: string)
             </p>
             <div v-if="isHovering && !formControl.showEdit" class="d-flex">
               <v-btn size="x-small" class="ml-4" @click="formControl.showEdit = true">edit</v-btn>
-              <v-btn size="x-small" class="ml-4">delete</v-btn>
+              <v-btn size="x-small" class="ml-4" @click="deleteProperty(nodeKey)">delete</v-btn>
             </div>
 
             <VForm v-if="formControl.showEdit" ref="editFormRef">
@@ -152,7 +177,7 @@ const handleUpdateParentNode = (key: string, value: string, originalKey: string)
               <div v-if="isHovering && !formControl.showEdit" class="d-flex">
                 <v-btn size="x-small" class="ml-4" @click="formControl.showAdd = true">add</v-btn>
                 <v-btn size="x-small" class="ml-4" @click="formControl.showEdit = true">edit</v-btn>
-                <v-btn size="x-small" class="ml-4">delete</v-btn>
+                <v-btn size="x-small" class="ml-4" @click="deleteProperty(nodeKey)">delete</v-btn>
               </div>
               <VForm v-if="formControl.showEdit" ref="editFormRef">
                 <div class="d-flex">
@@ -200,7 +225,9 @@ const handleUpdateParentNode = (key: string, value: string, originalKey: string)
               :nodeValue="node[1]"
               :level="nodeProps.level + 1"
               @updateParentNode="handleUpdateParentNode"
-              @addPropertyToNode="handleAddProperty"
+              @addPropertyToNode="handleAddPropertyToNode"
+              @deletePropertyFromNode="handleDeleteProperty"
+              @updateAfterDelete="updateAfterDelete"
             />
           </div>
         </div>

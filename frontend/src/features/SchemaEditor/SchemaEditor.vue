@@ -35,7 +35,7 @@ const handleSubmit = () => {};
 const handleImportSchema = () => {
   ImportSchema()
     .then(() => {})
-    .catch((err) => {});
+    .catch(() => {});
 };
 const handleExportSchema = () => {
   // ExportSchema()

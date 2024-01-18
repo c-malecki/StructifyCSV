@@ -1,10 +1,9 @@
 <script lang="ts" setup>
 import { ref, reactive } from "vue";
 import SchemaNode from "./SchemaNode.vue";
-import { dataTypes } from "../../../util";
-import { type VForm } from "vuetify/lib/components/index.mjs";
-
-type MapValue = Map<string, string | Map<any, any>>;
+import { dataTypes } from "../schemaEditor.util";
+import type { MapValue } from "../schemaEditor.types";
+import type { VForm } from "vuetify/lib/components/index.mjs";
 
 type FormControl = {
   showAdd: boolean;
@@ -60,11 +59,30 @@ const addProperty = () => {
   });
 };
 
-const handleAddProperty = (key: string, value: MapValue) => {
+const handleDeleteProperty = (keyToDelete: string) => {
+  const propertyType = typeof nodeMap.value.get(keyToDelete);
+  if (propertyType === "object") {
+    if (
+      confirm(`Deleting "${keyToDelete}" will also delete any descendents of "${keyToDelete}." Do you wish to proceed?`)
+    ) {
+      nodeMap.value.delete(keyToDelete);
+    }
+  } else {
+    if (confirm(`Deleting "${keyToDelete}" cannot be undone. Do you wish to proceed?`)) {
+      nodeMap.value.delete(keyToDelete);
+    }
+  }
+};
+
+const handleAddPropertyToNode = (key: string, value: MapValue) => {
   nodeMap.value.set(key, value);
 };
 
-const handleUpdateNode = (key: string, value: string, originalKey: string) => {
+const updateAfterDelete = (keyToUpdate: string, value: MapValue) => {
+  nodeMap.value.set(keyToUpdate, value);
+};
+
+const handleUpdateProperty = (key: string, value: string, originalKey: string) => {
   if (key !== originalKey) {
     nodeMap.value.delete(originalKey);
   }
@@ -80,8 +98,10 @@ const handleUpdateNode = (key: string, value: string, originalKey: string) => {
       :nodeKey="node[0]"
       :nodeValue="node[1]"
       :level="1"
-      @updateParentNode="handleUpdateNode"
-      @addPropertyToNode="handleAddProperty"
+      @updateParentNode="handleUpdateProperty"
+      @addPropertyToNode="handleAddPropertyToNode"
+      @deletePropertyFromNode="handleDeleteProperty"
+      @updateAfterDelete="updateAfterDelete"
     />
     <div>
       <v-btn v-if="!formControl.showAdd" size="x-small" @click="formControl.showAdd = true" class="ml-2"> add </v-btn>
