@@ -36,7 +36,7 @@ const headerOpts = computed(() => (store.csv ? store.csv.headers : []));
 
     <v-card-text>
       <div v-if="store.csv">
-        <v-btn @click="store.runProcessCsvDescriptor()">test</v-btn>
+        <!-- <v-btn @click="store.runProcessCsvDescriptor()">test</v-btn> -->
         <EditHeaders v-if="curForm === 'edit'" />
         <v-sheet border class="pa-2">
           <div class="d-flex">

@@ -5,23 +5,10 @@ type DataType struct {
 	Value string `json:"value"`
 }
 
-type Field struct {
-	Name     string   `json:"name"`
-	Type     string   `json:"type"`
-	DataType DataType `json:"dataType"`
-}
-
-type Schema struct {
-	Name   string  `json:"name"`
-	Type   string  `json:"type"`
-	Fields []Field `json:"fields"`
-}
-
-type Model struct {
-	Name          string   `json:"name"`
-	Type          string   `json:"type"`
-	Schemas       []Schema `json:"schemas"`
-	BaseSchemaIdx int      `json:"baseSchemaIdx"`
+type JsonSchema struct {
+	Title       string                 `json:"title"`
+	Description string                 `json:"description"`
+	Properties  map[string]interface{} `json:"properties"`
 }
 
 type CsvData struct {

@@ -11,14 +11,14 @@ const formValues = reactive({
 
 const headerOpts = computed(() => (store.csv ? store.csv.headers : []));
 
-const handleSubmit = () => {
-  store.updateSelectedColumns(formValues.selectedHeaders);
-  store.changeCsvEditorForm("none");
-};
+// const handleSubmit = () => {
+//   store.updateSelectedColumns(formValues.selectedHeaders);
+//   store.changeCsvEditorForm("none");
+// };
 </script>
 
 <template>
-  <v-form @submit.prevent="handleSubmit">
+  <!-- <v-form @submit.prevent="handleSubmit">
     <p><b>Total Headers:</b> {{ headerOpts.length }}</p>
     <VAutocomplete
       v-model="formValues.selectedHeaders"
@@ -32,7 +32,7 @@ const handleSubmit = () => {
       <v-btn type="button" size="small" @click="store.changeCsvEditorForm('none')" class="ml-auto mr-8"> cancel </v-btn>
       <v-btn type="submit" size="small">save</v-btn>
     </div>
-  </v-form>
+  </v-form> -->
 </template>
 
 <style scoped></style>
