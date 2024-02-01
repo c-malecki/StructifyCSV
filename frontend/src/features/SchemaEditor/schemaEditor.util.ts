@@ -1,4 +1,4 @@
-import type { DataTypes } from "./schemaEditor.types";
+import type { DataTypes, MapValue } from "./schemaEditor.types";
 
 export const dataTypes: DataTypes[] = [
   { name: "string (text)", value: "string" },
@@ -30,7 +30,31 @@ export const getLeftIndent = (schemaNodeLevel: number) => {
   return `margin-left: ${schemaNodeLevel * 16}px`;
 };
 
-const address = new Map<string, string | Map<any, any>>([
+export const convertMaptoObject = (data: MapValue): Record<string, any> => {
+  let obj = {} as Record<string, any>;
+  for (let [k, v] of data) {
+    if (v instanceof Map) {
+      obj[k] = convertMaptoObject(v);
+    } else {
+      obj[k] = v;
+    }
+  }
+  return obj;
+};
+
+export const convertObjectToMap = (obj: Record<string, any>) => {
+  let map = new Map();
+  for (let key of Object.keys(obj)) {
+    if (obj[key] instanceof Object) {
+      map.set(key, convertObjectToMap(obj[key]));
+    } else {
+      map.set(key, obj[key]);
+    }
+  }
+  return map;
+};
+
+const address = new Map<string, string | Map<string, any>>([
   ["line_one", "string"],
   ["line_two", "string"],
   ["city", "string"],
@@ -39,18 +63,18 @@ const address = new Map<string, string | Map<any, any>>([
   ["postal_code", "string"],
 ]);
 
-const bids = new Map<string, string | Map<any, any>>([
+const bids = new Map<string, string | Map<string, any>>([
   ["initial_price", "number"],
   ["last_bid", "null"],
   ["total_bids", "integer"],
 ]);
 
-const seller = new Map<string, string | Map<any, any>>([
+const seller = new Map<string, string | Map<string, any>>([
   ["name", "string"],
   ["address", address],
 ]);
 
-export const exampleSchema = new Map<string, string | Map<any, any>>([
+export const exampleSchema = new Map<string, string | Map<string, any>>([
   ["id", "integer"],
   ["name", "string"],
   ["description", "string"],

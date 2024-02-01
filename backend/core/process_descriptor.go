@@ -81,23 +81,23 @@ func WriteDescriptorJson(filePath string, csvLocation string, writerCh <-chan ma
 	}
 }
 
-func createStringWriter(filePath string) func(string, bool) {
-	file, err := os.Create(filePath)
-	if err != nil {
-		print(err)
-	}
+// func createStringWriter(filePath string) func(string, bool) {
+// 	file, err := os.Create(filePath)
+// 	if err != nil {
+// 		print(err)
+// 	}
 
-	return func(data string, close bool) {
-		_, err := file.WriteString(data)
-		if err != nil {
-			print(err)
-		}
+// 	return func(data string, close bool) {
+// 		_, err := file.WriteString(data)
+// 		if err != nil {
+// 			print(err)
+// 		}
 
-		if close {
-			file.Close()
-		}
-	}
-}
+// 		if close {
+// 			file.Close()
+// 		}
+// 	}
+// }
 
 // need to add nesting and data type conversions
 

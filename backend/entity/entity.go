@@ -11,6 +11,12 @@ type JsonSchema struct {
 	Properties  map[string]interface{} `json:"properties"`
 }
 
+// type JsonSchema struct {
+// 	Title       string `json:"title"`
+// 	Description string `json:"description"`
+// 	Properties  string `json:"properties"`
+// }
+
 type CsvData struct {
 	FileName string   `json:"fileName"`
 	Location string   `json:"location"`
