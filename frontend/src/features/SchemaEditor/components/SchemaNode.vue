@@ -1,12 +1,8 @@
 <script lang="ts" setup>
 import { reactive, ref, type PropType } from "vue";
 import { computed } from "vue";
-import {
-  dataTypeOpts,
-  getHoverColorScheme,
-  getLeftIndent,
-} from "../schemaEditor.util";
-import type { PropertiesMap } from "../schemaEditor.types";
+import { getHoverColorScheme, getLeftIndent } from "../../../util/style";
+import { dataTypeOpts, type PropertiesMap } from "../../../types/editor.types";
 import type { VForm } from "vuetify/lib/components/index.mjs";
 
 type FormControl = {

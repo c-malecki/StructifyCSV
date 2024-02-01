@@ -1,9 +1,12 @@
 <script lang="ts" setup>
 import { ref, reactive, inject } from "vue";
 import SchemaNode from "./SchemaNode.vue";
-import { dataTypeOpts, SchemaValuesKey } from "../schemaEditor.util";
-import type { PropertiesMap } from "../schemaEditor.types";
 import type { VForm } from "vuetify/lib/components/index.mjs";
+import {
+  dataTypeOpts,
+  SchemaValuesKey,
+  type PropertiesMap,
+} from "../../../types/editor.types";
 
 type FormControl = {
   showAdd: boolean;

@@ -1,8 +1,10 @@
 <script lang="ts" setup>
 import { reactive, ref, inject } from "vue";
 import type { VForm } from "vuetify/lib/components/index.mjs";
-import type { SchemaValues } from "../schemaEditor.types";
-import { SchemaValuesKey } from "../schemaEditor.util";
+import {
+  SchemaValuesKey,
+  type SchemaValues,
+} from "../../../types/editor.types";
 
 type FormControl = {
   titleRules: ((val: string) => string | boolean)[];

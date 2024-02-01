@@ -1,13 +1,9 @@
 <script lang="ts" setup>
 import { ImportSchema, ExportSchema } from "../wailsjs/go/main/App";
 import { ref, reactive, provide } from "vue";
-import {
-  convertMaptoObject,
-  convertObjectToMap,
-  exampleSchema,
-  SchemaValuesKey,
-} from "./features/SchemaEditor/schemaEditor.util";
-import { SchemaValues } from "./features/SchemaEditor/schemaEditor.types";
+import { convertMaptoObject, convertObjectToMap } from "./util/transform";
+import { exampleSchema } from "./util/example";
+import { SchemaValuesKey, type SchemaValues } from "./types/editor.types";
 import ProgramBar from "./ui/ProgramBar.vue";
 import CsvEditor from "./features/CsvEditor/CsvEditor.vue";
 import SchemaEditor from "./features/SchemaEditor/SchemaEditor.vue";
@@ -15,11 +11,7 @@ import SchemaEditor from "./features/SchemaEditor/SchemaEditor.vue";
 const programBarRef = ref<typeof ProgramBar | null>(null);
 const schemaEditorRef = ref<typeof SchemaEditor | null>(null);
 
-const schemaValues = reactive<SchemaValues>({
-  title: "Product Example Schema",
-  description: "Just a test schema to build out the editor UI with.",
-  properties: exampleSchema,
-});
+const schemaValues = reactive<SchemaValues>(exampleSchema);
 provide(SchemaValuesKey, schemaValues);
 
 const handleCreateNewSchema = () => {

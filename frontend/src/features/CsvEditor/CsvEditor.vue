@@ -1,19 +1,14 @@
 <script lang="ts" setup>
 import { ImportCsvData } from "../../../wailsjs/go/main/App";
-import { reactive, computed } from "vue";
+import { reactive, computed, inject } from "vue";
+import { SchemaValuesKey, type CsvFileData } from "../../types/editor.types";
 
-type Header = {
-  name: string;
-  selected: boolean;
-};
+const schemaValues = inject(SchemaValuesKey);
+if (!schemaValues) {
+  throw new Error(`Could not resolve ${SchemaValuesKey.description}`);
+}
 
-type CurCsv = {
-  fileName: string;
-  fileLocation: string;
-  headers: Header[];
-};
-
-const curCsv = reactive<CurCsv>({
+const curCsv = reactive<CsvFileData>({
   fileName: "test.csv",
   fileLocation: "/home/meeps/Documents/test.csv",
   headers: [

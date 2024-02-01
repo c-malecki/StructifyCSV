@@ -1,9 +1,8 @@
 <script lang="ts" setup>
-import { SchemaValuesKey } from "./schemaEditor.util";
+import { SchemaValuesKey, type SchemaValues } from "../../types/editor.types";
 import { ref, inject } from "vue";
 import SchemaTree from "./components/SchemaTree.vue";
 import SchemaInfoForm from "./components/SchemaInfoForm.vue";
-import type { SchemaValues } from "./schemaEditor.types";
 
 const emit = defineEmits(["updateSchema"]);
 
