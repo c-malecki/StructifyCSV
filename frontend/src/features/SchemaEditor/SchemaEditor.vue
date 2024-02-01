@@ -1,51 +1,53 @@
 <script lang="ts" setup>
 import { ImportSchema, ExportSchema } from "../../../wailsjs/go/main/App";
+import { convertMaptoObject, convertObjectToMap } from "./schemaEditor.util";
 import { reactive, ref } from "vue";
 import SchemaTree from "./components/SchemaTree.vue";
-
-export type FormValues = {
-  title: string;
-  description: string;
-};
-type FormControl = {
-  titleRules: ((val: string) => string | boolean)[];
-  descriptionRules: ((val: string) => string | boolean)[];
-};
+import SchemaInfoForm from "./components/SchemaInfoForm.vue";
+import type { SchemaInfo } from "./schemaEditor.types";
 
 const isEdit = ref(false);
-const schemaTree = ref<typeof SchemaTree | null>(null);
+const schemaTreeRef = ref<typeof SchemaTree | null>(null);
 
-const formValues = reactive<FormValues>({
+const schemaInfo = reactive<SchemaInfo>({
   title: "Product Example Schema",
   description: "Just a test schema to build out the editor UI with.",
 });
-const formControl: FormControl = {
-  titleRules: [
-    (v: string) => v.length > 0 || "Schema Name is required.",
-    (v: string) => [...v].length <= 150 || "Schema Name cannot be longer than 150 characters.",
-  ],
-  descriptionRules: [(v: string) => [...v].length <= 1000 || "Description cannot be longer than 1000 characters."],
-};
 
 const handleNewSchema = () => {
-  if (schemaTree.value) {
-    schemaTree.value.nodeMap = new Map<string, string | Map<any, any>>();
-    formValues.title = "New Schema";
-    formValues.description =
+  if (schemaTreeRef.value) {
+    schemaTreeRef.value.nodeMap = new Map<string, string | Map<string, any>>();
+    schemaInfo.title = "New Schema";
+    schemaInfo.description =
       "To change the name and description of this Schema, use the EDIT button to the right. \nTo begin building your Schema, click the ADD button below.";
   }
 };
 
-const handleSubmit = () => {};
+const handleUpdateSchema = ({ title, description }: SchemaInfo) => {
+  schemaInfo.title = title;
+  schemaInfo.description = description;
+  isEdit.value = false;
+};
+
 const handleImportSchema = () => {
+  if (!schemaTreeRef.value) return;
   ImportSchema()
-    .then(() => {})
+    .then((res) => {
+      schemaInfo.title = res.title;
+      schemaInfo.description = res.description;
+      schemaTreeRef.value!.nodeMap = convertObjectToMap(res.properties);
+    })
     .catch(() => {});
 };
+
 const handleExportSchema = () => {
-  // ExportSchema()
-  // .then(() => {})
-  // .catch((err) => {})
+  if (!schemaTreeRef.value) return;
+  ExportSchema({
+    ...schemaInfo,
+    properties: convertMaptoObject(schemaTreeRef.value!.nodeMap),
+  })
+    .then(() => {})
+    .catch((err) => {});
 };
 </script>
 
@@ -70,33 +72,19 @@ const handleExportSchema = () => {
     <v-card-text>
       <v-sheet border class="pa-2 mb-2">
         <div v-if="!isEdit" class="relative">
-          <h3>{{ formValues.title }}</h3>
-          <p>{{ formValues.description }}</p>
+          <h3>{{ schemaInfo.title }}</h3>
+          <p>{{ schemaInfo.description }}</p>
           <v-btn position="absolute" size="small" location="top right" @click="isEdit = true">edit</v-btn>
         </div>
 
-        <VForm @submit.prevent="handleSubmit" v-else>
-          <VTextField
-            v-model="formValues.title"
-            label="Schema Name"
-            :rules="formControl.titleRules"
-            :counter="150"
-            persistent-counter
-          />
-          <VTextarea
-            v-model="formValues.description"
-            label="Description"
-            :rules="formControl.descriptionRules"
-            :counter="1000"
-            persistent-counter
-          />
-          <div class="d-flex mt-2">
-            <v-btn type="button" size="small" @click="isEdit = false" class="ml-auto mr-4">cancel</v-btn>
-            <v-btn type="submit" size="small">save</v-btn>
-          </div>
-        </VForm>
+        <SchemaInfoForm
+          v-else
+          :schema-info="schemaInfo"
+          @close-form="isEdit = false"
+          @update-schema="handleUpdateSchema"
+        />
       </v-sheet>
-      <SchemaTree ref="schemaTree" />
+      <SchemaTree ref="schemaTreeRef" />
     </v-card-text>
   </v-card>
 </template>
