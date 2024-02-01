@@ -1,52 +1,96 @@
 <script lang="ts" setup>
-import { computed } from "vue";
-import { useStore } from "../../store/store";
-import EditHeaders from "./components/EditHeaders.vue";
-import DefineColumns from "./components/DefineColumns.vue";
-const store = useStore();
-const curForm = computed(() => store.csvEditor.curForm);
-const header = computed(() => {
-  switch (curForm.value) {
-    case "new":
-      return "New Model";
-    case "edit":
-      return "Select Headers";
-    case "none":
-      return `CSV: ${store.csv ? store.csv.fileName : "None Selected"}`;
-  }
+import { ImportCsvData } from "../../../wailsjs/go/main/App";
+import { reactive, computed } from "vue";
+
+type Header = {
+  name: string;
+  selected: boolean;
+};
+
+type CurCsv = {
+  fileName: string;
+  fileLocation: string;
+  headers: Header[];
+};
+
+const curCsv = reactive<CurCsv>({
+  fileName: "test.csv",
+  fileLocation: "/home/meeps/Documents/test.csv",
+  headers: [
+    { name: "First Name", selected: false },
+    { name: "Last Name", selected: false },
+    { name: "Age", selected: false },
+    { name: "Location", selected: false },
+    { name: "Email", selected: false },
+    { name: "LinkedIn URL", selected: false },
+    { name: "Title", selected: false },
+    { name: "Company", selected: false },
+  ],
 });
-const headerOpts = computed(() => (store.csv ? store.csv.headers : []));
+
+const importCsv = async () => {
+  try {
+    const csvData = await ImportCsvData();
+    if (csvData.headers !== null) {
+      curCsv.fileName = csvData.fileName;
+      curCsv.fileLocation = csvData.location;
+      curCsv.headers = csvData.headers.map((s) => {
+        return {
+          name: s,
+          selected: false,
+        };
+      });
+    } else {
+      console.log("canceled import");
+    }
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+const totalSelected = computed(
+  () => curCsv.headers.filter((h) => h.selected).length
+);
+
+const tableHeaders = [
+  {
+    title: "Selected",
+  },
+  {
+    title: "Column Header",
+  },
+  {
+    title: "Schema Attribute",
+  },
+];
 </script>
 
 <template>
   <v-card rounded="0">
-    <v-toolbar density="compact" color="grey-lighten-2">
-      <v-menu>
-        <template v-slot:activator="{ props }">
-          <v-app-bar-nav-icon v-bind="props"></v-app-bar-nav-icon>
-        </template>
-
-        <v-list variant="flat" border density="compact" elevation="0">
-          <v-list-item density="compact" title="Import CSV" @click="store.importCsv()" />
-        </v-list>
-      </v-menu>
-
-      <v-toolbar-title>{{ header }}</v-toolbar-title>
-    </v-toolbar>
-
     <v-card-text>
-      <div v-if="store.csv">
-        <!-- <v-btn @click="store.runProcessCsvDescriptor()">test</v-btn> -->
-        <EditHeaders v-if="curForm === 'edit'" />
-        <v-sheet border class="pa-2">
-          <div class="d-flex">
-            <v-btn size="x-small" @click="store.changeCsvEditorForm('edit')" class="mr-4">edit</v-btn>
-            <h3 class="mr-4">Total Headers: {{ headerOpts.length }}</h3>
-            <h3>Used Headers: {{ store.csvEditor.selectedColumns.length }}</h3>
-          </div>
-        </v-sheet>
-        <DefineColumns v-if="curForm === 'none'" />
-      </div>
+      <v-sheet border class="pa-2 mb-2">
+        <h3>{{ curCsv.fileName }}</h3>
+        <p>Total Headers: {{ curCsv.headers.length }}</p>
+        <p>Selected Headers: {{ totalSelected }}</p>
+      </v-sheet>
+      <v-sheet border class="pa-2">
+        <v-data-table
+          :headers="tableHeaders"
+          :header-props="{ align: 'start' }"
+          :items="curCsv.headers"
+          :items-per-page="25"
+        >
+          <template #item="{ item }">
+            <tr>
+              <td>
+                <v-checkbox-btn v-model="item.selected" />
+              </td>
+              <td>{{ item.name }}</td>
+              <td></td>
+            </tr>
+          </template>
+        </v-data-table>
+      </v-sheet>
     </v-card-text>
   </v-card>
 </template>

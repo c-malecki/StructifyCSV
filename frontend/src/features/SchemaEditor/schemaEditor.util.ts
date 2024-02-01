@@ -1,6 +1,14 @@
-import type { DataTypes, MapValue } from "./schemaEditor.types";
+import { InjectionKey } from "vue";
+import type {
+  DataTypeOpts,
+  SchemaValues,
+  PropertiesMap,
+} from "./schemaEditor.types";
 
-export const dataTypes: DataTypes[] = [
+export const SchemaValuesKey: InjectionKey<SchemaValues> =
+  Symbol("SchemaValues");
+
+export const dataTypeOpts: DataTypeOpts[] = [
   { name: "string (text)", value: "string" },
   { name: "float (decimal)", value: "number" },
   { name: "integer", value: "integer" },
@@ -30,7 +38,9 @@ export const getLeftIndent = (schemaNodeLevel: number) => {
   return `margin-left: ${schemaNodeLevel * 16}px`;
 };
 
-export const convertMaptoObject = (data: MapValue): Record<string, any> => {
+export const convertMaptoObject = (
+  data: PropertiesMap
+): Record<string, any> => {
   let obj = {} as Record<string, any>;
   for (let [k, v] of data) {
     if (v instanceof Map) {

@@ -1,5 +1,27 @@
-export type MapValue = Map<string, string | Map<string, any>>;
+export type PropertiesMap = Map<string, string | Map<string, any>>;
 
-export type DataTypes = { name: string; value: string };
+export type SchemaValues = {
+  title: string;
+  description: string;
+  properties: PropertiesMap;
+};
 
-export type SchemaInfo = { title: string; description: string };
+type DataTypeName =
+  | "string (text)"
+  | "float (decimal)"
+  | "integer"
+  | "object"
+  | "array"
+  | "boolean"
+  | "null";
+
+type DataTypeValue =
+  | "string"
+  | "number"
+  | "integer"
+  | "object"
+  | "array"
+  | "boolean"
+  | "null";
+
+export type DataTypeOpts = { name: DataTypeName; value: DataTypeValue };
