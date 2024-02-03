@@ -1,14 +1,22 @@
 <script lang="ts" setup>
-import { reactive, ref, type PropType } from "vue";
-import { computed } from "vue";
-import { dataTypes, getHoverColorScheme, getLeftIndent } from "../schemaEditor.util";
-import type { MapValue } from "../schemaEditor.types";
-import type { VForm } from "vuetify/lib/components/index.mjs";
+import { reactive, ref, computed, type PropType } from "vue";
+import { getHoverColorScheme, getLeftIndent } from "../../../util/style";
+import {
+  dataTypeOpts,
+  type JsonSchemaDataType,
+  type SchemaPropertiesMap,
+} from "../../../types/editor.types";
+import type { VForm } from "vuetify/components";
 
 type FormControl = {
   showAdd: boolean;
   showEdit: boolean;
   keyRules: ((val: string) => string | boolean)[];
+};
+
+type NewProperty = {
+  key: string;
+  value: JsonSchemaDataType;
 };
 
 const nodeProps = defineProps({
@@ -17,7 +25,9 @@ const nodeProps = defineProps({
     required: true,
   },
   nodeValue: {
-    type: [String, Object] as PropType<string | MapValue>,
+    type: [String, Object] as PropType<
+      JsonSchemaDataType | SchemaPropertiesMap
+    >,
     required: true,
   },
   level: {
@@ -25,7 +35,12 @@ const nodeProps = defineProps({
     default: 1,
   },
 });
-const emit = defineEmits(["updateParentNode", "addPropertyToNode", "deletePropertyFromNode", "updateAfterDelete"]);
+const emit = defineEmits([
+  "updateParentNode",
+  "addPropertyToNode",
+  "deletePropertyFromNode",
+  "updateAfterDelete",
+]);
 
 const leftIndent = computed(() => getLeftIndent(nodeProps.level));
 const colorScheme = computed(() => getHoverColorScheme(nodeProps.level));
@@ -39,21 +54,25 @@ const formControl = reactive<FormControl>({
   keyRules: [(val: string) => val.length > 0 || "Property Name is required."],
 });
 
-const copyNodeValue = ref(nodeProps.nodeValue);
-const newProperty = reactive({
+const copyNodeValue = ref<JsonSchemaDataType | SchemaPropertiesMap>(
+  nodeProps.nodeValue
+);
+const newProperty = reactive<NewProperty>({
   key: "",
   value: "string",
 });
 
-const editProperty = reactive({
+const editProperty = reactive<NewProperty>({
   key: nodeProps.nodeKey,
-  value: typeof nodeProps.nodeValue === "object" ? "object" : nodeProps.nodeValue,
+  value:
+    typeof nodeProps.nodeValue === "object" ? "object" : nodeProps.nodeValue,
 });
 
 const resetEditProperty = () => {
   formControl.showEdit = false;
   editProperty.key = nodeProps.nodeKey;
-  editProperty.value = typeof nodeProps.nodeValue;
+  editProperty.value =
+    typeof nodeProps.nodeValue === "object" ? "object" : "string";
 };
 
 const resetAddProperty = () => {
@@ -68,23 +87,24 @@ const deleteProperty = (keyToDelete: string) => {
 
 const handleDeleteProperty = (keyToDelete: string) => {
   const message =
-    typeof (copyNodeValue.value as MapValue).get(keyToDelete) === "object"
+    typeof (copyNodeValue.value as SchemaPropertiesMap).get(keyToDelete) ===
+    "object"
       ? `Deleting "${keyToDelete}" will also delete any descendents of "${keyToDelete}." Do you wish to proceed?`
       : `Deleting "${keyToDelete}" cannot be undone. Do you wish to proceed?`;
 
   if (confirm(message)) {
-    (copyNodeValue.value as MapValue).delete(keyToDelete);
+    (copyNodeValue.value as SchemaPropertiesMap).delete(keyToDelete);
     emit("updateAfterDelete", nodeProps.nodeKey, copyNodeValue.value);
   }
 };
 
-const updateAfterDelete = (keyToUpdate: string, value: MapValue) => {
-  (copyNodeValue.value as MapValue).set(keyToUpdate, value);
+const updateAfterDelete = (keyToUpdate: string, value: SchemaPropertiesMap) => {
+  (copyNodeValue.value as SchemaPropertiesMap).set(keyToUpdate, value);
   emit("updateAfterDelete", nodeProps.nodeKey, copyNodeValue.value);
 };
 
 const addProperty = () => {
-  (copyNodeValue.value as MapValue).set(
+  (copyNodeValue.value as SchemaPropertiesMap).set(
     newProperty.key,
     newProperty.value === "object" ? new Map() : newProperty.value
   );
@@ -92,35 +112,70 @@ const addProperty = () => {
   resetAddProperty();
 };
 
-const handleAddPropertyToNode = (key: string, value: MapValue) => {
-  (copyNodeValue.value as MapValue).set(key, value);
+const handleAddPropertyToNode = (key: string, value: SchemaPropertiesMap) => {
+  (copyNodeValue.value as SchemaPropertiesMap).set(key, value);
   emit("addPropertyToNode", nodeProps.nodeKey, copyNodeValue.value);
 };
 
 const handleUpdateProperty = () => {
   // no change
-  if (editProperty.value === copyNodeValue.value && editProperty.key === nodeProps.nodeKey) {
+  if (
+    editProperty.value === copyNodeValue.value &&
+    editProperty.key === nodeProps.nodeKey
+  ) {
     resetEditProperty();
   }
   // if value is object and copyNodeValue is object, don't change the properties
-  if (editProperty.value === "object" && typeof copyNodeValue.value === "object") {
-    emit("updateParentNode", editProperty.key, copyNodeValue.value, nodeProps.nodeKey);
+  if (
+    editProperty.value === "object" &&
+    typeof copyNodeValue.value === "object"
+  ) {
+    emit(
+      "updateParentNode",
+      editProperty.key,
+      copyNodeValue.value,
+      nodeProps.nodeKey
+    );
     formControl.showEdit = false;
   } else {
-    emit("updateParentNode", editProperty.key, editProperty.value, nodeProps.nodeKey);
+    emit(
+      "updateParentNode",
+      editProperty.key,
+      editProperty.value,
+      nodeProps.nodeKey
+    );
     formControl.showEdit = false;
   }
 };
 
-const handleUpdateParentNode = (key: string, value: string, originalKey: string) => {
+const handleUpdateParentNode = (
+  key: string,
+  value: string,
+  originalKey: string
+) => {
   if (typeof copyNodeValue.value === "object") {
     if (key !== originalKey) {
       copyNodeValue.value.delete(originalKey);
     }
-    copyNodeValue.value.set(key, value === "object" ? new Map() : value);
-    emit("updateParentNode", nodeProps.nodeKey, copyNodeValue.value, nodeProps.nodeKey);
+    copyNodeValue.value.set(
+      key,
+      value === "object"
+        ? (new Map() as SchemaPropertiesMap)
+        : (value as JsonSchemaDataType)
+    );
+    emit(
+      "updateParentNode",
+      nodeProps.nodeKey,
+      copyNodeValue.value,
+      nodeProps.nodeKey
+    );
   } else {
-    emit("updateParentNode", editProperty.key, editProperty.value, nodeProps.nodeKey);
+    emit(
+      "updateParentNode",
+      editProperty.key,
+      editProperty.value,
+      nodeProps.nodeKey
+    );
   }
 };
 </script>
@@ -128,19 +183,36 @@ const handleUpdateParentNode = (key: string, value: string, originalKey: string)
 <template>
   <v-hover>
     <template v-slot:default="{ isHovering, props }">
-      <v-card v-bind="props" :color="isHovering ? colorScheme.hover : undefined" variant="flat" :style="leftIndent">
+      <v-card
+        v-bind="props"
+        :color="isHovering ? colorScheme.hover : undefined"
+        variant="flat"
+        :style="leftIndent"
+      >
         <div
           :class="{ closing_bracket: typeof nodeValue === 'object' }"
           :style="`color: ${isHovering ? colorScheme.font : 'black'}`"
-          class="pt-1 pb-1"
+          class="pl-1 pt-1 pb-1"
         >
           <div v-if="typeof nodeValue === 'string'" class="d-flex">
             <p v-if="!formControl.showEdit">
               <b>{{ nodeKey }}:</b> {{ nodeValue }}
             </p>
             <div v-if="isHovering && !formControl.showEdit" class="d-flex">
-              <v-btn size="x-small" class="ml-4" @click="formControl.showEdit = true">edit</v-btn>
-              <v-btn size="x-small" class="ml-4" @click="deleteProperty(nodeKey)">delete</v-btn>
+              <v-btn
+                size="x-small"
+                class="ml-4"
+                @click="formControl.showEdit = true"
+              >
+                edit
+              </v-btn>
+              <v-btn
+                size="x-small"
+                class="ml-4"
+                @click="deleteProperty(nodeKey)"
+              >
+                delete
+              </v-btn>
             </div>
 
             <VForm v-if="formControl.showEdit" ref="editFormRef">
@@ -153,13 +225,19 @@ const handleUpdateParentNode = (key: string, value: string, originalKey: string)
                 />
                 <VSelect
                   v-model="editProperty.value"
-                  :items="dataTypes"
-                  item-title="name"
-                  item-value="value"
+                  :items="dataTypeOpts"
                   style="width: 200px"
                 />
-                <v-btn size="x-small" class="ml-4" @click="handleUpdateProperty">save</v-btn>
-                <v-btn size="x-small" class="ml-4" @click="resetEditProperty">cancel</v-btn>
+                <v-btn
+                  size="x-small"
+                  class="ml-4"
+                  @click="handleUpdateProperty"
+                >
+                  save
+                </v-btn>
+                <v-btn size="x-small" class="ml-4" @click="resetEditProperty">
+                  cancel
+                </v-btn>
               </div>
             </VForm>
           </div>
@@ -170,9 +248,27 @@ const handleUpdateParentNode = (key: string, value: string, originalKey: string)
                 <b>{{ nodeKey }}:</b>
               </p>
               <div v-if="isHovering && !formControl.showEdit" class="d-flex">
-                <v-btn size="x-small" class="ml-4" @click="formControl.showAdd = true">add</v-btn>
-                <v-btn size="x-small" class="ml-4" @click="formControl.showEdit = true">edit</v-btn>
-                <v-btn size="x-small" class="ml-4" @click="deleteProperty(nodeKey)">delete</v-btn>
+                <v-btn
+                  size="x-small"
+                  class="ml-4"
+                  @click="formControl.showAdd = true"
+                >
+                  add
+                </v-btn>
+                <v-btn
+                  size="x-small"
+                  class="ml-4"
+                  @click="formControl.showEdit = true"
+                >
+                  edit
+                </v-btn>
+                <v-btn
+                  size="x-small"
+                  class="ml-4"
+                  @click="deleteProperty(nodeKey)"
+                >
+                  delete
+                </v-btn>
               </div>
               <VForm v-if="formControl.showEdit" ref="editFormRef">
                 <div class="d-flex">
@@ -184,17 +280,29 @@ const handleUpdateParentNode = (key: string, value: string, originalKey: string)
                   />
                   <VSelect
                     v-model="editProperty.value"
-                    :items="dataTypes"
+                    :items="dataTypeOpts"
                     item-title="name"
                     item-value="value"
                     style="width: 200px"
                   />
-                  <v-btn size="x-small" class="ml-4" @click="handleUpdateProperty">save</v-btn>
-                  <v-btn size="x-small" class="ml-4" @click="resetEditProperty">cancel</v-btn>
+                  <v-btn
+                    size="x-small"
+                    class="ml-4"
+                    @click="handleUpdateProperty"
+                  >
+                    save
+                  </v-btn>
+                  <v-btn size="x-small" class="ml-4" @click="resetEditProperty">
+                    cancel
+                  </v-btn>
                 </div>
               </VForm>
             </div>
-            <VForm v-if="formControl.showAdd" @submit.prevent="addProperty" ref="addFormRef">
+            <VForm
+              v-if="formControl.showAdd"
+              @submit.prevent="addProperty"
+              ref="addFormRef"
+            >
               <div class="d-flex">
                 <VTextField
                   v-model="newProperty.key"
@@ -204,12 +312,19 @@ const handleUpdateParentNode = (key: string, value: string, originalKey: string)
                 />
                 <VSelect
                   v-model="newProperty.value"
-                  :items="dataTypes"
+                  :items="dataTypeOpts"
                   item-title="name"
                   item-value="value"
                   style="max-width: 200px"
                 />
-                <v-btn type="button" size="x-small" class="ml-4" @click="resetAddProperty">cancel</v-btn>
+                <v-btn
+                  type="button"
+                  size="x-small"
+                  class="ml-4"
+                  @click="resetAddProperty"
+                >
+                  cancel
+                </v-btn>
                 <v-btn type="submit" size="x-small" class="ml-4">save</v-btn>
               </div>
             </VForm>

@@ -1,99 +1,63 @@
 <script lang="ts" setup>
-import { ImportSchema, ExportSchema } from "../../../wailsjs/go/main/App";
-import { convertMaptoObject, convertObjectToMap } from "./schemaEditor.util";
-import { reactive, ref } from "vue";
+import { JsonSchemaKey, type JsonSchema } from "../../types/editor.types";
+import { ref, inject } from "vue";
 import SchemaTree from "./components/SchemaTree.vue";
 import SchemaInfoForm from "./components/SchemaInfoForm.vue";
-import type { SchemaInfo } from "./schemaEditor.types";
 
-const isEdit = ref(false);
-const schemaTreeRef = ref<typeof SchemaTree | null>(null);
+const emit = defineEmits(["updateSchema"]);
 
-const schemaInfo = reactive<SchemaInfo>({
-  title: "Product Example Schema",
-  description: "Just a test schema to build out the editor UI with.",
-});
+const jsonSchema = inject(JsonSchemaKey);
+if (!jsonSchema) {
+  throw new Error(`Could not resolve ${JsonSchemaKey.description}`);
+}
+const showEditForm = ref(false);
 
-const handleNewSchema = () => {
-  if (schemaTreeRef.value) {
-    schemaTreeRef.value.nodeMap = new Map<string, string | Map<string, any>>();
-    schemaInfo.title = "New Schema";
-    schemaInfo.description =
-      "To change the name and description of this Schema, use the EDIT button to the right. \nTo begin building your Schema, click the ADD button below.";
-  }
-};
-
-const handleUpdateSchema = ({ title, description }: SchemaInfo) => {
-  schemaInfo.title = title;
-  schemaInfo.description = description;
-  isEdit.value = false;
-};
-
-const handleImportSchema = () => {
-  if (!schemaTreeRef.value) return;
-  ImportSchema()
-    .then((res) => {
-      schemaInfo.title = res.title;
-      schemaInfo.description = res.description;
-      schemaTreeRef.value!.nodeMap = convertObjectToMap(res.properties);
-    })
-    .catch(() => {});
-};
-
-const handleExportSchema = () => {
-  if (!schemaTreeRef.value) return;
-  ExportSchema({
-    ...schemaInfo,
-    properties: convertMaptoObject(schemaTreeRef.value!.nodeMap),
-  })
-    .then(() => {})
-    .catch((err) => {});
+const handleUpdateSchema = (vals: Omit<JsonSchema, "properties">) => {
+  emit("updateSchema", vals);
+  showEditForm.value = false;
 };
 </script>
 
 <template>
-  <v-card rounded="0">
-    <v-toolbar density="compact" color="grey-lighten-2">
-      <v-menu>
-        <template v-slot:activator="{ props }">
-          <v-app-bar-nav-icon v-bind="props"></v-app-bar-nav-icon>
-        </template>
+  <v-card border rounded="0" flat>
+    <template v-if="!showEditForm" #title>
+      <div class="relative">
+        <h3>{{ jsonSchema.title }}</h3>
+        <v-btn
+          position="absolute"
+          size="small"
+          location="top right"
+          @click="showEditForm = true"
+        >
+          edit
+        </v-btn>
+      </div>
+    </template>
 
-        <v-list variant="flat" border density="compact" elevation="0">
-          <v-list-item density="compact" title="New Schema" @click="handleNewSchema" />
-          <v-list-item density="compact" title="Import Schema" @click="handleImportSchema" />
-          <v-list-item density="compact" title="Export Schema" @click="handleExportSchema" />
-        </v-list>
-      </v-menu>
+    <template v-if="!showEditForm" #subtitle>
+      <p>{{ jsonSchema.description }}</p>
+    </template>
 
-      <v-toolbar-title>Schema Editor</v-toolbar-title>
-    </v-toolbar>
+    <template v-if="showEditForm" #text>
+      <SchemaInfoForm
+        @close-form="showEditForm = false"
+        @update-schema="handleUpdateSchema"
+      />
+    </template>
 
-    <v-card-text>
-      <v-sheet border class="pa-2 mb-2">
-        <div v-if="!isEdit" class="relative">
-          <h3>{{ schemaInfo.title }}</h3>
-          <p>{{ schemaInfo.description }}</p>
-          <v-btn position="absolute" size="small" location="top right" @click="isEdit = true">edit</v-btn>
-        </div>
+    <v-divider />
 
-        <SchemaInfoForm
-          v-else
-          :schema-info="schemaInfo"
-          @close-form="isEdit = false"
-          @update-schema="handleUpdateSchema"
-        />
-      </v-sheet>
-      <SchemaTree ref="schemaTreeRef" />
-    </v-card-text>
+    <SchemaTree />
   </v-card>
 </template>
 
 <style scoped>
-p {
-  white-space: pre;
-}
 .relative {
   position: relative;
+}
+
+.v-card:deep(.v-card-subtitle) {
+  opacity: 1;
+  white-space: pre;
 }
 </style>

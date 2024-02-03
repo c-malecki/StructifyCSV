@@ -1,27 +1,39 @@
 <script lang="ts" setup>
-import { ref, reactive } from "vue";
+import { ref, reactive, inject } from "vue";
 import SchemaNode from "./SchemaNode.vue";
-import { dataTypes, exampleSchema } from "../schemaEditor.util";
-import type { MapValue } from "../schemaEditor.types";
-import type { VForm } from "vuetify/lib/components/index.mjs";
+import type { VForm } from "vuetify/components";
+import {
+  dataTypeOpts,
+  JsonSchemaKey,
+  type JsonSchemaDataType,
+  type SchemaPropertiesMap,
+} from "../../../types/editor.types";
 
 type FormControl = {
   showAdd: boolean;
   keyRules: ((val: string) => string | boolean)[];
 };
+
+type NewProperty = {
+  key: string;
+  value: JsonSchemaDataType;
+};
+
+const jsonSchema = inject(JsonSchemaKey);
+if (!jsonSchema) {
+  throw new Error(`Could not resolve ${JsonSchemaKey.description}`);
+}
+
+const formRef = ref<VForm | null>(null);
 const formControl = reactive<FormControl>({
   showAdd: false,
   keyRules: [(val: string) => val.length > 0 || "Property Name is required."],
 });
-const formRef = ref<VForm | null>(null);
 
-const newProperty = reactive({
+const newProperty = reactive<NewProperty>({
   key: "",
   value: "string",
 });
-
-const nodeMap = ref(exampleSchema);
-defineExpose({ nodeMap });
 
 const resetAddProperty = () => {
   formControl.showAdd = false;
@@ -32,7 +44,12 @@ const resetAddProperty = () => {
 const addProperty = () => {
   formRef.value!.validate().then(({ valid }) => {
     if (valid) {
-      nodeMap.value.set(newProperty.key, newProperty.value === "object" ? new Map() : newProperty.value);
+      jsonSchema.properties.set(
+        newProperty.key,
+        newProperty.value === "object"
+          ? (new Map() as SchemaPropertiesMap)
+          : newProperty.value
+      );
       resetAddProperty();
     }
   });
@@ -40,34 +57,38 @@ const addProperty = () => {
 
 const handleDeleteProperty = (keyToDelete: string) => {
   const message =
-    typeof nodeMap.value.get(keyToDelete) === "object"
+    typeof jsonSchema.properties.get(keyToDelete) === "object"
       ? `Deleting "${keyToDelete}" will also delete any descendents of "${keyToDelete}." Do you wish to proceed?`
       : `Deleting "${keyToDelete}" cannot be undone. Do you wish to proceed?`;
   if (confirm(message)) {
-    nodeMap.value.delete(keyToDelete);
+    jsonSchema.properties.delete(keyToDelete);
   }
 };
 
-const handleAddPropertyToNode = (key: string, value: MapValue) => {
-  nodeMap.value.set(key, value);
+const handleAddPropertyToNode = (key: string, value: SchemaPropertiesMap) => {
+  jsonSchema.properties.set(key, value);
 };
 
-const updateAfterDelete = (keyToUpdate: string, value: MapValue) => {
-  nodeMap.value.set(keyToUpdate, value);
+const updateAfterDelete = (keyToUpdate: string, value: SchemaPropertiesMap) => {
+  jsonSchema.properties.set(keyToUpdate, value);
 };
 
-const handleUpdateProperty = (key: string, value: string, originalKey: string) => {
+const handleUpdateProperty = (
+  key: string,
+  value: JsonSchemaDataType,
+  originalKey: string
+) => {
   if (key !== originalKey) {
-    nodeMap.value.delete(originalKey);
+    jsonSchema.properties.delete(originalKey);
   }
-  nodeMap.value.set(key, value === "object" ? new Map() : value);
+  jsonSchema.properties.set(key, value === "object" ? new Map() : value);
 };
 </script>
 
 <template>
-  <v-sheet border class="schema_tree pa-2">
+  <div class="schema_tree pa-4">
     <SchemaNode
-      v-for="(node, i) in nodeMap"
+      v-for="(node, i) in jsonSchema.properties"
       :key="`1-${i}-${typeof node[1]}`"
       :nodeKey="node[0]"
       :nodeValue="node[1]"
@@ -78,7 +99,14 @@ const handleUpdateProperty = (key: string, value: string, originalKey: string) =
       @updateAfterDelete="updateAfterDelete"
     />
     <div>
-      <v-btn v-if="!formControl.showAdd" size="x-small" @click="formControl.showAdd = true" class="ml-2"> add </v-btn>
+      <v-btn
+        v-if="!formControl.showAdd"
+        size="x-small"
+        @click="formControl.showAdd = true"
+        class="ml-2"
+      >
+        add
+      </v-btn>
       <VForm v-else @submit.prevent="addProperty" ref="formRef">
         <div class="d-flex">
           <VTextField
@@ -89,23 +117,25 @@ const handleUpdateProperty = (key: string, value: string, originalKey: string) =
           />
           <VSelect
             v-model="newProperty.value"
-            :items="dataTypes"
-            item-title="name"
-            item-value="value"
+            :items="dataTypeOpts"
             style="max-width: 200px"
           />
-          <v-btn type="button" size="x-small" class="ml-4" @click="resetAddProperty">cancel</v-btn>
+          <v-btn
+            type="button"
+            size="x-small"
+            class="ml-4"
+            @click="resetAddProperty"
+          >
+            cancel
+          </v-btn>
           <v-btn type="submit" size="x-small" class="ml-4">save</v-btn>
         </div>
       </VForm>
     </div>
-  </v-sheet>
+  </div>
 </template>
 
 <style scoped>
-.schema_tree {
-  font-size: 1.2em;
-}
 .schema_tree:before {
   content: "{";
 }
