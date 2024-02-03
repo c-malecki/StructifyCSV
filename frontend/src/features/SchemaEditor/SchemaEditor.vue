@@ -19,38 +19,45 @@ const handleUpdateSchema = (vals: Omit<SchemaValues, "properties">) => {
 </script>
 
 <template>
-  <v-card rounded="0">
-    <v-card-text>
-      <v-sheet border class="pa-2 mb-2">
-        <div v-if="!showEditForm" class="relative">
-          <h3>{{ schemaValues.title }}</h3>
-          <p>{{ schemaValues.description }}</p>
-          <v-btn
-            position="absolute"
-            size="small"
-            location="top right"
-            @click="showEditForm = true"
-          >
-            edit
-          </v-btn>
-        </div>
+  <v-card border rounded="0" flat>
+    <template v-if="!showEditForm" #title>
+      <div class="relative">
+        <h3>{{ schemaValues.title }}</h3>
+        <v-btn
+          position="absolute"
+          size="small"
+          location="top right"
+          @click="showEditForm = true"
+        >
+          edit
+        </v-btn>
+      </div>
+    </template>
 
-        <SchemaInfoForm
-          v-else
-          @close-form="showEditForm = false"
-          @update-schema="handleUpdateSchema"
-        />
-      </v-sheet>
-      <SchemaTree />
-    </v-card-text>
+    <template v-if="!showEditForm" #subtitle>
+      <p>{{ schemaValues.description }}</p>
+    </template>
+
+    <template v-if="showEditForm" #text>
+      <SchemaInfoForm
+        @close-form="showEditForm = false"
+        @update-schema="handleUpdateSchema"
+      />
+    </template>
+
+    <v-divider />
+
+    <SchemaTree />
   </v-card>
 </template>
 
 <style scoped>
-p {
-  white-space: pre;
-}
 .relative {
   position: relative;
+}
+
+.v-card:deep(.v-card-subtitle) {
+  opacity: 1;
+  white-space: pre;
 }
 </style>

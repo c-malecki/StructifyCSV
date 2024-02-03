@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { reactive, ref, inject } from "vue";
-import type { VForm } from "vuetify/lib/components/index.mjs";
+import type { VForm } from "vuetify/components";
 import {
   SchemaValuesKey,
   type SchemaValues,

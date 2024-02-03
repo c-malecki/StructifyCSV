@@ -1,14 +1,22 @@
 <script lang="ts" setup>
-import { reactive, ref, type PropType } from "vue";
-import { computed } from "vue";
+import { reactive, ref, computed, type PropType } from "vue";
 import { getHoverColorScheme, getLeftIndent } from "../../../util/style";
-import { dataTypeOpts, type PropertiesMap } from "../../../types/editor.types";
-import type { VForm } from "vuetify/lib/components/index.mjs";
+import {
+  dataTypeOpts,
+  type JsonSchemaDataType,
+  type PropertiesMap,
+} from "../../../types/editor.types";
+import type { VForm } from "vuetify/components";
 
 type FormControl = {
   showAdd: boolean;
   showEdit: boolean;
   keyRules: ((val: string) => string | boolean)[];
+};
+
+type NewProperty = {
+  key: string;
+  value: JsonSchemaDataType;
 };
 
 const nodeProps = defineProps({
@@ -17,7 +25,7 @@ const nodeProps = defineProps({
     required: true,
   },
   nodeValue: {
-    type: [String, Object] as PropType<string | PropertiesMap>,
+    type: [String, Object] as PropType<JsonSchemaDataType | PropertiesMap>,
     required: true,
   },
   level: {
@@ -44,13 +52,15 @@ const formControl = reactive<FormControl>({
   keyRules: [(val: string) => val.length > 0 || "Property Name is required."],
 });
 
-const copyNodeValue = ref(nodeProps.nodeValue);
-const newProperty = reactive({
+const copyNodeValue = ref<JsonSchemaDataType | PropertiesMap>(
+  nodeProps.nodeValue
+);
+const newProperty = reactive<NewProperty>({
   key: "",
   value: "string",
 });
 
-const editProperty = reactive({
+const editProperty = reactive<NewProperty>({
   key: nodeProps.nodeKey,
   value:
     typeof nodeProps.nodeValue === "object" ? "object" : nodeProps.nodeValue,
@@ -59,7 +69,8 @@ const editProperty = reactive({
 const resetEditProperty = () => {
   formControl.showEdit = false;
   editProperty.key = nodeProps.nodeKey;
-  editProperty.value = typeof nodeProps.nodeValue;
+  editProperty.value =
+    typeof nodeProps.nodeValue === "object" ? "object" : "string";
 };
 
 const resetAddProperty = () => {
@@ -143,7 +154,12 @@ const handleUpdateParentNode = (
     if (key !== originalKey) {
       copyNodeValue.value.delete(originalKey);
     }
-    copyNodeValue.value.set(key, value === "object" ? new Map() : value);
+    copyNodeValue.value.set(
+      key,
+      value === "object"
+        ? (new Map() as PropertiesMap)
+        : (value as JsonSchemaDataType)
+    );
     emit(
       "updateParentNode",
       nodeProps.nodeKey,
@@ -173,7 +189,7 @@ const handleUpdateParentNode = (
         <div
           :class="{ closing_bracket: typeof nodeValue === 'object' }"
           :style="`color: ${isHovering ? colorScheme.font : 'black'}`"
-          class="pt-1 pb-1"
+          class="pl-1 pt-1 pb-1"
         >
           <div v-if="typeof nodeValue === 'string'" class="d-flex">
             <p v-if="!formControl.showEdit">
@@ -207,8 +223,6 @@ const handleUpdateParentNode = (
                 <VSelect
                   v-model="editProperty.value"
                   :items="dataTypeOpts"
-                  item-title="name"
-                  item-value="value"
                   style="width: 200px"
                 />
                 <v-btn

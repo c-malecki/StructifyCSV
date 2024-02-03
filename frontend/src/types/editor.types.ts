@@ -1,6 +1,28 @@
 import { InjectionKey } from "vue";
 
-export type PropertiesMap = Map<string, string | Map<string, any>>;
+export type JsonSchemaDataType =
+  | "string"
+  | "number"
+  | "integer"
+  | "object"
+  | "array"
+  | "boolean"
+  | "null";
+
+export const dataTypeOpts: JsonSchemaDataType[] = [
+  "string",
+  "number",
+  "integer",
+  "object",
+  "array",
+  "boolean",
+  "null",
+];
+
+export type PropertyMapValue =
+  | JsonSchemaDataType
+  | Map<string, PropertyMapValue>;
+export type PropertiesMap = Map<string, PropertyMapValue>;
 
 export type SchemaValues = {
   title: string;
@@ -11,43 +33,38 @@ export type SchemaValues = {
 export const SchemaValuesKey: InjectionKey<SchemaValues> =
   Symbol("SchemaValues");
 
-type DataTypeName =
-  | "string (text)"
-  | "float (decimal)"
-  | "integer"
-  | "object"
-  | "array"
-  | "boolean"
-  | "null";
+type SchemaProperty = {
+  key: string;
+  schemaPath: string;
+  value: JsonSchemaDataType;
+} | null;
 
-type DataTypeValue =
-  | "string"
-  | "number"
-  | "integer"
-  | "object"
-  | "array"
-  | "boolean"
-  | "null";
-
-export type DataTypeOpts = { name: DataTypeName; value: DataTypeValue };
-
-export const dataTypeOpts: DataTypeOpts[] = [
-  { name: "string (text)", value: "string" },
-  { name: "float (decimal)", value: "number" },
-  { name: "integer", value: "integer" },
-  { name: "object", value: "object" },
-  { name: "array", value: "array" },
-  { name: "boolean", value: "boolean" },
-  { name: "null", value: "null" },
-];
-
-export type ColumnHeader = {
-  name: string;
-  selected: boolean;
+export type CsvHeader = {
+  isSelected: boolean;
+  header: string;
+  schemaProperty: SchemaProperty | null;
 };
 
-export type CsvFileData = {
+export type CsvFile = {
   fileName: string;
   fileLocation: string;
-  headers: ColumnHeader[];
 };
+
+export const CsvFileKey: InjectionKey<CsvFile> = Symbol("CsvFile");
+
+export type CsvModelProperty = {
+  schemaPath: string;
+  header: string | null;
+  headerIdx: number | null;
+  dataType: JsonSchemaDataType;
+};
+
+export type CsvModelMapValue = CsvModelProperty | Map<string, CsvModelMapValue>;
+export type CsvModelMap = Map<string, CsvModelMapValue>;
+
+export type CsvModel = {
+  headers: CsvHeader[];
+  map: CsvModelMap;
+};
+
+export const CsvModelKey: InjectionKey<CsvModel> = Symbol("CsvModel");

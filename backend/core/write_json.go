@@ -4,8 +4,10 @@ import (
 	"context"
 	"csvtoschema/backend/entity"
 	"csvtoschema/backend/ui"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 )
@@ -84,3 +86,102 @@ func ExportCsvDescriptor(c context.Context, schema entity.JsonSchema, hd []entit
 	go WriteDescriptorJson(filePath, csvPath, writerCh, doneCh)
 	<-doneCh
 }
+
+// writing csv to json from model
+// open csv and get headers again
+// only use selected headers
+// ignore map properties in model without an assigned header
+// rescursively step through property values to write json
+func WriteJsonFromModel(c context.Context, selectedHeaders []string, model map[string]interface{}) {
+	file, err := os.Open("/home/meeps/Documents/Products.csv")
+	if err != nil {
+		print(err)
+	}
+	defer file.Close()
+
+	writerCh := make(chan map[string]string)
+	// doneCh := make(chan bool)
+
+	reader := csv.NewReader(file)
+
+	var headers, line []string
+	headers, err = reader.Read()
+	if err != nil {
+		print(err)
+	}
+
+	var usedIndexes []int
+	for i, h := range headers {
+		for _, sh := range selectedHeaders {
+			if h == sh {
+				usedIndexes = append(usedIndexes, i)
+			}
+		}
+	}
+
+	for {
+		line, err = reader.Read()
+
+		if err == io.EOF {
+			close(writerCh)
+			break
+		} else if err != nil {
+			print(err)
+		}
+
+		if len(line) != len(headers) {
+			// return nil, errors.New("line doesn't match headers format. skipping")
+			continue
+		}
+
+		record, err := processCsvLine(headers, line, usedIndexes)
+
+		if err != nil {
+			fmt.Printf("Line: %sError: %s\n", line, err)
+			continue
+		}
+		writerCh <- record
+	}
+}
+
+// func processLineWithModel(model map[string]interface{}) {
+// 	for k,v := range model {
+// 		header, ok := v["csvheader"]
+// 		if ok {
+// 			dataType := v["dataType"]
+// 		}
+
+// 	}
+// }
+
+// func coerceVal(dataType string, lineItem interface{}) {
+// 	switch dataType {
+// 	case "string":
+//  string
+
+// 	case "number":
+//  float
+
+// 	case "integer":
+//  int
+
+// 	case "object":
+//  map ??
+
+// 	case "array":
+//  slice ??
+
+// 	case "boolean":
+//  boolean
+
+// 	case "null":
+//  nil ??
+
+// 	}
+// }
+// for line in csv
+// for [k,v] in model
+// if v is map, recur
+// else v.get(csvHeader)
+// if csvHeader != nil
+// assert or convert csv value

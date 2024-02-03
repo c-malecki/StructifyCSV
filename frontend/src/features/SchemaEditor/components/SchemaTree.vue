@@ -1,16 +1,22 @@
 <script lang="ts" setup>
 import { ref, reactive, inject } from "vue";
 import SchemaNode from "./SchemaNode.vue";
-import type { VForm } from "vuetify/lib/components/index.mjs";
+import type { VForm } from "vuetify/components";
 import {
   dataTypeOpts,
   SchemaValuesKey,
+  type JsonSchemaDataType,
   type PropertiesMap,
 } from "../../../types/editor.types";
 
 type FormControl = {
   showAdd: boolean;
   keyRules: ((val: string) => string | boolean)[];
+};
+
+type NewProperty = {
+  key: string;
+  value: JsonSchemaDataType;
 };
 
 const schemaValues = inject(SchemaValuesKey);
@@ -24,7 +30,7 @@ const formControl = reactive<FormControl>({
   keyRules: [(val: string) => val.length > 0 || "Property Name is required."],
 });
 
-const newProperty = reactive({
+const newProperty = reactive<NewProperty>({
   key: "",
   value: "string",
 });
@@ -40,7 +46,9 @@ const addProperty = () => {
     if (valid) {
       schemaValues.properties.set(
         newProperty.key,
-        newProperty.value === "object" ? new Map() : newProperty.value
+        newProperty.value === "object"
+          ? (new Map() as PropertiesMap)
+          : newProperty.value
       );
       resetAddProperty();
     }
@@ -67,7 +75,7 @@ const updateAfterDelete = (keyToUpdate: string, value: PropertiesMap) => {
 
 const handleUpdateProperty = (
   key: string,
-  value: string,
+  value: JsonSchemaDataType,
   originalKey: string
 ) => {
   if (key !== originalKey) {
@@ -78,7 +86,7 @@ const handleUpdateProperty = (
 </script>
 
 <template>
-  <v-sheet border class="schema_tree pa-2">
+  <div class="schema_tree pa-4">
     <SchemaNode
       v-for="(node, i) in schemaValues.properties"
       :key="`1-${i}-${typeof node[1]}`"
@@ -110,8 +118,6 @@ const handleUpdateProperty = (
           <VSelect
             v-model="newProperty.value"
             :items="dataTypeOpts"
-            item-title="name"
-            item-value="value"
             style="max-width: 200px"
           />
           <v-btn
@@ -126,13 +132,10 @@ const handleUpdateProperty = (
         </div>
       </VForm>
     </div>
-  </v-sheet>
+  </div>
 </template>
 
 <style scoped>
-.schema_tree {
-  font-size: 1.2em;
-}
 .schema_tree:before {
   content: "{";
 }
