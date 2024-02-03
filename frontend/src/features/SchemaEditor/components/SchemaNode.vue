@@ -4,7 +4,7 @@ import { getHoverColorScheme, getLeftIndent } from "../../../util/style";
 import {
   dataTypeOpts,
   type JsonSchemaDataType,
-  type PropertiesMap,
+  type SchemaPropertiesMap,
 } from "../../../types/editor.types";
 import type { VForm } from "vuetify/components";
 
@@ -25,7 +25,9 @@ const nodeProps = defineProps({
     required: true,
   },
   nodeValue: {
-    type: [String, Object] as PropType<JsonSchemaDataType | PropertiesMap>,
+    type: [String, Object] as PropType<
+      JsonSchemaDataType | SchemaPropertiesMap
+    >,
     required: true,
   },
   level: {
@@ -52,7 +54,7 @@ const formControl = reactive<FormControl>({
   keyRules: [(val: string) => val.length > 0 || "Property Name is required."],
 });
 
-const copyNodeValue = ref<JsonSchemaDataType | PropertiesMap>(
+const copyNodeValue = ref<JsonSchemaDataType | SchemaPropertiesMap>(
   nodeProps.nodeValue
 );
 const newProperty = reactive<NewProperty>({
@@ -85,23 +87,24 @@ const deleteProperty = (keyToDelete: string) => {
 
 const handleDeleteProperty = (keyToDelete: string) => {
   const message =
-    typeof (copyNodeValue.value as PropertiesMap).get(keyToDelete) === "object"
+    typeof (copyNodeValue.value as SchemaPropertiesMap).get(keyToDelete) ===
+    "object"
       ? `Deleting "${keyToDelete}" will also delete any descendents of "${keyToDelete}." Do you wish to proceed?`
       : `Deleting "${keyToDelete}" cannot be undone. Do you wish to proceed?`;
 
   if (confirm(message)) {
-    (copyNodeValue.value as PropertiesMap).delete(keyToDelete);
+    (copyNodeValue.value as SchemaPropertiesMap).delete(keyToDelete);
     emit("updateAfterDelete", nodeProps.nodeKey, copyNodeValue.value);
   }
 };
 
-const updateAfterDelete = (keyToUpdate: string, value: PropertiesMap) => {
-  (copyNodeValue.value as PropertiesMap).set(keyToUpdate, value);
+const updateAfterDelete = (keyToUpdate: string, value: SchemaPropertiesMap) => {
+  (copyNodeValue.value as SchemaPropertiesMap).set(keyToUpdate, value);
   emit("updateAfterDelete", nodeProps.nodeKey, copyNodeValue.value);
 };
 
 const addProperty = () => {
-  (copyNodeValue.value as PropertiesMap).set(
+  (copyNodeValue.value as SchemaPropertiesMap).set(
     newProperty.key,
     newProperty.value === "object" ? new Map() : newProperty.value
   );
@@ -109,8 +112,8 @@ const addProperty = () => {
   resetAddProperty();
 };
 
-const handleAddPropertyToNode = (key: string, value: PropertiesMap) => {
-  (copyNodeValue.value as PropertiesMap).set(key, value);
+const handleAddPropertyToNode = (key: string, value: SchemaPropertiesMap) => {
+  (copyNodeValue.value as SchemaPropertiesMap).set(key, value);
   emit("addPropertyToNode", nodeProps.nodeKey, copyNodeValue.value);
 };
 
@@ -157,7 +160,7 @@ const handleUpdateParentNode = (
     copyNodeValue.value.set(
       key,
       value === "object"
-        ? (new Map() as PropertiesMap)
+        ? (new Map() as SchemaPropertiesMap)
         : (value as JsonSchemaDataType)
     );
     emit(

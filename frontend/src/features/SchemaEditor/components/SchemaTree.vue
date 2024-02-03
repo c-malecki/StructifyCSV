@@ -4,9 +4,9 @@ import SchemaNode from "./SchemaNode.vue";
 import type { VForm } from "vuetify/components";
 import {
   dataTypeOpts,
-  SchemaValuesKey,
+  JsonSchemaKey,
   type JsonSchemaDataType,
-  type PropertiesMap,
+  type SchemaPropertiesMap,
 } from "../../../types/editor.types";
 
 type FormControl = {
@@ -19,9 +19,9 @@ type NewProperty = {
   value: JsonSchemaDataType;
 };
 
-const schemaValues = inject(SchemaValuesKey);
-if (!schemaValues) {
-  throw new Error(`Could not resolve ${SchemaValuesKey.description}`);
+const jsonSchema = inject(JsonSchemaKey);
+if (!jsonSchema) {
+  throw new Error(`Could not resolve ${JsonSchemaKey.description}`);
 }
 
 const formRef = ref<VForm | null>(null);
@@ -44,10 +44,10 @@ const resetAddProperty = () => {
 const addProperty = () => {
   formRef.value!.validate().then(({ valid }) => {
     if (valid) {
-      schemaValues.properties.set(
+      jsonSchema.properties.set(
         newProperty.key,
         newProperty.value === "object"
-          ? (new Map() as PropertiesMap)
+          ? (new Map() as SchemaPropertiesMap)
           : newProperty.value
       );
       resetAddProperty();
@@ -57,20 +57,20 @@ const addProperty = () => {
 
 const handleDeleteProperty = (keyToDelete: string) => {
   const message =
-    typeof schemaValues.properties.get(keyToDelete) === "object"
+    typeof jsonSchema.properties.get(keyToDelete) === "object"
       ? `Deleting "${keyToDelete}" will also delete any descendents of "${keyToDelete}." Do you wish to proceed?`
       : `Deleting "${keyToDelete}" cannot be undone. Do you wish to proceed?`;
   if (confirm(message)) {
-    schemaValues.properties.delete(keyToDelete);
+    jsonSchema.properties.delete(keyToDelete);
   }
 };
 
-const handleAddPropertyToNode = (key: string, value: PropertiesMap) => {
-  schemaValues.properties.set(key, value);
+const handleAddPropertyToNode = (key: string, value: SchemaPropertiesMap) => {
+  jsonSchema.properties.set(key, value);
 };
 
-const updateAfterDelete = (keyToUpdate: string, value: PropertiesMap) => {
-  schemaValues.properties.set(keyToUpdate, value);
+const updateAfterDelete = (keyToUpdate: string, value: SchemaPropertiesMap) => {
+  jsonSchema.properties.set(keyToUpdate, value);
 };
 
 const handleUpdateProperty = (
@@ -79,16 +79,16 @@ const handleUpdateProperty = (
   originalKey: string
 ) => {
   if (key !== originalKey) {
-    schemaValues.properties.delete(originalKey);
+    jsonSchema.properties.delete(originalKey);
   }
-  schemaValues.properties.set(key, value === "object" ? new Map() : value);
+  jsonSchema.properties.set(key, value === "object" ? new Map() : value);
 };
 </script>
 
 <template>
   <div class="schema_tree pa-4">
     <SchemaNode
-      v-for="(node, i) in schemaValues.properties"
+      v-for="(node, i) in jsonSchema.properties"
       :key="`1-${i}-${typeof node[1]}`"
       :nodeKey="node[0]"
       :nodeValue="node[1]"

@@ -1,25 +1,20 @@
 <script lang="ts" setup>
 import { ref, computed, inject } from "vue";
-import { CsvModelKey, SchemaValuesKey } from "../../../types/editor.types";
-import { getAllSchemaMapProperties } from "../../../util/transform";
+import { CsvModelKey, JsonSchemaKey } from "../../../types/editor.types";
 import type { VDataTable } from "vuetify/components";
 
-const schemaValues = inject(SchemaValuesKey);
-if (!schemaValues) {
-  throw new Error(`Could not resolve ${SchemaValuesKey.description}`);
+const jsonSchema = inject(JsonSchemaKey);
+if (!jsonSchema) {
+  throw new Error(`Could not resolve ${JsonSchemaKey.description}`);
 }
-const csvData = inject(CsvModelKey);
-if (!csvData) {
+const csvModel = inject(CsvModelKey);
+if (!csvModel) {
   throw new Error(`Could not resolve ${CsvModelKey.description}`);
 }
 
-const allSchemaMapProperties = computed(() =>
-  getAllSchemaMapProperties(schemaValues.properties)
-);
-
 const headerSearch = ref("");
 const selectedHeaders = computed(() =>
-  csvData.headers.filter((h) => h.isSelected)
+  csvModel.headers.filter((h) => h.isSelected)
 );
 
 const tableHeaders: VDataTable["$props"]["headers"] = [
@@ -46,7 +41,7 @@ const tableHeaders: VDataTable["$props"]["headers"] = [
 
 <template>
   <div class="pa-4">
-    <p class="mb-1">Total: {{ csvData.headers.length }}</p>
+    <p class="mb-1">Total: {{ csvModel.headers.length }}</p>
     <p class="mb-2">Selected: {{ selectedHeaders.length }}</p>
 
     <v-text-field
@@ -62,7 +57,7 @@ const tableHeaders: VDataTable["$props"]["headers"] = [
 
   <v-data-table
     :headers="tableHeaders"
-    :items="csvData.headers"
+    :items="csvModel.headers"
     :items-per-page="10"
     :search="headerSearch"
     items-per-page-text="Headers per page:"
@@ -76,23 +71,12 @@ const tableHeaders: VDataTable["$props"]["headers"] = [
           {{ item.header }}
         </td>
         <td>
-          <!-- <VAutocomplete
-            v-model="item.schemaProperty"
-            :items="allSchemaMapProperties"
-            label="Property"
-            item-title="key"
-            item-value="value"
-            return-object
-            hide-details
-            clearable
-            persistent-clear
-          /> -->
           <i v-if="!item.schemaProperty">None Assigned</i>
-          <span v-else
-            >{{ item.schemaProperty.schemaPath }} ({{
+          <span v-else>
+            {{ item.schemaProperty.schemaPath }} ({{
               item.schemaProperty.value
-            }})</span
-          >
+            }})
+          </span>
         </td>
       </tr>
     </template>

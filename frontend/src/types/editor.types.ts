@@ -19,19 +19,18 @@ export const dataTypeOpts: JsonSchemaDataType[] = [
   "null",
 ];
 
-export type PropertyMapValue =
+export type PropertiesMapValue =
   | JsonSchemaDataType
-  | Map<string, PropertyMapValue>;
-export type PropertiesMap = Map<string, PropertyMapValue>;
+  | Map<string, PropertiesMapValue>;
+export type SchemaPropertiesMap = Map<string, PropertiesMapValue>;
 
-export type SchemaValues = {
+export type JsonSchema = {
   title: string;
   description: string;
-  properties: PropertiesMap;
+  properties: SchemaPropertiesMap;
 };
 
-export const SchemaValuesKey: InjectionKey<SchemaValues> =
-  Symbol("SchemaValues");
+export const JsonSchemaKey: InjectionKey<JsonSchema> = Symbol("JsonSchema");
 
 type SchemaProperty = {
   key: string;
@@ -64,6 +63,7 @@ export type CsvModelMap = Map<string, CsvModelMapValue>;
 
 export type CsvModel = {
   headers: CsvHeader[];
+  usedHeaders: string[];
   map: CsvModelMap;
 };
 

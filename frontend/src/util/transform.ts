@@ -1,11 +1,11 @@
 import type {
-  PropertiesMap,
+  SchemaPropertiesMap,
   CsvModelMap,
   JsonSchemaDataType,
 } from "../types/editor.types";
 
 export const convertMaptoObject = (
-  data: PropertiesMap
+  data: SchemaPropertiesMap
 ): Record<string, any> => {
   let obj = {} as Record<string, any>;
   for (let [key, val] of data) {
@@ -31,7 +31,7 @@ export const convertObjectToMap = (obj: Record<string, any>) => {
 };
 
 export const getAllSchemaMapProperties = (
-  data: PropertiesMap,
+  data: SchemaPropertiesMap,
   acc = [] as { key: string; value: JsonSchemaDataType }[],
   path = ""
 ) => {
@@ -48,7 +48,10 @@ export const getAllSchemaMapProperties = (
   return keyArr;
 };
 
-export const transformForCsvModelMap = (data: PropertiesMap, path = "") => {
+export const transformForCsvModelMap = (
+  data: SchemaPropertiesMap,
+  path = ""
+) => {
   const map: CsvModelMap = new Map();
   for (let [key, val] of data) {
     let schemaPath = path.length ? `${path}.${key}` : key;

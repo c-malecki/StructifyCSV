@@ -1,10 +1,7 @@
 <script lang="ts" setup>
 import { reactive, ref, inject } from "vue";
 import type { VForm } from "vuetify/components";
-import {
-  SchemaValuesKey,
-  type SchemaValues,
-} from "../../../types/editor.types";
+import { JsonSchemaKey, type JsonSchema } from "../../../types/editor.types";
 
 type FormControl = {
   titleRules: ((val: string) => string | boolean)[];
@@ -13,9 +10,9 @@ type FormControl = {
 
 const emit = defineEmits(["closeForm", "updateSchema"]);
 
-const schemaValues = inject(SchemaValuesKey);
-if (!schemaValues) {
-  throw new Error(`Could not resolve ${SchemaValuesKey.description}`);
+const jsonSchema = inject(JsonSchemaKey);
+if (!jsonSchema) {
+  throw new Error(`Could not resolve ${JsonSchemaKey.description}`);
 }
 
 const formRef = ref<VForm | null>(null);
@@ -32,9 +29,9 @@ const formControl: FormControl = {
       "Description cannot be longer than 1000 characters.",
   ],
 };
-const formValues = reactive<Omit<SchemaValues, "properties">>({
-  title: schemaValues.title,
-  description: schemaValues.description,
+const formValues = reactive<Omit<JsonSchema, "properties">>({
+  title: jsonSchema.title,
+  description: jsonSchema.description,
 });
 
 const handleSubmit = () => {

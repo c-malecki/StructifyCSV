@@ -1,18 +1,18 @@
 <script lang="ts" setup>
-import { SchemaValuesKey, type SchemaValues } from "../../types/editor.types";
+import { JsonSchemaKey, type JsonSchema } from "../../types/editor.types";
 import { ref, inject } from "vue";
 import SchemaTree from "./components/SchemaTree.vue";
 import SchemaInfoForm from "./components/SchemaInfoForm.vue";
 
 const emit = defineEmits(["updateSchema"]);
 
-const schemaValues = inject(SchemaValuesKey);
-if (!schemaValues) {
-  throw new Error(`Could not resolve ${SchemaValuesKey.description}`);
+const jsonSchema = inject(JsonSchemaKey);
+if (!jsonSchema) {
+  throw new Error(`Could not resolve ${JsonSchemaKey.description}`);
 }
 const showEditForm = ref(false);
 
-const handleUpdateSchema = (vals: Omit<SchemaValues, "properties">) => {
+const handleUpdateSchema = (vals: Omit<JsonSchema, "properties">) => {
   emit("updateSchema", vals);
   showEditForm.value = false;
 };
@@ -22,7 +22,7 @@ const handleUpdateSchema = (vals: Omit<SchemaValues, "properties">) => {
   <v-card border rounded="0" flat>
     <template v-if="!showEditForm" #title>
       <div class="relative">
-        <h3>{{ schemaValues.title }}</h3>
+        <h3>{{ jsonSchema.title }}</h3>
         <v-btn
           position="absolute"
           size="small"
@@ -35,7 +35,7 @@ const handleUpdateSchema = (vals: Omit<SchemaValues, "properties">) => {
     </template>
 
     <template v-if="!showEditForm" #subtitle>
-      <p>{{ schemaValues.description }}</p>
+      <p>{{ jsonSchema.description }}</p>
     </template>
 
     <template v-if="showEditForm" #text>

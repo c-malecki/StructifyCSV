@@ -1,11 +1,16 @@
 <script lang="ts" setup>
-import { ref, inject, computed, type PropType } from "vue";
+import { inject, computed, type PropType } from "vue";
 import { getHoverColorScheme, getLeftIndent } from "../../../util/style";
 import {
   CsvModelKey,
   type CsvModelMap,
   type CsvModelProperty,
 } from "../../../types/editor.types";
+
+const csvModel = inject(CsvModelKey);
+if (!csvModel) {
+  throw new Error(`Could not resolve ${CsvModelKey.description}`);
+}
 
 // make note about directly mutating props and why
 const nodeProps = defineProps({
@@ -27,15 +32,15 @@ const isMap = computed(() => nodeProps.nodeValue instanceof Map);
 const leftIndent = computed(() => getLeftIndent(nodeProps.level));
 const colorScheme = computed(() => getHoverColorScheme(nodeProps.level));
 
-const csvModel = inject(CsvModelKey);
-if (!csvModel) {
-  throw new Error(`Could not resolve ${CsvModelKey.description}`);
-}
+const headerOpts = computed(() =>
+  csvModel.headers.filter((h) => !csvModel.usedHeaders.includes(h.header))
+);
 
 const handleUpdateCsvHeader = (val: string | null) => {
   const csvModelProperty = nodeProps.nodeValue as CsvModelProperty;
   if (val !== null) {
     const index = csvModel.headers.findIndex((h) => h.header === val);
+    csvModel.usedHeaders.push(val);
     csvModelProperty.headerIdx = index;
     csvModel.headers[index].schemaProperty = {
       key: nodeProps.nodeKey,
@@ -43,6 +48,9 @@ const handleUpdateCsvHeader = (val: string | null) => {
       value: csvModelProperty.dataType,
     };
   } else {
+    csvModel.usedHeaders = csvModel.usedHeaders.filter(
+      (h) => h !== csvModel.headers[csvModelProperty.headerIdx!].header
+    );
     csvModel.headers[csvModelProperty.headerIdx!].schemaProperty = null;
     csvModelProperty.headerIdx = null;
   }
@@ -70,11 +78,11 @@ const handleUpdateCsvHeader = (val: string | null) => {
 
             <VAutocomplete
               v-model="(nodeProps.nodeValue as CsvModelProperty).header"
-              :items="csvModel.headers"
+              :items="headerOpts"
               label="Headers"
               item-title="header"
               item-value="header"
-              style="max-width: 200px"
+              style="max-width: 300px"
               hide-details
               clearable
               persistent-clear

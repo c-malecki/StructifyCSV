@@ -8,13 +8,13 @@ import { ref, reactive, provide } from "vue";
 import { convertMaptoObject, convertObjectToMap } from "./util/transform";
 import { exampleSchema, exampleCsvFile, exampleCsvModel } from "./util/example";
 import {
-  SchemaValuesKey,
+  JsonSchemaKey,
   CsvFileKey,
   CsvModelKey,
-  type SchemaValues,
+  type JsonSchema,
   type CsvFile,
   type CsvModel,
-  type PropertiesMap,
+  type SchemaPropertiesMap,
 } from "./types/editor.types";
 import ProgramBar from "./ui/ProgramBar.vue";
 import CsvEditor from "./features/CsvEditor/CsvEditor.vue";
@@ -25,29 +25,28 @@ import SchemaEditor from "./features/SchemaEditor/SchemaEditor.vue";
 const programBarRef = ref<typeof ProgramBar | null>(null);
 const schemaEditorRef = ref<typeof SchemaEditor | null>(null);
 
-// rename schemaData
-const schemaValues = reactive<SchemaValues>(exampleSchema);
+const jsonSchema = reactive<JsonSchema>(exampleSchema);
 const csvFile = reactive<CsvFile>(exampleCsvFile);
 const csvModel = reactive<CsvModel>(exampleCsvModel);
 
 provide(CsvFileKey, csvFile);
-provide(SchemaValuesKey, schemaValues);
+provide(JsonSchemaKey, jsonSchema);
 provide(CsvModelKey, csvModel);
 
 const handleCreateNewSchema = () => {
-  schemaValues.title = "New Schema";
-  schemaValues.description =
+  jsonSchema.title = "New Schema";
+  jsonSchema.description =
     "To change the name and description of this Schema, use the EDIT button to the right. \nTo begin building your Schema, click the ADD button below.";
-  schemaValues.properties = new Map() as PropertiesMap;
+  jsonSchema.properties = new Map() as SchemaPropertiesMap;
   programBarRef.value!.menuControl.show = false;
 };
 
 const handleImportSchema = () => {
   ImportSchema()
     .then((res) => {
-      schemaValues.title = res.title;
-      schemaValues.description = res.description;
-      schemaValues.properties = convertObjectToMap(res.properties);
+      jsonSchema.title = res.title;
+      jsonSchema.description = res.description;
+      jsonSchema.properties = convertObjectToMap(res.properties);
       programBarRef.value!.menuControl.show = false;
     })
     .catch(() => {});
@@ -55,8 +54,8 @@ const handleImportSchema = () => {
 
 const handleExportSchema = () => {
   ExportSchema({
-    ...schemaValues,
-    properties: convertMaptoObject(schemaValues.properties),
+    ...jsonSchema,
+    properties: convertMaptoObject(jsonSchema.properties),
   })
     .then(() => {
       programBarRef.value!.menuControl.show = false;
@@ -67,25 +66,33 @@ const handleExportSchema = () => {
 const handleUpdateSchema = ({
   title,
   description,
-}: Omit<SchemaValues, "properties">) => {
-  schemaValues.title = title;
-  schemaValues.description = description;
+}: Omit<JsonSchema, "properties">) => {
+  jsonSchema.title = title;
+  jsonSchema.description = description;
 };
 
-// const importCsv = async () => {
-//   try {
-//     const csvFileData = await ImportCsvData();
-//     if (csvFileData.headers !== null) {
-//       csvData.fileName = csvFileData.fileName;
-//       csvData.fileLocation = csvFileData.location;
-//       csvData.headers = csvFileData.headers;
-//     } else {
-//       console.log("canceled import");
-//     }
-//   } catch (err) {
-//     console.log(err);
-//   }
-// };
+const handleImportCsv = async () => {
+  try {
+    const csvFileData = await ImportCsvData();
+    if (csvFileData.headers !== null) {
+      csvFile.fileName = csvFileData.fileName;
+      csvFile.fileLocation = csvFileData.location;
+      csvModel.headers = csvFileData.headers.map((h) => {
+        return {
+          isSelected: false,
+          header: h,
+          schemaProperty: null,
+        };
+      });
+      csvModel.usedHeaders = [];
+      // csvModel.map = null
+    } else {
+      console.log("canceled import");
+    }
+  } catch (err) {
+    console.log(err);
+  }
+};
 
 // todo: How to handle arrays? Do I need to have support for
 // multi-typed properties?
@@ -99,6 +106,7 @@ const handleUpdateSchema = ({
         @new-schema="handleCreateNewSchema"
         @import-schema="handleImportSchema"
         @export-schema="handleExportSchema"
+        @import-csv="handleImportCsv"
         ref="programBarRef"
       />
       <v-container fluid class="pa-0">
