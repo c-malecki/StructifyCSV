@@ -4,6 +4,7 @@ import {
   ExportSchema,
   ImportCsvData,
 } from "../wailsjs/go/main/App";
+import { entity } from "../wailsjs/go/models";
 import { ref, reactive, provide } from "vue";
 import { convertMaptoObject, convertObjectToMap } from "./util/transform";
 import { exampleSchema, exampleCsvFile, exampleCsvModel } from "./util/example";
@@ -71,28 +72,29 @@ const handleUpdateSchema = ({
   jsonSchema.description = description;
 };
 
-const handleImportCsv = async () => {
-  try {
-    const csvFileData = await ImportCsvData();
-    if (csvFileData.headers !== null) {
-      csvFile.fileName = csvFileData.fileName;
-      csvFile.fileLocation = csvFileData.location;
-      csvModel.headers = csvFileData.headers.map((h) => {
-        return {
-          isSelected: false,
-          header: h,
-          schemaProperty: null,
-        };
-      });
-      csvModel.usedHeaders = [];
-      // csvModel.map = null
-    } else {
-      console.log("canceled import");
-    }
-  } catch (err) {
-    console.log(err);
-  }
-};
+// const handleImportCsv = async () => {
+//   try {
+//     const csvFileData = await ImportCsvData();
+//     if (csvFileData.headers !== null) {
+//       csvFile.fileName = csvFileData.fileName;
+//       csvFile.fileLocation = csvFileData.location;
+//       csvModel.headerDescriptors = csvFileData.headers.map((h, i) => {
+//         return {
+//           isSelected: false,
+//           headerText: h,
+//           headerIndex: i,
+//           schemaProperty: null,
+//         };
+//       });
+//       csvModel.usedHeaderIndexes = [];
+//       // csvModel.map = null
+//     } else {
+//       console.log("canceled import");
+//     }
+//   } catch (err) {
+//     console.log(err);
+//   }
+// };
 
 // todo: How to handle arrays? Do I need to have support for
 // multi-typed properties?
@@ -106,7 +108,6 @@ const handleImportCsv = async () => {
         @new-schema="handleCreateNewSchema"
         @import-schema="handleImportSchema"
         @export-schema="handleExportSchema"
-        @import-csv="handleImportCsv"
         ref="programBarRef"
       />
       <v-container fluid class="pa-0">

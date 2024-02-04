@@ -1,4 +1,5 @@
 import { InjectionKey } from "vue";
+import { entity } from "../../wailsjs/go/models";
 
 export type JsonSchemaDataType =
   | "string"
@@ -32,18 +33,6 @@ export type JsonSchema = {
 
 export const JsonSchemaKey: InjectionKey<JsonSchema> = Symbol("JsonSchema");
 
-type SchemaProperty = {
-  key: string;
-  schemaPath: string;
-  value: JsonSchemaDataType;
-} | null;
-
-export type CsvHeader = {
-  isSelected: boolean;
-  header: string;
-  schemaProperty: SchemaProperty | null;
-};
-
 export type CsvFile = {
   fileName: string;
   fileLocation: string;
@@ -61,10 +50,6 @@ export type CsvModelProperty = {
 export type CsvModelMapValue = CsvModelProperty | Map<string, CsvModelMapValue>;
 export type CsvModelMap = Map<string, CsvModelMapValue>;
 
-export type CsvModel = {
-  headers: CsvHeader[];
-  usedHeaders: string[];
-  map: CsvModelMap;
-};
+export type CsvModel = entity.CsvModel;
 
 export const CsvModelKey: InjectionKey<CsvModel> = Symbol("CsvModel");

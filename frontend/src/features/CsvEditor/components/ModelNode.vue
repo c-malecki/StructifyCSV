@@ -33,25 +33,30 @@ const leftIndent = computed(() => getLeftIndent(nodeProps.level));
 const colorScheme = computed(() => getHoverColorScheme(nodeProps.level));
 
 const headerOpts = computed(() =>
-  csvModel.headers.filter((h) => !csvModel.usedHeaders.includes(h.header))
+  csvModel.headerDescriptors.filter(
+    (h, i) => !csvModel.usedHeaderIndexes.includes(i)
+  )
 );
 
 const handleUpdateCsvHeader = (val: string | null) => {
   const csvModelProperty = nodeProps.nodeValue as CsvModelProperty;
   if (val !== null) {
-    const index = csvModel.headers.findIndex((h) => h.header === val);
-    csvModel.usedHeaders.push(val);
+    const index = csvModel.headerDescriptors.findIndex(
+      (h) => h.headerText === val
+    );
+    csvModel.usedHeaderIndexes.push(index);
     csvModelProperty.headerIdx = index;
-    csvModel.headers[index].schemaProperty = {
+    csvModel.headerDescriptors[index].schemaProperty = {
       key: nodeProps.nodeKey,
-      schemaPath: csvModelProperty.schemaPath,
+      path: csvModelProperty.schemaPath,
       value: csvModelProperty.dataType,
     };
   } else {
-    csvModel.usedHeaders = csvModel.usedHeaders.filter(
-      (h) => h !== csvModel.headers[csvModelProperty.headerIdx!].header
+    csvModel.usedHeaderIndexes = csvModel.usedHeaderIndexes.filter(
+      (h, i) => i !== csvModelProperty.headerIdx!
     );
-    csvModel.headers[csvModelProperty.headerIdx!].schemaProperty = null;
+    csvModel.headerDescriptors[csvModelProperty.headerIdx!].schemaProperty =
+      undefined;
     csvModelProperty.headerIdx = null;
   }
 };
@@ -80,8 +85,8 @@ const handleUpdateCsvHeader = (val: string | null) => {
               v-model="(nodeProps.nodeValue as CsvModelProperty).header"
               :items="headerOpts"
               label="Headers"
-              item-title="header"
-              item-value="header"
+              item-title="headerText"
+              item-value="headerText"
               style="max-width: 300px"
               hide-details
               clearable

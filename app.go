@@ -30,6 +30,10 @@ func (a *App) ExportSchema(schema entity.JsonSchema) {
 	core.WriteJsonSchema(a.ctx, schema)
 }
 
-func (a *App) ProcessCsvDescriptor(schema entity.JsonSchema, hd []entity.HeaderDescriptor, csvPath string) {
-	core.ExportCsvDescriptor(a.ctx, schema, hd, csvPath)
+func (a *App) ExportCsvModel(schema entity.JsonSchema, model entity.CsvModel) {
+	core.ExportCsvModelJson(a.ctx, schema, model)
 }
+
+// func (a *App) ProcessCsvDescriptor(schema entity.JsonSchema, hd []entity.HeaderDescriptor, csvPath string) {
+// 	core.ExportCsvDescriptor(a.ctx, schema, hd, csvPath)
+// }
