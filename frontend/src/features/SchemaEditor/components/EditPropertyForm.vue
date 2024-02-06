@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { reactive, ref, type PropType } from "vue";
+import { type PropertiesMapValue } from "../../../types/editor.types";
+import type { VForm } from "vuetify/components";
 import {
   dataTypeOpts,
   type JsonSchemaDataType,
-  type PropertiesMapValue,
-} from "../../../types/editor.types";
-import type { VForm } from "vuetify/components";
+} from "../../../types/schema.types";
 
 type Node = [string, PropertiesMapValue];
 

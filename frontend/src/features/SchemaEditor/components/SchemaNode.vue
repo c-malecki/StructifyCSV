@@ -2,13 +2,13 @@
 import { ref, computed, type PropType } from "vue";
 import { getHoverColorScheme, getLeftIndent } from "../../../util/style";
 import {
-  type JsonSchemaDataType,
   type SchemaPropertiesMap,
   type PropertiesMapValue,
 } from "../../../types/editor.types";
 import SchemaNodeButtons from "./SchemaNodeButtons.vue";
 import AddPropertyForm from "./AddPropertyForm.vue";
 import EditPropertyForm from "./EditPropertyForm.vue";
+import { type JsonSchemaDataType } from "../../../types/schema.types";
 
 type Node = [string, PropertiesMapValue];
 

@@ -1,23 +1,5 @@
 import { InjectionKey } from "vue";
-
-export type JsonSchemaDataType =
-  | "string"
-  | "number"
-  | "integer"
-  | "object"
-  | "array"
-  | "boolean"
-  | "null";
-
-export const dataTypeOpts: JsonSchemaDataType[] = [
-  "string",
-  "number",
-  "integer",
-  "object",
-  "array",
-  "boolean",
-  "null",
-];
+import { type JsonSchemaDataType } from "./schema.types";
 
 export type PropertiesMapValue =
   | JsonSchemaDataType

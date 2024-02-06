@@ -4,10 +4,10 @@ import SchemaNode from "./SchemaNode.vue";
 import AddPropertyForm from "./AddPropertyForm.vue";
 import {
   JsonSchemaKey,
-  type JsonSchemaDataType,
   type SchemaPropertiesMap,
   type PropertiesMapValue,
 } from "../../../types/editor.types";
+import { type JsonSchemaDataType } from "../../../types/schema.types";
 
 const jsonSchema = inject(JsonSchemaKey);
 if (!jsonSchema) {

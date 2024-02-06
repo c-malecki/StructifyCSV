@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { ref, reactive, type PropType } from "vue";
 import type { VForm } from "vuetify/components";
+import { type PropertiesMapValue } from "../../../types/editor.types";
 import {
   dataTypeOpts,
   type JsonSchemaDataType,
-  type PropertiesMapValue,
-} from "../../../types/editor.types";
+} from "../../../types/schema.types";
 
 const props = defineProps({
   nodeValue: {
