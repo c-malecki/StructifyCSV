@@ -5,7 +5,7 @@ import type {
 } from "../types/editor.types";
 
 export const convertMaptoObject = (
-  data: SchemaPropertiesMap
+  data: SchemaPropertiesMap | CsvModelMap
 ): Record<string, any> => {
   let obj = {} as Record<string, any>;
   for (let [key, val] of data) {

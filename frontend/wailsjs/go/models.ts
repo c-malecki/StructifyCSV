@@ -18,8 +18,8 @@ export namespace entity {
 	}
 	export class SchemaProperty {
 	    key: string;
-	    path: string;
 	    value: string;
+	    path: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new SchemaProperty(source);
@@ -28,8 +28,8 @@ export namespace entity {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.key = source["key"];
-	        this.path = source["path"];
 	        this.value = source["value"];
+	        this.path = source["path"];
 	    }
 	}
 	export class HeaderDescriptor {

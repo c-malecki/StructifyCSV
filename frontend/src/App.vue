@@ -72,29 +72,29 @@ const handleUpdateSchema = ({
   jsonSchema.description = description;
 };
 
-// const handleImportCsv = async () => {
-//   try {
-//     const csvFileData = await ImportCsvData();
-//     if (csvFileData.headers !== null) {
-//       csvFile.fileName = csvFileData.fileName;
-//       csvFile.fileLocation = csvFileData.location;
-//       csvModel.headerDescriptors = csvFileData.headers.map((h, i) => {
-//         return {
-//           isSelected: false,
-//           headerText: h,
-//           headerIndex: i,
-//           schemaProperty: null,
-//         };
-//       });
-//       csvModel.usedHeaderIndexes = [];
-//       // csvModel.map = null
-//     } else {
-//       console.log("canceled import");
-//     }
-//   } catch (err) {
-//     console.log(err);
-//   }
-// };
+const handleImportCsv = async () => {
+  try {
+    const csvFileData = await ImportCsvData();
+    if (csvFileData.headers !== null) {
+      csvFile.fileName = csvFileData.fileName;
+      csvFile.fileLocation = csvFileData.location;
+      csvModel.headerDescriptors = csvFileData.headers.map((h, i) => {
+        return {
+          isSelected: false,
+          headerText: h,
+          headerIndex: i,
+          schemaProperty: undefined,
+        };
+      });
+      csvModel.usedHeaderIndexes = [];
+      // csvModel.map = null
+    } else {
+      console.log("canceled import");
+    }
+  } catch (err) {
+    console.log(err);
+  }
+};
 
 // todo: How to handle arrays? Do I need to have support for
 // multi-typed properties?

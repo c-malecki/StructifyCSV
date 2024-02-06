@@ -28,14 +28,14 @@ func createStringWriter(filePath string) func(string, bool) {
 	}
 }
 
-func createSchemaBoiler(indent string, schema entity.JsonSchema) string {
+func createSchemaBoiler(schema entity.JsonSchema) string {
 	title := schema.Title
 	description := schema.Description
 	// todo: doesn't account for anything other than " " literal
 	replaceInner := strings.ReplaceAll(title, " ", "_")
 	trim := strings.TrimSpace(replaceInner)
 	idText := strings.ToLower(trim)
-	return fmt.Sprintf("{\n%[1]v\"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n%[1]v\"$id\": \"https://example.com/%[3]v.schema.json\",\n%[1]v\"title\": \"%[2]v\",\n%[1]v\"description\": \"%[4]v\",\n%[1]v\"type\": \"object\",\n%[1]v\"properties\": ", indent, title, idText, description)
+	return fmt.Sprintf("{\n%[1]v\"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n%[1]v\"$id\": \"https://example.com/%[3]v.schema.json\",\n%[1]v\"title\": \"%[2]v\",\n%[1]v\"description\": \"%[4]v\",\n%[1]v\"type\": \"object\",\n%[1]v\"properties\": ", entity.Indent, title, idText, description)
 }
 
 // func createReqProps(indent string, required []string) string {
@@ -50,14 +50,13 @@ func createSchemaBoiler(indent string, schema entity.JsonSchema) string {
 func WriteJsonSchema(c context.Context, schema entity.JsonSchema) {
 	outPath := ui.PrepareSaveFileDialog(c, schema.Title)
 
-	const indent = "    "
 	writeString := createStringWriter(outPath)
-	boiler := createSchemaBoiler(indent, schema)
+	boiler := createSchemaBoiler(schema)
 	writeString(boiler, false)
 
 	fmt.Printf("%v", schema.Properties)
 
-	jsonBytes, err := json.MarshalIndent(schema.Properties, indent, indent)
+	jsonBytes, err := json.MarshalIndent(schema.Properties, entity.Indent, entity.Indent)
 	if err != nil {
 		print(err)
 	}

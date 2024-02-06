@@ -50,6 +50,23 @@ export type CsvModelProperty = {
 export type CsvModelMapValue = CsvModelProperty | Map<string, CsvModelMapValue>;
 export type CsvModelMap = Map<string, CsvModelMapValue>;
 
-export type CsvModel = entity.CsvModel;
+type SchemaProperty = {
+  key: string;
+  value: JsonSchemaDataType;
+  path: string;
+};
+
+type HeaderDescriptor = {
+  isSelected: boolean;
+  headerText: string;
+  headerIndex: number | undefined;
+  schemaProperty: SchemaProperty | undefined;
+};
+
+export type CsvModel = {
+  headerDescriptors: HeaderDescriptor[];
+  usedHeaderIndexes: number[];
+  map: CsvModelMap;
+};
 
 export const CsvModelKey: InjectionKey<CsvModel> = Symbol("CsvModel");

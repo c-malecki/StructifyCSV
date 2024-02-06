@@ -48,7 +48,7 @@ export const exampleCsvFile: CsvFile = {
   fileLocation: "/home/meeps/Documents/Products.csv",
 };
 
-export const exampleCsvModel = new entity.CsvModel({
+export const exampleCsvModel: CsvModel = {
   headerDescriptors: [
     {
       isSelected: false,
@@ -140,4 +140,4 @@ export const exampleCsvModel = new entity.CsvModel({
   ],
   usedHeaderIndexes: [],
   map: transformForCsvModelMap(exampleSchema.properties),
-});
+};

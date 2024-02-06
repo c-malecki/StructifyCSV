@@ -10,6 +10,8 @@ import (
 	"io"
 	"os"
 	"strconv"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 func ExportCsvModelJson(c context.Context, schema entity.JsonSchema, model entity.CsvModel) {
@@ -21,11 +23,6 @@ func ExportCsvModelJson(c context.Context, schema entity.JsonSchema, model entit
 	<-doneCh
 }
 
-// writing csv to json from model
-// open csv and get headers again
-// only use selected headers
-// ignore map properties in model without an assigned header
-// rescursively step through property values to write json
 func processCsvModel(schema entity.JsonSchema, model entity.CsvModel, lineMapCh chan<- map[string]any) {
 	file, err := os.Open("/home/meeps/Documents/Products.csv")
 	if err != nil {
@@ -51,7 +48,7 @@ func processCsvModel(schema entity.JsonSchema, model entity.CsvModel, lineMapCh 
 			print(err)
 		}
 
-		record, err := processCsvLineToMap(headers, line, model.HeaderDescriptors)
+		record, err := processCsvLineToMap(headers, line, model)
 
 		if err != nil {
 			fmt.Printf("Line: %sError: %s\n", line, err)
@@ -61,29 +58,62 @@ func processCsvModel(schema entity.JsonSchema, model entity.CsvModel, lineMapCh 
 	}
 }
 
-func processCsvLineToMap(headers []string, lineData []string, headerDescriptors []entity.HeaderDescriptor) (map[string]any, error) {
+func parseModelChildMap(child map[string]interface{}, lineData []string, jsonMap map[string]interface{}, lastKey string) {
+	nextMap := make(map[string]interface{})
+
+	for key, value := range child {
+		var nodeStruct entity.CsvModelNodeValue
+		grandChildMap := value.(map[string]interface{})
+
+		_, ok := grandChildMap["headerIdx"]
+		if ok {
+			err := mapstructure.Decode(grandChildMap, &nodeStruct)
+			if err != nil {
+				print(err)
+			}
+			if nodeStruct.HeaderIdx != nil {
+				v, _ := convertLineDataType(lineData[*nodeStruct.HeaderIdx], nodeStruct)
+				nextMap[key] = v
+				jsonMap[lastKey] = nextMap
+			}
+		} else {
+			jsonMap[lastKey] = nextMap
+			parseModelChildMap(grandChildMap, lineData, jsonMap[lastKey].(map[string]interface{}), key)
+		}
+	}
+}
+
+func processCsvLineToMap(headers []string, lineData []string, model entity.CsvModel) (map[string]any, error) {
 	if len(lineData) != len(headers) {
 		return nil, errors.New("line doesn't match headers format. skipping")
 	}
 
-	lineMap := make(map[string]any)
+	jsonMap := make(map[string]interface{})
 
-	for _, hd := range headerDescriptors {
-		if hd.SchemaProperty == nil {
-			continue
+	for key, value := range model.Map {
+		var nodeStruct entity.CsvModelNodeValue
+		nodeMap := value.(map[string]interface{})
+
+		_, ok := nodeMap["headerIdx"]
+		if ok {
+			err := mapstructure.Decode(nodeMap, &nodeStruct)
+			if err != nil {
+				print(err)
+			}
+			if nodeStruct.HeaderIdx != nil {
+				v, _ := convertLineDataType(lineData[*nodeStruct.HeaderIdx], nodeStruct)
+				jsonMap[key] = v
+			}
+		} else {
+			parseModelChildMap(nodeMap, lineData, jsonMap, key)
 		}
-		v, err := convertLineDataType(lineData[hd.HeaderIndex], *hd.SchemaProperty)
-		if err != nil {
-			return nil, err
-		}
-		lineMap[headers[hd.HeaderIndex]] = v
 	}
 
-	return lineMap, nil
+	return jsonMap, nil
 }
 
-func convertLineDataType(lineItem string, schemaProperty entity.SchemaProperty) (any, error) {
-	switch schemaProperty.Value {
+func convertLineDataType(lineItem string, node entity.CsvModelNodeValue) (any, error) {
+	switch node.DataType {
 	case "string":
 		//  string
 		return lineItem, nil
@@ -112,8 +142,8 @@ func convertLineDataType(lineItem string, schemaProperty entity.SchemaProperty) 
 
 func writeModelJson(lineMapCh <-chan map[string]any, done chan<- bool) {
 	jsonFunc := func(lineMap map[string]any) string {
-		jsonData, _ := json.MarshalIndent(lineMap, "  ", "  ")
-		return "  " + string(jsonData)
+		jsonData, _ := json.MarshalIndent(lineMap, entity.Indent, entity.Indent)
+		return entity.Indent + string(jsonData)
 	}
 	writeString := createStringWriter("/home/meeps/Documents/ProductsModel.json")
 	writeString("[\n", false)
@@ -137,49 +167,3 @@ func writeModelJson(lineMapCh <-chan map[string]any, done chan<- bool) {
 		}
 	}
 }
-
-// func processLineMapToModel() {
-
-// }
-
-// func processLineWithModel(model map[string]interface{}) {
-// 	for k,v := range model {
-// 		header, ok := v["csvheader"]
-// 		if ok {
-// 			dataType := v["dataType"]
-// 		}
-
-// 	}
-// }
-
-// func coerceVal(dataType string, lineItem interface{}) {
-// 	switch dataType {
-// 	case "string":
-//  string
-
-// 	case "number":
-//  float
-
-// 	case "integer":
-//  int
-
-// 	case "object":
-//  map ??
-
-// 	case "array":
-//  slice ??
-
-// 	case "boolean":
-//  boolean
-
-// 	case "null":
-//  nil ??
-
-// 	}
-// }
-// for line in csv
-// for [k,v] in model
-// if v is map, recur
-// else v.get(csvHeader)
-// if csvHeader != nil
-// assert or convert csv value
