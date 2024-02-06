@@ -6,11 +6,11 @@ type JsonSchema struct {
 	Properties  map[string]interface{} `json:"properties"`
 }
 
-type DataType string
-
 const (
 	Indent string = "    "
 )
+
+type DataType string
 
 const (
 	String  DataType = "string"
@@ -29,7 +29,6 @@ type SchemaProperty struct {
 }
 
 type HeaderDescriptor struct {
-	IsSelected     bool            `json:"isSelected"`
 	HeaderText     string          `json:"headerText"`
 	HeaderIndex    int             `json:"headerIndex"`
 	SchemaProperty *SchemaProperty `json:"schemaProperty"`
@@ -42,10 +41,12 @@ type CsvModelNodeValue struct {
 	SchemaPath string  `json:"schemaPath"`
 }
 
+type CsvModelMap map[string]interface{}
+
 type CsvModel struct {
-	HeaderDescriptors []HeaderDescriptor     `json:"headerDescriptors"`
-	UsedHeaderIndexes []int                  `json:"usedHeaderIndexes"`
-	Map               map[string]interface{} `json:"map"`
+	HeaderDescriptors []HeaderDescriptor `json:"headerDescriptors"`
+	UsedHeaderIndexes []int              `json:"usedHeaderIndexes"`
+	Map               CsvModelMap        `json:"map"`
 }
 
 type CsvData struct {

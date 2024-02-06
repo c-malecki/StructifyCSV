@@ -1,7 +1,6 @@
 <script lang="ts" setup>
-import { ExportCsvModel } from "../../../../wailsjs/go/main/App";
+import { WriteJsonFromCsvModelMap } from "../../../../wailsjs/go/main/App";
 import { inject } from "vue";
-import { entity } from "../../../../wailsjs/go/models";
 import { convertMaptoObject } from "../../../util/transform";
 import { CsvModelKey, JsonSchemaKey } from "../../../types/editor.types";
 import ModelNode from "./ModelNode.vue";
@@ -16,13 +15,7 @@ if (!jsonSchema) {
 }
 
 const handleExport = () => {
-  ExportCsvModel(
-    jsonSchema,
-    new entity.CsvModel({
-      ...csvModel,
-      map: convertMaptoObject(csvModel.map),
-    })
-  );
+  WriteJsonFromCsvModelMap(convertMaptoObject(csvModel.map));
 };
 </script>
 

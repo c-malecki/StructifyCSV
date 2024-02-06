@@ -1,5 +1,4 @@
 import { InjectionKey } from "vue";
-import { entity } from "../../wailsjs/go/models";
 
 export type JsonSchemaDataType =
   | "string"
@@ -40,16 +39,6 @@ export type CsvFile = {
 
 export const CsvFileKey: InjectionKey<CsvFile> = Symbol("CsvFile");
 
-export type CsvModelProperty = {
-  schemaPath: string;
-  header: string | null;
-  headerIdx: number | null;
-  dataType: JsonSchemaDataType;
-};
-
-export type CsvModelMapValue = CsvModelProperty | Map<string, CsvModelMapValue>;
-export type CsvModelMap = Map<string, CsvModelMapValue>;
-
 type SchemaProperty = {
   key: string;
   value: JsonSchemaDataType;
@@ -63,9 +52,21 @@ type HeaderDescriptor = {
   schemaProperty: SchemaProperty | undefined;
 };
 
+export type CsvModelProperty = {
+  schemaPath: string;
+  header: string | null;
+  headerIdx: number | null;
+  dataType: JsonSchemaDataType;
+};
+
+export type CsvModelMapValue = CsvModelProperty | Map<string, CsvModelMapValue>;
+export type CsvModelMap = Map<string, CsvModelMapValue>;
+
 export type CsvModel = {
   headerDescriptors: HeaderDescriptor[];
   usedHeaderIndexes: number[];
+  // should become reference to file path?
+  schema: JsonSchema;
   map: CsvModelMap;
 };
 

@@ -1,10 +1,9 @@
 <script lang="ts" setup>
 import {
-  ImportSchema,
-  ExportSchema,
+  ImportJsonSchema,
+  ExportJsonSchema,
   ImportCsvData,
 } from "../wailsjs/go/main/App";
-import { entity } from "../wailsjs/go/models";
 import { ref, reactive, provide } from "vue";
 import { convertMaptoObject, convertObjectToMap } from "./util/transform";
 import { exampleSchema, exampleCsvFile, exampleCsvModel } from "./util/example";
@@ -43,7 +42,7 @@ const handleCreateNewSchema = () => {
 };
 
 const handleImportSchema = () => {
-  ImportSchema()
+  ImportJsonSchema()
     .then((res) => {
       jsonSchema.title = res.title;
       jsonSchema.description = res.description;
@@ -54,7 +53,7 @@ const handleImportSchema = () => {
 };
 
 const handleExportSchema = () => {
-  ExportSchema({
+  ExportJsonSchema({
     ...jsonSchema,
     properties: convertMaptoObject(jsonSchema.properties),
   })
@@ -95,10 +94,6 @@ const handleImportCsv = async () => {
     console.log(err);
   }
 };
-
-// todo: How to handle arrays? Do I need to have support for
-// multi-typed properties?
-// look at next steps of JSON Schema spec integration
 </script>
 
 <template>

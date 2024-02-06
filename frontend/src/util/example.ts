@@ -5,7 +5,6 @@ import type {
   PropertiesMapValue,
 } from "../types/editor.types";
 import { transformForCsvModelMap } from "./transform";
-import { entity } from "../../wailsjs/go/models";
 
 const address = new Map<string, PropertiesMapValue>([
   ["line_one", "string"],
@@ -32,7 +31,7 @@ export const product = new Map<string, PropertiesMapValue>([
   ["name", "string"],
   ["description", "string"],
   ["featured", "boolean"],
-  // ["images", "array"],
+  ["images", "array"],
   ["bids", bids],
   ["seller", seller],
 ]);
@@ -51,93 +50,98 @@ export const exampleCsvFile: CsvFile = {
 export const exampleCsvModel: CsvModel = {
   headerDescriptors: [
     {
-      isSelected: false,
       headerText: "Product Name",
       headerIndex: 0,
       schemaProperty: undefined,
+      isSelected: false,
     },
     {
-      isSelected: false,
       headerText: "Product Description",
       headerIndex: 1,
       schemaProperty: undefined,
+      isSelected: false,
     },
     {
-      isSelected: false,
       headerText: "Featured",
       headerIndex: 2,
       schemaProperty: undefined,
-    },
-    // { isSelected: false, headerText: "Image 1", schemaProperty: null },
-    // { isSelected: false, headerText: "Image 2", schemaProperty: null },
-    // { isSelected: false, headerText: "Image 3", schemaProperty: null },
-    {
       isSelected: false,
-      headerText: "Initial Price",
+    },
+    {
+      headerText: "Image 1",
       headerIndex: 3,
       schemaProperty: undefined,
+      isSelected: false,
     },
     {
-      isSelected: false,
-      headerText: "Last Bid",
+      headerText: "Initial Price",
       headerIndex: 4,
       schemaProperty: undefined,
+      isSelected: false,
     },
     {
-      isSelected: false,
-      headerText: "Total Bids",
+      headerText: "Last Bid",
       headerIndex: 5,
       schemaProperty: undefined,
+      isSelected: false,
     },
     {
-      isSelected: false,
-      headerText: "Seller ID",
+      headerText: "Total Bids",
       headerIndex: 6,
       schemaProperty: undefined,
+      isSelected: false,
     },
     {
-      isSelected: false,
-      headerText: "Seller Name",
+      headerText: "Seller ID",
       headerIndex: 7,
       schemaProperty: undefined,
+      isSelected: false,
     },
     {
-      isSelected: false,
-      headerText: "Seller Address Line 1",
+      headerText: "Seller Name",
       headerIndex: 8,
       schemaProperty: undefined,
+      isSelected: false,
     },
     {
-      isSelected: false,
-      headerText: "Seller Address Line 2",
+      headerText: "Seller Address Line 1",
       headerIndex: 9,
       schemaProperty: undefined,
+      isSelected: false,
     },
     {
-      isSelected: false,
-      headerText: "Seller Address City",
+      headerText: "Seller Address Line 2",
       headerIndex: 10,
       schemaProperty: undefined,
+      isSelected: false,
     },
     {
-      isSelected: false,
-      headerText: "Seller Address State",
+      headerText: "Seller Address City",
       headerIndex: 11,
       schemaProperty: undefined,
+      isSelected: false,
     },
     {
-      isSelected: false,
-      headerText: "Seller Address Country",
+      headerText: "Seller Address State",
       headerIndex: 12,
       schemaProperty: undefined,
+      isSelected: false,
     },
     {
-      isSelected: false,
-      headerText: "Seller Postal Code",
+      headerText: "Seller Address Country",
       headerIndex: 13,
       schemaProperty: undefined,
+      isSelected: false,
+    },
+    {
+      headerText: "Seller Postal Code",
+      headerIndex: 14,
+      schemaProperty: undefined,
+      isSelected: false,
     },
   ],
   usedHeaderIndexes: [],
+  // should become reference to file path?
+  schema: exampleSchema,
   map: transformForCsvModelMap(exampleSchema.properties),
 };

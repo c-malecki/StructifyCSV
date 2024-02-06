@@ -14,16 +14,16 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-func ExportCsvModelJson(c context.Context, schema entity.JsonSchema, model entity.CsvModel) {
+func WriteJsonFromCsvModelMap(c context.Context, modelMap entity.CsvModelMap) {
 	lineMapCh := make(chan map[string]any)
 	doneCh := make(chan bool)
 
-	go processCsvModel(schema, model, lineMapCh)
+	go processCsvModel(modelMap, lineMapCh)
 	go writeModelJson(lineMapCh, doneCh)
 	<-doneCh
 }
 
-func processCsvModel(schema entity.JsonSchema, model entity.CsvModel, lineMapCh chan<- map[string]any) {
+func processCsvModel(modelMap entity.CsvModelMap, lineMapCh chan<- map[string]any) {
 	file, err := os.Open("/home/meeps/Documents/Products.csv")
 	if err != nil {
 		print(err)
@@ -48,7 +48,7 @@ func processCsvModel(schema entity.JsonSchema, model entity.CsvModel, lineMapCh 
 			print(err)
 		}
 
-		record, err := processCsvLineToMap(headers, line, model)
+		record, err := processCsvLineToMap(headers, line, modelMap)
 
 		if err != nil {
 			fmt.Printf("Line: %sError: %s\n", line, err)
@@ -83,14 +83,14 @@ func parseModelChildMap(child map[string]interface{}, lineData []string, jsonMap
 	}
 }
 
-func processCsvLineToMap(headers []string, lineData []string, model entity.CsvModel) (map[string]any, error) {
+func processCsvLineToMap(headers []string, lineData []string, modelMap entity.CsvModelMap) (map[string]any, error) {
 	if len(lineData) != len(headers) {
 		return nil, errors.New("line doesn't match headers format. skipping")
 	}
 
 	jsonMap := make(map[string]interface{})
 
-	for key, value := range model.Map {
+	for key, value := range modelMap {
 		var nodeStruct entity.CsvModelNodeValue
 		nodeMap := value.(map[string]interface{})
 

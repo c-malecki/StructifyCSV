@@ -1,33 +1,20 @@
 <script lang="ts" setup>
-import { reactive, ref, computed, type PropType } from "vue";
+import { ref, computed, type PropType } from "vue";
 import { getHoverColorScheme, getLeftIndent } from "../../../util/style";
 import {
-  dataTypeOpts,
   type JsonSchemaDataType,
   type SchemaPropertiesMap,
+  type PropertiesMapValue,
 } from "../../../types/editor.types";
-import type { VForm } from "vuetify/components";
+import SchemaNodeButtons from "./SchemaNodeButtons.vue";
+import AddPropertyForm from "./AddPropertyForm.vue";
+import EditPropertyForm from "./EditPropertyForm.vue";
 
-type FormControl = {
-  showAdd: boolean;
-  showEdit: boolean;
-  keyRules: ((val: string) => string | boolean)[];
-};
-
-type NewProperty = {
-  key: string;
-  value: JsonSchemaDataType;
-};
+type Node = [string, PropertiesMapValue];
 
 const nodeProps = defineProps({
-  nodeKey: {
-    type: String,
-    required: true,
-  },
-  nodeValue: {
-    type: [String, Object] as PropType<
-      JsonSchemaDataType | SchemaPropertiesMap
-    >,
+  node: {
+    type: Object as PropType<Node>,
     required: true,
   },
   level: {
@@ -36,146 +23,91 @@ const nodeProps = defineProps({
   },
 });
 const emit = defineEmits([
-  "updateParentNode",
-  "addPropertyToNode",
-  "deletePropertyFromNode",
-  "updateAfterDelete",
+  "updateBaseKey",
+  "updateBaseValue",
+  "deleteBaseProperty",
+  "updateParentKey",
+  "updateParentValue",
+  "deleteParentProperty",
 ]);
 
+const showAddForm = ref(false);
+const showEditForm = ref(false);
+
+const isMap = computed(() => nodeProps.node[1] instanceof Map);
 const leftIndent = computed(() => getLeftIndent(nodeProps.level));
 const colorScheme = computed(() => getHoverColorScheme(nodeProps.level));
 
-const addFormRef = ref<VForm | null>(null);
-const editFormRef = ref<VForm | null>(null);
-
-const formControl = reactive<FormControl>({
-  showAdd: false,
-  showEdit: false,
-  keyRules: [(val: string) => val.length > 0 || "Property Name is required."],
-});
-
-const copyNodeValue = ref<JsonSchemaDataType | SchemaPropertiesMap>(
-  nodeProps.nodeValue
-);
-const newProperty = reactive<NewProperty>({
-  key: "",
-  value: "string",
-});
-
-const editProperty = reactive<NewProperty>({
-  key: nodeProps.nodeKey,
-  value:
-    typeof nodeProps.nodeValue === "object" ? "object" : nodeProps.nodeValue,
-});
-
-const resetEditProperty = () => {
-  formControl.showEdit = false;
-  editProperty.key = nodeProps.nodeKey;
-  editProperty.value =
-    typeof nodeProps.nodeValue === "object" ? "object" : "string";
+const updateKey = (update: {
+  newKey: string;
+  oldKey: string;
+  sameValue: Node;
+}) => {
+  if (nodeProps.level === 1) {
+    emit("updateBaseKey", update);
+  } else {
+    emit("updateParentKey", update);
+  }
 };
 
-const resetAddProperty = () => {
-  formControl.showAdd = false;
-  newProperty.key = "";
-  newProperty.value = "string";
+const updateParentKey = ({
+  newKey,
+  oldKey,
+  sameValue,
+}: {
+  newKey: string;
+  oldKey: string;
+  sameValue: PropertiesMapValue;
+}) => {
+  (nodeProps.node[1] as SchemaPropertiesMap).delete(oldKey);
+  (nodeProps.node[1] as SchemaPropertiesMap).set(newKey, sameValue);
+};
+
+const updateValue = (update: {
+  sameKey: string;
+  newValue: JsonSchemaDataType | SchemaPropertiesMap;
+}) => {
+  if (nodeProps.level === 1) {
+    emit("updateBaseValue", update);
+  } else {
+    emit("updateParentValue", update);
+  }
+};
+
+const updateParentValue = ({
+  sameKey,
+  newValue,
+}: {
+  sameKey: string;
+  newValue: JsonSchemaDataType | SchemaPropertiesMap;
+}) => {
+  (nodeProps.node[1] as SchemaPropertiesMap).set(sameKey, newValue);
 };
 
 const deleteProperty = (keyToDelete: string) => {
-  emit("deletePropertyFromNode", keyToDelete);
+  if (nodeProps.level === 1) {
+    emit("deleteBaseProperty", keyToDelete);
+  } else {
+    emit("deleteParentProperty", keyToDelete);
+  }
 };
 
-const handleDeleteProperty = (keyToDelete: string) => {
-  const message =
-    typeof (copyNodeValue.value as SchemaPropertiesMap).get(keyToDelete) ===
-    "object"
-      ? `Deleting "${keyToDelete}" will also delete any descendents of "${keyToDelete}." Do you wish to proceed?`
-      : `Deleting "${keyToDelete}" cannot be undone. Do you wish to proceed?`;
-
+const deleteParentProperty = (keyToDelete: string) => {
+  // will need to account for array and null?
+  const isObject =
+    typeof (nodeProps.node[1] as SchemaPropertiesMap).get(keyToDelete) ===
+    "object";
+  let message = "";
+  switch (isObject) {
+    case true:
+      message = `Deleting "${keyToDelete}" will also delete any descendents of "${keyToDelete}." Do you wish to proceed?`;
+      break;
+    case false:
+      message = `Deleting "${keyToDelete}" cannot be undone. Do you wish to proceed?`;
+      break;
+  }
   if (confirm(message)) {
-    (copyNodeValue.value as SchemaPropertiesMap).delete(keyToDelete);
-    emit("updateAfterDelete", nodeProps.nodeKey, copyNodeValue.value);
-  }
-};
-
-const updateAfterDelete = (keyToUpdate: string, value: SchemaPropertiesMap) => {
-  (copyNodeValue.value as SchemaPropertiesMap).set(keyToUpdate, value);
-  emit("updateAfterDelete", nodeProps.nodeKey, copyNodeValue.value);
-};
-
-const addProperty = () => {
-  (copyNodeValue.value as SchemaPropertiesMap).set(
-    newProperty.key,
-    newProperty.value === "object" ? new Map() : newProperty.value
-  );
-  emit("addPropertyToNode", nodeProps.nodeKey, copyNodeValue.value);
-  resetAddProperty();
-};
-
-const handleAddPropertyToNode = (key: string, value: SchemaPropertiesMap) => {
-  (copyNodeValue.value as SchemaPropertiesMap).set(key, value);
-  emit("addPropertyToNode", nodeProps.nodeKey, copyNodeValue.value);
-};
-
-const handleUpdateProperty = () => {
-  // no change
-  if (
-    editProperty.value === copyNodeValue.value &&
-    editProperty.key === nodeProps.nodeKey
-  ) {
-    resetEditProperty();
-  }
-  // if value is object and copyNodeValue is object, don't change the properties
-  if (
-    editProperty.value === "object" &&
-    typeof copyNodeValue.value === "object"
-  ) {
-    emit(
-      "updateParentNode",
-      editProperty.key,
-      copyNodeValue.value,
-      nodeProps.nodeKey
-    );
-    formControl.showEdit = false;
-  } else {
-    emit(
-      "updateParentNode",
-      editProperty.key,
-      editProperty.value,
-      nodeProps.nodeKey
-    );
-    formControl.showEdit = false;
-  }
-};
-
-const handleUpdateParentNode = (
-  key: string,
-  value: string,
-  originalKey: string
-) => {
-  if (typeof copyNodeValue.value === "object") {
-    if (key !== originalKey) {
-      copyNodeValue.value.delete(originalKey);
-    }
-    copyNodeValue.value.set(
-      key,
-      value === "object"
-        ? (new Map() as SchemaPropertiesMap)
-        : (value as JsonSchemaDataType)
-    );
-    emit(
-      "updateParentNode",
-      nodeProps.nodeKey,
-      copyNodeValue.value,
-      nodeProps.nodeKey
-    );
-  } else {
-    emit(
-      "updateParentNode",
-      editProperty.key,
-      editProperty.value,
-      nodeProps.nodeKey
-    );
+    (nodeProps.node[1] as SchemaPropertiesMap).delete(keyToDelete);
   }
 };
 </script>
@@ -190,154 +122,61 @@ const handleUpdateParentNode = (
         :style="leftIndent"
       >
         <div
-          :class="{ closing_bracket: typeof nodeValue === 'object' }"
+          :class="{ closing_bracket: isMap }"
           :style="`color: ${isHovering ? colorScheme.font : 'black'}`"
-          class="pl-1 pt-1 pb-1"
+          class="pa-1"
         >
-          <div v-if="typeof nodeValue === 'string'" class="d-flex">
-            <p v-if="!formControl.showEdit">
-              <b>{{ nodeKey }}:</b> {{ nodeValue }}
+          <div v-if="!isMap" class="d-flex">
+            <p v-if="!showEditForm">
+              <b>{{ node[0] }}:</b> {{ node[1] }}
             </p>
-            <div v-if="isHovering && !formControl.showEdit" class="d-flex">
-              <v-btn
-                size="x-small"
-                class="ml-4"
-                @click="formControl.showEdit = true"
-              >
-                edit
-              </v-btn>
-              <v-btn
-                size="x-small"
-                class="ml-4"
-                @click="deleteProperty(nodeKey)"
-              >
-                delete
-              </v-btn>
-            </div>
-
-            <VForm v-if="formControl.showEdit" ref="editFormRef">
-              <div class="d-flex">
-                <VTextField
-                  v-model="editProperty.key"
-                  label="Property Name"
-                  :rules="formControl.keyRules"
-                  style="width: 200px"
-                />
-                <VSelect
-                  v-model="editProperty.value"
-                  :items="dataTypeOpts"
-                  style="width: 200px"
-                />
-                <v-btn
-                  size="x-small"
-                  class="ml-4"
-                  @click="handleUpdateProperty"
-                >
-                  save
-                </v-btn>
-                <v-btn size="x-small" class="ml-4" @click="resetEditProperty">
-                  cancel
-                </v-btn>
-              </div>
-            </VForm>
+            <SchemaNodeButtons
+              v-if="isHovering && !showEditForm"
+              :show-add-button="false"
+              @show-edit-form="showEditForm = true"
+              @delete-property="deleteProperty(node[0])"
+            />
+            <EditPropertyForm
+              v-if="showEditForm"
+              :node="node"
+              @update-key="updateKey"
+              @update-value="updateValue"
+              @close-form="showEditForm = false"
+            />
           </div>
 
           <div v-else>
             <div class="d-flex opening_bracket pb-1">
-              <p v-if="!formControl.showEdit">
-                <b>{{ nodeKey }}:</b>
+              <p v-if="!showEditForm">
+                <b>{{ node[0] }}:</b>
               </p>
-              <div v-if="isHovering && !formControl.showEdit" class="d-flex">
-                <v-btn
-                  size="x-small"
-                  class="ml-4"
-                  @click="formControl.showAdd = true"
-                >
-                  add
-                </v-btn>
-                <v-btn
-                  size="x-small"
-                  class="ml-4"
-                  @click="formControl.showEdit = true"
-                >
-                  edit
-                </v-btn>
-                <v-btn
-                  size="x-small"
-                  class="ml-4"
-                  @click="deleteProperty(nodeKey)"
-                >
-                  delete
-                </v-btn>
-              </div>
-              <VForm v-if="formControl.showEdit" ref="editFormRef">
-                <div class="d-flex">
-                  <VTextField
-                    v-model="editProperty.key"
-                    label="Property Name"
-                    :rules="formControl.keyRules"
-                    style="width: 200px"
-                  />
-                  <VSelect
-                    v-model="editProperty.value"
-                    :items="dataTypeOpts"
-                    item-title="name"
-                    item-value="value"
-                    style="width: 200px"
-                  />
-                  <v-btn
-                    size="x-small"
-                    class="ml-4"
-                    @click="handleUpdateProperty"
-                  >
-                    save
-                  </v-btn>
-                  <v-btn size="x-small" class="ml-4" @click="resetEditProperty">
-                    cancel
-                  </v-btn>
-                </div>
-              </VForm>
+              <SchemaNodeButtons
+                v-if="isHovering && !showEditForm"
+                @show-add-form="showAddForm = true"
+                @show-edit-form="showEditForm = true"
+                @delete-property="deleteProperty(node[0])"
+              />
+              <EditPropertyForm
+                v-if="showEditForm"
+                :node="node"
+                @update-key="updateKey"
+                @update-value="updateValue"
+                @close-form="showEditForm = false"
+              />
             </div>
-            <VForm
-              v-if="formControl.showAdd"
-              @submit.prevent="addProperty"
-              ref="addFormRef"
-            >
-              <div class="d-flex">
-                <VTextField
-                  v-model="newProperty.key"
-                  label="Property Name"
-                  :rules="formControl.keyRules"
-                  style="max-width: 200px"
-                />
-                <VSelect
-                  v-model="newProperty.value"
-                  :items="dataTypeOpts"
-                  item-title="name"
-                  item-value="value"
-                  style="max-width: 200px"
-                />
-                <v-btn
-                  type="button"
-                  size="x-small"
-                  class="ml-4"
-                  @click="resetAddProperty"
-                >
-                  cancel
-                </v-btn>
-                <v-btn type="submit" size="x-small" class="ml-4">save</v-btn>
-              </div>
-            </VForm>
+            <AddPropertyForm
+              v-if="showAddForm"
+              :nodeValue="(node[1] as Map<string, PropertiesMapValue>)"
+              @hideForm="showAddForm = false"
+            />
             <SchemaNode
-              v-for="(node, i) in nodeValue"
-              :key="`${nodeProps.level + 1}-${i}-${typeof node[1]}`"
-              :nodeKey="node[0]"
-              :nodeValue="node[1]"
-              :level="nodeProps.level + 1"
-              @updateParentNode="handleUpdateParentNode"
-              @addPropertyToNode="handleAddPropertyToNode"
-              @deletePropertyFromNode="handleDeleteProperty"
-              @updateAfterDelete="updateAfterDelete"
+              v-for="(n, i) in node[1]"
+              :key="`${level + 1}-${i}-${typeof node[1]}`"
+              :node="(n as Node)"
+              :level="level + 1"
+              @update-parent-key="updateParentKey"
+              @update-parent-value="updateParentValue"
+              @delete-parent-property="deleteParentProperty"
             />
           </div>
         </div>
