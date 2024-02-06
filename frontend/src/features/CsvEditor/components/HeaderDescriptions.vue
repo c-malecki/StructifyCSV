@@ -14,7 +14,7 @@ if (!csvModel) {
 
 const headerSearch = ref("");
 const selectedHeaders = computed(() =>
-  csvModel.headers.filter((h) => h.isSelected)
+  csvModel.headerDescriptors.filter((h) => h.isSelected)
 );
 
 const tableHeaders: VDataTable["$props"]["headers"] = [
@@ -41,7 +41,7 @@ const tableHeaders: VDataTable["$props"]["headers"] = [
 
 <template>
   <div class="pa-4">
-    <p class="mb-1">Total: {{ csvModel.headers.length }}</p>
+    <p class="mb-1">Total: {{ csvModel.headerDescriptors.length }}</p>
     <p class="mb-2">Selected: {{ selectedHeaders.length }}</p>
 
     <v-text-field
@@ -57,8 +57,8 @@ const tableHeaders: VDataTable["$props"]["headers"] = [
 
   <v-data-table
     :headers="tableHeaders"
-    :items="csvModel.headers"
-    :items-per-page="10"
+    :items="csvModel.headerDescriptors"
+    :items-per-page="25"
     :search="headerSearch"
     items-per-page-text="Headers per page:"
   >
@@ -68,14 +68,12 @@ const tableHeaders: VDataTable["$props"]["headers"] = [
           <v-checkbox-btn v-model="item.isSelected" />
         </td>
         <td>
-          {{ item.header }}
+          {{ item.headerText }}
         </td>
         <td>
           <i v-if="!item.schemaProperty">None Assigned</i>
           <span v-else>
-            {{ item.schemaProperty.schemaPath }} ({{
-              item.schemaProperty.value
-            }})
+            {{ item.schemaProperty.path }} ({{ item.schemaProperty.value }})
           </span>
         </td>
       </tr>

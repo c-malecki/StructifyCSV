@@ -5,6 +5,7 @@ import type {
   PropertiesMapValue,
 } from "../types/editor.types";
 import { transformForCsvModelMap } from "./transform";
+import { entity } from "../../wailsjs/go/models";
 
 const address = new Map<string, PropertiesMapValue>([
   ["line_one", "string"],
@@ -48,37 +49,95 @@ export const exampleCsvFile: CsvFile = {
 };
 
 export const exampleCsvModel: CsvModel = {
-  headers: [
-    { isSelected: false, header: "Product Name", schemaProperty: null },
-    { isSelected: false, header: "Product Description", schemaProperty: null },
-    { isSelected: false, header: "Featured", schemaProperty: null },
-    // { isSelected: false, header: "Image 1", schemaProperty: null },
-    // { isSelected: false, header: "Image 2", schemaProperty: null },
-    // { isSelected: false, header: "Image 3", schemaProperty: null },
-    { isSelected: false, header: "Initial Price", schemaProperty: null },
-    { isSelected: false, header: "Last Bid", schemaProperty: null },
-    { isSelected: false, header: "Total Bids", schemaProperty: null },
-    { isSelected: false, header: "Seller ID", schemaProperty: null },
-    { isSelected: false, header: "Seller Name", schemaProperty: null },
+  headerDescriptors: [
     {
       isSelected: false,
-      header: "Seller Address Line 1",
-      schemaProperty: null,
+      headerText: "Product Name",
+      headerIndex: 0,
+      schemaProperty: undefined,
     },
     {
       isSelected: false,
-      header: "Seller Address Line 2",
-      schemaProperty: null,
+      headerText: "Product Description",
+      headerIndex: 1,
+      schemaProperty: undefined,
     },
-    { isSelected: false, header: "Seller Address City", schemaProperty: null },
-    { isSelected: false, header: "Seller Address State", schemaProperty: null },
     {
       isSelected: false,
-      header: "Seller Address Country",
-      schemaProperty: null,
+      headerText: "Featured",
+      headerIndex: 2,
+      schemaProperty: undefined,
     },
-    { isSelected: false, header: "Seller Postal Code", schemaProperty: null },
+    // { isSelected: false, headerText: "Image 1", schemaProperty: null },
+    // { isSelected: false, headerText: "Image 2", schemaProperty: null },
+    // { isSelected: false, headerText: "Image 3", schemaProperty: null },
+    {
+      isSelected: false,
+      headerText: "Initial Price",
+      headerIndex: 3,
+      schemaProperty: undefined,
+    },
+    {
+      isSelected: false,
+      headerText: "Last Bid",
+      headerIndex: 4,
+      schemaProperty: undefined,
+    },
+    {
+      isSelected: false,
+      headerText: "Total Bids",
+      headerIndex: 5,
+      schemaProperty: undefined,
+    },
+    {
+      isSelected: false,
+      headerText: "Seller ID",
+      headerIndex: 6,
+      schemaProperty: undefined,
+    },
+    {
+      isSelected: false,
+      headerText: "Seller Name",
+      headerIndex: 7,
+      schemaProperty: undefined,
+    },
+    {
+      isSelected: false,
+      headerText: "Seller Address Line 1",
+      headerIndex: 8,
+      schemaProperty: undefined,
+    },
+    {
+      isSelected: false,
+      headerText: "Seller Address Line 2",
+      headerIndex: 9,
+      schemaProperty: undefined,
+    },
+    {
+      isSelected: false,
+      headerText: "Seller Address City",
+      headerIndex: 10,
+      schemaProperty: undefined,
+    },
+    {
+      isSelected: false,
+      headerText: "Seller Address State",
+      headerIndex: 11,
+      schemaProperty: undefined,
+    },
+    {
+      isSelected: false,
+      headerText: "Seller Address Country",
+      headerIndex: 12,
+      schemaProperty: undefined,
+    },
+    {
+      isSelected: false,
+      headerText: "Seller Postal Code",
+      headerIndex: 13,
+      schemaProperty: undefined,
+    },
   ],
-  usedHeaders: [],
+  usedHeaderIndexes: [],
   map: transformForCsvModelMap(exampleSchema.properties),
 };

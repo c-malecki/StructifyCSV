@@ -1,15 +1,37 @@
 <script lang="ts" setup>
+import { ExportCsvModel } from "../../../../wailsjs/go/main/App";
 import { inject } from "vue";
-import { CsvModelKey } from "../../../types/editor.types";
+import { entity } from "../../../../wailsjs/go/models";
+import { convertMaptoObject } from "../../../util/transform";
+import { CsvModelKey, JsonSchemaKey } from "../../../types/editor.types";
 import ModelNode from "./ModelNode.vue";
 
 const csvModel = inject(CsvModelKey);
 if (!csvModel) {
   throw new Error(`Could not resolve ${CsvModelKey.description}`);
 }
+const jsonSchema = inject(JsonSchemaKey);
+if (!jsonSchema) {
+  throw new Error(`Could not resolve ${JsonSchemaKey.description}`);
+}
+
+const handleExport = () => {
+  ExportCsvModel(
+    jsonSchema,
+    new entity.CsvModel({
+      ...csvModel,
+      map: convertMaptoObject(csvModel.map),
+    })
+  );
+};
 </script>
 
 <template>
+  <div class="pl-4 pt-4">
+    <v-btn @click="handleExport">test</v-btn>
+    <h3>{{ jsonSchema.title }}</h3>
+  </div>
+
   <div class="schema_tree pa-4">
     <ModelNode
       v-for="(node, i) in csvModel.map"

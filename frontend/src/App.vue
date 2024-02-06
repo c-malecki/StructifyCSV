@@ -4,6 +4,7 @@ import {
   ExportSchema,
   ImportCsvData,
 } from "../wailsjs/go/main/App";
+import { entity } from "../wailsjs/go/models";
 import { ref, reactive, provide } from "vue";
 import { convertMaptoObject, convertObjectToMap } from "./util/transform";
 import { exampleSchema, exampleCsvFile, exampleCsvModel } from "./util/example";
@@ -77,14 +78,15 @@ const handleImportCsv = async () => {
     if (csvFileData.headers !== null) {
       csvFile.fileName = csvFileData.fileName;
       csvFile.fileLocation = csvFileData.location;
-      csvModel.headers = csvFileData.headers.map((h) => {
+      csvModel.headerDescriptors = csvFileData.headers.map((h, i) => {
         return {
           isSelected: false,
-          header: h,
-          schemaProperty: null,
+          headerText: h,
+          headerIndex: i,
+          schemaProperty: undefined,
         };
       });
-      csvModel.usedHeaders = [];
+      csvModel.usedHeaderIndexes = [];
       // csvModel.map = null
     } else {
       console.log("canceled import");
@@ -106,7 +108,6 @@ const handleImportCsv = async () => {
         @new-schema="handleCreateNewSchema"
         @import-schema="handleImportSchema"
         @export-schema="handleExportSchema"
-        @import-csv="handleImportCsv"
         ref="programBarRef"
       />
       <v-container fluid class="pa-0">
