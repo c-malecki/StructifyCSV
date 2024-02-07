@@ -6,16 +6,20 @@ import {
 } from "../wailsjs/go/main/App";
 import { ref, reactive, provide } from "vue";
 import { convertMaptoObject, convertObjectToMap } from "./util/transform";
-import { exampleSchema, exampleCsvFile, exampleCsvModel } from "./util/example";
+import {
+  exampleSchema,
+  exampleCsvFile,
+  exampleCsvSchema,
+} from "./util/example";
 import {
   JsonSchemaKey,
   CsvFileKey,
-  CsvModelKey,
+  CsvSchemaKey,
   type JsonSchema,
   type CsvFile,
-  type CsvModel,
-  type SchemaPropertiesMap,
+  type CsvSchema,
 } from "./types/editor.types";
+import { type PropertiesMap } from "./types/properties.types";
 import ProgramBar from "./ui/ProgramBar.vue";
 import CsvEditor from "./features/CsvEditor/CsvEditor.vue";
 import SchemaEditor from "./features/SchemaEditor/SchemaEditor.vue";
@@ -27,17 +31,17 @@ const schemaEditorRef = ref<typeof SchemaEditor | null>(null);
 
 const jsonSchema = reactive<JsonSchema>(exampleSchema);
 const csvFile = reactive<CsvFile>(exampleCsvFile);
-const csvModel = reactive<CsvModel>(exampleCsvModel);
+const csvSchema = reactive<CsvSchema>(exampleCsvSchema);
 
 provide(CsvFileKey, csvFile);
 provide(JsonSchemaKey, jsonSchema);
-provide(CsvModelKey, csvModel);
+provide(CsvSchemaKey, csvSchema);
 
 const handleCreateNewSchema = () => {
   jsonSchema.title = "New Schema";
   jsonSchema.description =
     "To change the name and description of this Schema, use the EDIT button to the right. \nTo begin building your Schema, click the ADD button below.";
-  jsonSchema.properties = new Map() as SchemaPropertiesMap;
+  jsonSchema.properties = new Map() as PropertiesMap;
   programBarRef.value!.menuControl.show = false;
 };
 
@@ -77,15 +81,15 @@ const handleImportCsv = async () => {
     if (csvFileData.headers !== null) {
       csvFile.fileName = csvFileData.fileName;
       csvFile.fileLocation = csvFileData.location;
-      csvModel.headerDescriptors = csvFileData.headers.map((h, i) => {
+      csvSchema.headerDescriptors = csvFileData.headers.map((h, i) => {
         return {
           isSelected: false,
           headerText: h,
           headerIndex: i,
-          schemaProperty: undefined,
+          propertyDescriptor: undefined,
         };
       });
-      csvModel.usedHeaderIndexes = [];
+      csvSchema.usedHeaderIndexes = [];
       // csvModel.map = null
     } else {
       console.log("canceled import");

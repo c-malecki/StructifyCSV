@@ -2,12 +2,12 @@
 import { WriteJsonFromCsvModelMap } from "../../../../wailsjs/go/main/App";
 import { inject } from "vue";
 import { convertMaptoObject } from "../../../util/transform";
-import { CsvModelKey, JsonSchemaKey } from "../../../types/editor.types";
+import { CsvSchemaKey, JsonSchemaKey } from "../../../types/editor.types";
 import ModelNode from "./ModelNode.vue";
 
-const csvModel = inject(CsvModelKey);
-if (!csvModel) {
-  throw new Error(`Could not resolve ${CsvModelKey.description}`);
+const csvSchema = inject(CsvSchemaKey);
+if (!csvSchema) {
+  throw new Error(`Could not resolve ${CsvSchemaKey.description}`);
 }
 const jsonSchema = inject(JsonSchemaKey);
 if (!jsonSchema) {
@@ -15,7 +15,7 @@ if (!jsonSchema) {
 }
 
 const handleExport = () => {
-  WriteJsonFromCsvModelMap(convertMaptoObject(csvModel.map));
+  WriteJsonFromCsvModelMap(convertMaptoObject(csvSchema.map));
 };
 </script>
 
@@ -27,7 +27,7 @@ const handleExport = () => {
 
   <div class="schema_tree pa-4">
     <ModelNode
-      v-for="(node, i) in csvModel.map"
+      v-for="(node, i) in csvSchema.map"
       :key="`1-${i}-${typeof node[1]}-csv`"
       :nodeKey="node[0]"
       :nodeValue="node[1]"

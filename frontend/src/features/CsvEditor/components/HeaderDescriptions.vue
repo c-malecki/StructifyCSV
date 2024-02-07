@@ -1,20 +1,20 @@
 <script lang="ts" setup>
 import { ref, computed, inject } from "vue";
-import { CsvModelKey, JsonSchemaKey } from "../../../types/editor.types";
+import { CsvSchemaKey, JsonSchemaKey } from "../../../types/editor.types";
 import type { VDataTable } from "vuetify/components";
 
 const jsonSchema = inject(JsonSchemaKey);
 if (!jsonSchema) {
   throw new Error(`Could not resolve ${JsonSchemaKey.description}`);
 }
-const csvModel = inject(CsvModelKey);
-if (!csvModel) {
-  throw new Error(`Could not resolve ${CsvModelKey.description}`);
+const csvSchema = inject(CsvSchemaKey);
+if (!csvSchema) {
+  throw new Error(`Could not resolve ${CsvSchemaKey.description}`);
 }
 
 const headerSearch = ref("");
 const selectedHeaders = computed(() =>
-  csvModel.headerDescriptors.filter((h) => h.isSelected)
+  csvSchema.headerDescriptors.filter((h) => h.isSelected)
 );
 
 const tableHeaders: VDataTable["$props"]["headers"] = [
@@ -41,7 +41,7 @@ const tableHeaders: VDataTable["$props"]["headers"] = [
 
 <template>
   <div class="pa-4">
-    <p class="mb-1">Total: {{ csvModel.headerDescriptors.length }}</p>
+    <p class="mb-1">Total: {{ csvSchema.headerDescriptors.length }}</p>
     <p class="mb-2">Selected: {{ selectedHeaders.length }}</p>
 
     <v-text-field
@@ -57,7 +57,7 @@ const tableHeaders: VDataTable["$props"]["headers"] = [
 
   <v-data-table
     :headers="tableHeaders"
-    :items="csvModel.headerDescriptors"
+    :items="csvSchema.headerDescriptors"
     :items-per-page="25"
     :search="headerSearch"
     items-per-page-text="Headers per page:"
@@ -71,9 +71,11 @@ const tableHeaders: VDataTable["$props"]["headers"] = [
           {{ item.headerText }}
         </td>
         <td>
-          <i v-if="!item.schemaProperty">None Assigned</i>
+          <i v-if="!item.propertyDescriptor">None Assigned</i>
           <span v-else>
-            {{ item.schemaProperty.path }} ({{ item.schemaProperty.value }})
+            {{ item.propertyDescriptor.path }} ({{
+              item.propertyDescriptor.type
+            }})
           </span>
         </td>
       </tr>

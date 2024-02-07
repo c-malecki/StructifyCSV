@@ -2,14 +2,14 @@
 import { inject, computed, type PropType } from "vue";
 import { getHoverColorScheme, getLeftIndent } from "../../../util/style";
 import {
-  CsvModelKey,
-  type CsvModelMap,
-  type CsvModelProperty,
+  CsvSchemaKey,
+  type CsvSchemaMap,
+  type CsvSchemaProperty,
 } from "../../../types/editor.types";
 
-const csvModel = inject(CsvModelKey);
-if (!csvModel) {
-  throw new Error(`Could not resolve ${CsvModelKey.description}`);
+const csvSchema = inject(CsvSchemaKey);
+if (!csvSchema) {
+  throw new Error(`Could not resolve ${CsvSchemaKey.description}`);
 }
 
 // make note about directly mutating props and why
@@ -19,7 +19,7 @@ const nodeProps = defineProps({
     required: true,
   },
   nodeValue: {
-    type: Object as PropType<CsvModelProperty | CsvModelMap>,
+    type: Object as PropType<CsvSchemaProperty | CsvSchemaMap>,
     required: true,
   },
   level: {
@@ -33,31 +33,32 @@ const leftIndent = computed(() => getLeftIndent(nodeProps.level));
 const colorScheme = computed(() => getHoverColorScheme(nodeProps.level));
 
 const headerOpts = computed(() =>
-  csvModel.headerDescriptors.filter(
-    (h, i) => !csvModel.usedHeaderIndexes.includes(i)
+  csvSchema.headerDescriptors.filter(
+    (h, i) => !csvSchema.usedHeaderIndexes.includes(i)
   )
 );
 
 const handleUpdateCsvHeader = (val: string | null) => {
-  const csvModelProperty = nodeProps.nodeValue as CsvModelProperty;
+  const csvSchemaProperty = nodeProps.nodeValue as CsvSchemaProperty;
   if (val !== null) {
-    const index = csvModel.headerDescriptors.findIndex(
+    const index = csvSchema.headerDescriptors.findIndex(
       (h) => h.headerText === val
     );
-    csvModel.usedHeaderIndexes.push(index);
-    csvModelProperty.headerIdx = index;
-    csvModel.headerDescriptors[index].schemaProperty = {
+    csvSchema.usedHeaderIndexes.push(index);
+    csvSchemaProperty.headerIdx = index;
+    csvSchema.headerDescriptors[index].propertyDescriptor = {
       key: nodeProps.nodeKey,
-      path: csvModelProperty.schemaPath,
-      value: csvModelProperty.dataType,
+      path: csvSchemaProperty.schemaPath,
+      type: csvSchemaProperty.dataType,
     };
   } else {
-    csvModel.usedHeaderIndexes = csvModel.usedHeaderIndexes.filter(
-      (h, i) => i !== csvModelProperty.headerIdx!
+    csvSchema.usedHeaderIndexes = csvSchema.usedHeaderIndexes.filter(
+      (h, i) => i !== csvSchemaProperty.headerIdx!
     );
-    csvModel.headerDescriptors[csvModelProperty.headerIdx!].schemaProperty =
-      undefined;
-    csvModelProperty.headerIdx = null;
+    csvSchema.headerDescriptors[
+      csvSchemaProperty.headerIdx!
+    ].propertyDescriptor = undefined;
+    csvSchemaProperty.headerIdx = null;
   }
 };
 </script>
@@ -82,7 +83,7 @@ const handleUpdateCsvHeader = (val: string | null) => {
             </p>
 
             <VAutocomplete
-              v-model="(nodeProps.nodeValue as CsvModelProperty).header"
+              v-model="(nodeProps.nodeValue as CsvSchemaProperty).header"
               :items="headerOpts"
               label="Headers"
               item-title="headerText"
@@ -100,7 +101,7 @@ const handleUpdateCsvHeader = (val: string | null) => {
               <b>{{ nodeKey }}: </b>
             </p>
             <ModelNode
-              v-for="(node, i) in (nodeProps.nodeValue as CsvModelMap)"
+              v-for="(node, i) in (nodeProps.nodeValue as CsvSchemaMap)"
               :key="`${nodeProps.level + 1}-${i}-${typeof node[1]}-csv`"
               :nodeKey="node[0]"
               :nodeValue="node[1]"
@@ -129,6 +130,7 @@ const handleUpdateCsvHeader = (val: string | null) => {
   height: 36px;
 }
 .v-input:deep(.v-field__input) {
+  min-height: 36px;
   padding-top: 2px;
   padding-bottom: 2px;
 }

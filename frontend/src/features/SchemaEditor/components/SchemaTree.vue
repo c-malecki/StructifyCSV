@@ -1,13 +1,9 @@
 <script lang="ts" setup>
 import { ref, inject } from "vue";
-import SchemaNode from "./SchemaNode.vue";
+import SchemaNode from "./SchemaNode/SchemaNode.vue";
 import AddPropertyForm from "./AddPropertyForm.vue";
-import {
-  JsonSchemaKey,
-  type SchemaPropertiesMap,
-  type PropertiesMapValue,
-} from "../../../types/editor.types";
-import { type JsonSchemaDataType } from "../../../types/schema.types";
+import { JsonSchemaKey } from "../../../types/editor.types";
+import { type SchemaProperty } from "../../../types/properties.types";
 
 const jsonSchema = inject(JsonSchemaKey);
 if (!jsonSchema) {
@@ -17,33 +13,38 @@ if (!jsonSchema) {
 const showAddForm = ref(false);
 
 const updateBaseKey = ({
-  newKey,
-  oldKey,
-  sameValue,
+  editKey,
+  curKey,
+  value,
 }: {
-  newKey: string;
-  oldKey: string;
-  sameValue: PropertiesMapValue;
+  editKey: string;
+  curKey: string;
+  value: SchemaProperty;
 }) => {
-  jsonSchema.properties.delete(oldKey);
-  jsonSchema.properties.set(newKey, sameValue);
+  jsonSchema.properties.delete(curKey);
+  jsonSchema.properties.set(editKey, value);
 };
 
 const updateBaseValue = ({
-  sameKey,
-  newValue,
+  editKey,
+  curKey,
+  value,
 }: {
-  sameKey: string;
-  newValue: JsonSchemaDataType | SchemaPropertiesMap;
+  editKey: string;
+  curKey: string;
+  value: SchemaProperty;
 }) => {
-  jsonSchema.properties.set(sameKey, newValue);
+  if (editKey !== curKey) {
+    jsonSchema.properties.delete(curKey);
+  }
+  jsonSchema.properties.set(editKey, value);
 };
 
 const deleteBaseProperty = (keyToDelete: string) => {
-  // will need to account for array and null?
-  const isObject = typeof jsonSchema.properties.get(keyToDelete) === "object";
+  const property = jsonSchema.properties.get(keyToDelete);
+  const isObjorArr = property!.type === "object" || property!.type === "array";
   let message = "";
-  switch (isObject) {
+  switch (isObjorArr) {
     case true:
       message = `Deleting "${keyToDelete}" will also delete any descendents of "${keyToDelete}." Do you wish to proceed?`;
       break;
@@ -55,6 +56,16 @@ const deleteBaseProperty = (keyToDelete: string) => {
     jsonSchema.properties.delete(keyToDelete);
   }
 };
+
+const addNewProperty = ({
+  key,
+  value,
+}: {
+  key: string;
+  value: SchemaProperty;
+}) => {
+  jsonSchema.properties.set(key, value);
+};
 </script>
 
 <template>
@@ -63,8 +74,6 @@ const deleteBaseProperty = (keyToDelete: string) => {
       v-for="(node, i) in jsonSchema.properties"
       :key="`1-${i}-${typeof node[1]}`"
       :node="node"
-      :nodeKey="node[0]"
-      :nodeValue="node[1]"
       :level="1"
       @update-base-key="updateBaseKey"
       @update-base-value="updateBaseValue"
@@ -82,7 +91,8 @@ const deleteBaseProperty = (keyToDelete: string) => {
       <AddPropertyForm
         v-else
         :nodeValue="jsonSchema.properties"
-        @hideForm="showAddForm = false"
+        @close-form="showAddForm = false"
+        @add-new-property="addNewProperty"
       />
     </div>
   </div>

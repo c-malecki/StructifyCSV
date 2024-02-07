@@ -1,16 +1,17 @@
 import { InjectionKey } from "vue";
-import { type JsonSchemaDataType } from "./schema.types";
-
-export type PropertiesMapValue =
-  | JsonSchemaDataType
-  | Map<string, PropertiesMapValue>;
-export type SchemaPropertiesMap = Map<string, PropertiesMapValue>;
+import {
+  type SchemaProperty,
+  type SchemaPropertyType,
+  type PropertiesMap,
+} from "./properties.types";
 
 export type JsonSchema = {
   title: string;
   description: string;
-  properties: SchemaPropertiesMap;
+  properties: PropertiesMap;
 };
+
+export type SchemaNode = [string, SchemaProperty];
 
 export const JsonSchemaKey: InjectionKey<JsonSchema> = Symbol("JsonSchema");
 
@@ -21,9 +22,9 @@ export type CsvFile = {
 
 export const CsvFileKey: InjectionKey<CsvFile> = Symbol("CsvFile");
 
-type SchemaProperty = {
+type PropertyDescriptor = {
   key: string;
-  value: JsonSchemaDataType;
+  type: SchemaPropertyType;
   path: string;
 };
 
@@ -31,25 +32,27 @@ type HeaderDescriptor = {
   isSelected: boolean;
   headerText: string;
   headerIndex: number | undefined;
-  schemaProperty: SchemaProperty | undefined;
+  propertyDescriptor: PropertyDescriptor | undefined;
 };
 
-export type CsvModelProperty = {
+export type CsvSchemaProperty = {
   schemaPath: string;
   header: string | null;
   headerIdx: number | null;
-  dataType: JsonSchemaDataType;
+  dataType: SchemaPropertyType;
 };
 
-export type CsvModelMapValue = CsvModelProperty | Map<string, CsvModelMapValue>;
-export type CsvModelMap = Map<string, CsvModelMapValue>;
+export type CsvSchemaMapValue =
+  | CsvSchemaProperty
+  | Map<string, CsvSchemaMapValue>;
+export type CsvSchemaMap = Map<string, CsvSchemaMapValue>;
 
-export type CsvModel = {
+export type CsvSchema = {
   headerDescriptors: HeaderDescriptor[];
   usedHeaderIndexes: number[];
   // should become reference to file path?
   schema: JsonSchema;
-  map: CsvModelMap;
+  map: CsvSchemaMap;
 };
 
-export const CsvModelKey: InjectionKey<CsvModel> = Symbol("CsvModel");
+export const CsvSchemaKey: InjectionKey<CsvSchema> = Symbol("CsvSchema");

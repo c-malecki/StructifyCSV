@@ -1,7 +1,8 @@
-import type { SchemaPropertiesMap, CsvModelMap } from "../types/editor.types";
+import type { CsvSchemaMap } from "../types/editor.types";
+import type { PropertiesMap } from "../types/properties.types";
 
 export const convertMaptoObject = (
-  data: SchemaPropertiesMap | CsvModelMap
+  data: PropertiesMap | CsvSchemaMap
 ): Record<string, any> => {
   let obj = {} as Record<string, any>;
   for (let [key, val] of data) {
@@ -26,11 +27,8 @@ export const convertObjectToMap = (obj: Record<string, any>) => {
   return map;
 };
 
-export const transformForCsvModelMap = (
-  data: SchemaPropertiesMap,
-  path = ""
-) => {
-  const map: CsvModelMap = new Map();
+export const transformForCsvModelMap = (data: PropertiesMap, path = "") => {
+  const map: CsvSchemaMap = new Map();
   for (let [key, val] of data) {
     let schemaPath = path.length ? `${path}.${key}` : key;
     if (val instanceof Map) {
@@ -40,7 +38,7 @@ export const transformForCsvModelMap = (
         schemaPath,
         header: null,
         headerIdx: null,
-        dataType: val,
+        dataType: val.type,
       });
     }
   }
