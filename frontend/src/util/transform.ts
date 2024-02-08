@@ -1,11 +1,8 @@
-import type {
-  SchemaPropertiesMap,
-  CsvModelMap,
-  JsonSchemaDataType,
-} from "../types/editor.types";
+import type { CsvSchemaMap } from "../types/editor.types";
+import type { PropertiesMap } from "../types/properties.types";
 
 export const convertMaptoObject = (
-  data: SchemaPropertiesMap | CsvModelMap
+  data: PropertiesMap | CsvSchemaMap
 ): Record<string, any> => {
   let obj = {} as Record<string, any>;
   for (let [key, val] of data) {
@@ -30,41 +27,45 @@ export const convertObjectToMap = (obj: Record<string, any>) => {
   return map;
 };
 
-export const getAllSchemaMapProperties = (
-  data: SchemaPropertiesMap,
-  acc = [] as { key: string; value: JsonSchemaDataType }[],
-  path = ""
-) => {
-  const keyArr = acc;
-  const keyPath = path;
-  for (let [key, val] of data) {
-    keyPath.concat(key.length > 0 ? `.${key}` : key);
-    if (val instanceof Map) {
-      getAllSchemaMapProperties(val, keyArr, keyPath);
-    } else {
-      keyArr.push({ key: keyPath, value: val });
-    }
-  }
-  return keyArr;
-};
-
-export const transformForCsvModelMap = (
-  data: SchemaPropertiesMap,
-  path = ""
-) => {
-  const map: CsvModelMap = new Map();
+export const transformForCsvModelMap = (data: PropertiesMap, path = "") => {
+  const map: CsvSchemaMap = new Map();
   for (let [key, val] of data) {
     let schemaPath = path.length ? `${path}.${key}` : key;
-    if (val instanceof Map) {
-      map.set(key, transformForCsvModelMap(val, schemaPath));
+    if (val.type === "object") {
+      map.set(key, transformForCsvModelMap(val.properties, schemaPath));
     } else {
-      map.set(key, {
-        schemaPath,
-        header: null,
-        headerIdx: null,
-        dataType: val,
-      });
+      if (val.type === "array") {
+        map.set(key, {
+          headerIndexes: [],
+          schemaPropertyType: val.type,
+        });
+      } else {
+        map.set(key, {
+          headerIndexes: null,
+          schemaPropertyType: val.type,
+        });
+      }
     }
   }
   return map;
+};
+
+export const transformCsvModelMaptoObject = (
+  data: CsvSchemaMap
+): Record<string, any> => {
+  let obj = {} as Record<string, any>;
+  for (let [key, val] of data) {
+    if (val instanceof Map) {
+      obj[key] = transformCsvModelMaptoObject(val);
+    } else {
+      let indexes = [] as number[];
+      if (val.schemaPropertyType !== "array" && val.headerIndexes !== null) {
+        indexes = [val.headerIndexes as number];
+      } else if (val.schemaPropertyType === "array") {
+        indexes = [...(val.headerIndexes as number[])];
+      }
+      obj[key] = { ...val, headerIndexes: indexes };
+    }
+  }
+  return obj;
 };

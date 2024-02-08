@@ -1,22 +1,25 @@
 <script lang="ts" setup>
 import {
-  ImportSchema,
-  ExportSchema,
+  ImportJsonSchema,
+  ExportJsonSchema,
   ImportCsvData,
 } from "../wailsjs/go/main/App";
-import { entity } from "../wailsjs/go/models";
 import { ref, reactive, provide } from "vue";
 import { convertMaptoObject, convertObjectToMap } from "./util/transform";
-import { exampleSchema, exampleCsvFile, exampleCsvModel } from "./util/example";
+import {
+  exampleSchema,
+  exampleCsvFile,
+  exampleCsvSchemaMap,
+} from "./util/example";
 import {
   JsonSchemaKey,
   CsvFileKey,
-  CsvModelKey,
+  CsvSchemaMapKey,
   type JsonSchema,
   type CsvFile,
-  type CsvModel,
-  type SchemaPropertiesMap,
+  type CsvSchemaMap,
 } from "./types/editor.types";
+import { type PropertiesMap } from "./types/properties.types";
 import ProgramBar from "./ui/ProgramBar.vue";
 import CsvEditor from "./features/CsvEditor/CsvEditor.vue";
 import SchemaEditor from "./features/SchemaEditor/SchemaEditor.vue";
@@ -28,22 +31,22 @@ const schemaEditorRef = ref<typeof SchemaEditor | null>(null);
 
 const jsonSchema = reactive<JsonSchema>(exampleSchema);
 const csvFile = reactive<CsvFile>(exampleCsvFile);
-const csvModel = reactive<CsvModel>(exampleCsvModel);
+const csvSchemaMap = reactive<CsvSchemaMap>(exampleCsvSchemaMap);
 
 provide(CsvFileKey, csvFile);
 provide(JsonSchemaKey, jsonSchema);
-provide(CsvModelKey, csvModel);
+provide(CsvSchemaMapKey, csvSchemaMap);
 
 const handleCreateNewSchema = () => {
   jsonSchema.title = "New Schema";
   jsonSchema.description =
     "To change the name and description of this Schema, use the EDIT button to the right. \nTo begin building your Schema, click the ADD button below.";
-  jsonSchema.properties = new Map() as SchemaPropertiesMap;
+  jsonSchema.properties = new Map() as PropertiesMap;
   programBarRef.value!.menuControl.show = false;
 };
 
 const handleImportSchema = () => {
-  ImportSchema()
+  ImportJsonSchema()
     .then((res) => {
       jsonSchema.title = res.title;
       jsonSchema.description = res.description;
@@ -54,7 +57,7 @@ const handleImportSchema = () => {
 };
 
 const handleExportSchema = () => {
-  ExportSchema({
+  ExportJsonSchema({
     ...jsonSchema,
     properties: convertMaptoObject(jsonSchema.properties),
   })
@@ -78,16 +81,7 @@ const handleImportCsv = async () => {
     if (csvFileData.headers !== null) {
       csvFile.fileName = csvFileData.fileName;
       csvFile.fileLocation = csvFileData.location;
-      csvModel.headerDescriptors = csvFileData.headers.map((h, i) => {
-        return {
-          isSelected: false,
-          headerText: h,
-          headerIndex: i,
-          schemaProperty: undefined,
-        };
-      });
-      csvModel.usedHeaderIndexes = [];
-      // csvModel.map = null
+      csvFile.headers = csvFileData.headers;
     } else {
       console.log("canceled import");
     }
@@ -95,10 +89,6 @@ const handleImportCsv = async () => {
     console.log(err);
   }
 };
-
-// todo: How to handle arrays? Do I need to have support for
-// multi-typed properties?
-// look at next steps of JSON Schema spec integration
 </script>
 
 <template>
@@ -108,6 +98,7 @@ const handleImportCsv = async () => {
         @new-schema="handleCreateNewSchema"
         @import-schema="handleImportSchema"
         @export-schema="handleExportSchema"
+        @import-csv="handleImportCsv"
         ref="programBarRef"
       />
       <v-container fluid class="pa-0">

@@ -73,3 +73,17 @@ const handleSubmit = () => {
     </div>
   </VForm>
 </template>
+
+<style scoped>
+.v-input:not(.v-textarea):deep(.v-field__field) {
+  height: 36px;
+}
+.v-input:not(.v-textarea):deep(.v-input__control) {
+  height: 36px;
+}
+.v-input:not(.v-textarea):deep(.v-field__input) {
+  min-height: 36px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+</style>

@@ -2,14 +2,15 @@
 import { inject, computed, type PropType } from "vue";
 import { getHoverColorScheme, getLeftIndent } from "../../../util/style";
 import {
-  CsvModelKey,
-  type CsvModelMap,
-  type CsvModelProperty,
+  HeaderOptsKey,
+  type CsvSchemaMap,
+  type CsvSchemaMapValue,
+  type CsvSchemaProperty,
 } from "../../../types/editor.types";
 
-const csvModel = inject(CsvModelKey);
-if (!csvModel) {
-  throw new Error(`Could not resolve ${CsvModelKey.description}`);
+const headerOpts = inject(HeaderOptsKey);
+if (!headerOpts) {
+  throw new Error(`Could not resolve ${HeaderOptsKey.description}`);
 }
 
 // make note about directly mutating props and why
@@ -19,7 +20,7 @@ const nodeProps = defineProps({
     required: true,
   },
   nodeValue: {
-    type: Object as PropType<CsvModelProperty | CsvModelMap>,
+    type: Object as PropType<CsvSchemaMapValue>,
     required: true,
   },
   level: {
@@ -32,34 +33,32 @@ const isMap = computed(() => nodeProps.nodeValue instanceof Map);
 const leftIndent = computed(() => getLeftIndent(nodeProps.level));
 const colorScheme = computed(() => getHoverColorScheme(nodeProps.level));
 
-const headerOpts = computed(() =>
-  csvModel.headerDescriptors.filter(
-    (h, i) => !csvModel.usedHeaderIndexes.includes(i)
-  )
-);
+// const handleUpdateCsvHeader = (val: string | string[] | null) => {
+//   const csvSchemaNodeValue = nodeProps.nodeValue as CsvSchemaNodeValue;
+//   if (val !== null) {
+//     if (Array.isArray(val)) {
 
-const handleUpdateCsvHeader = (val: string | null) => {
-  const csvModelProperty = nodeProps.nodeValue as CsvModelProperty;
-  if (val !== null) {
-    const index = csvModel.headerDescriptors.findIndex(
-      (h) => h.headerText === val
-    );
-    csvModel.usedHeaderIndexes.push(index);
-    csvModelProperty.headerIdx = index;
-    csvModel.headerDescriptors[index].schemaProperty = {
-      key: nodeProps.nodeKey,
-      path: csvModelProperty.schemaPath,
-      value: csvModelProperty.dataType,
-    };
-  } else {
-    csvModel.usedHeaderIndexes = csvModel.usedHeaderIndexes.filter(
-      (h, i) => i !== csvModelProperty.headerIdx!
-    );
-    csvModel.headerDescriptors[csvModelProperty.headerIdx!].schemaProperty =
-      undefined;
-    csvModelProperty.headerIdx = null;
-  }
-};
+//     }
+//     const index = csvSchema.headerDescriptors.findIndex(
+//       (h) => h.headerText === val
+//     );
+//     csvSchema.usedHeaderIndexes.push(index);
+//     csvSchemaNodeValue.headerIndex = index;
+//     csvSchema.headerDescriptors[index].propertyDescriptor = {
+//       key: nodeProps.nodeKey,
+//       path: csvSchemaNodeValue.schemaPath,
+//       type: csvSchemaNodeValue.schemaPropertyType,
+//     };
+//   } else {
+//     csvSchema.usedHeaderIndexes = csvSchema.usedHeaderIndexes.filter(
+//       (h, i) => i !== csvSchemaNodeValue.headerIndex!
+//     );
+//     csvSchema.headerDescriptors[
+//       csvSchemaNodeValue.headerIndex!
+//     ].propertyDescriptor = undefined;
+//     csvSchemaNodeValue.headerIndex = null;
+//   }
+// };
 </script>
 
 <template>
@@ -82,16 +81,16 @@ const handleUpdateCsvHeader = (val: string | null) => {
             </p>
 
             <VAutocomplete
-              v-model="(nodeProps.nodeValue as CsvModelProperty).header"
+              v-model="(nodeProps.nodeValue as CsvSchemaProperty).headerIndexes"
               :items="headerOpts"
               label="Headers"
-              item-title="headerText"
-              item-value="headerText"
+              item-title="header"
+              item-value="index"
               style="max-width: 300px"
               hide-details
               clearable
               persistent-clear
-              @update:model-value="handleUpdateCsvHeader"
+              :multiple="(nodeProps.nodeValue as CsvSchemaProperty).schemaPropertyType === 'array'"
             />
           </div>
 
@@ -100,7 +99,7 @@ const handleUpdateCsvHeader = (val: string | null) => {
               <b>{{ nodeKey }}: </b>
             </p>
             <ModelNode
-              v-for="(node, i) in (nodeProps.nodeValue as CsvModelMap)"
+              v-for="(node, i) in (nodeProps.nodeValue as CsvSchemaMap)"
               :key="`${nodeProps.level + 1}-${i}-${typeof node[1]}-csv`"
               :nodeKey="node[0]"
               :nodeValue="node[1]"
@@ -129,6 +128,7 @@ const handleUpdateCsvHeader = (val: string | null) => {
   height: 36px;
 }
 .v-input:deep(.v-field__input) {
+  min-height: 36px;
   padding-top: 2px;
   padding-bottom: 2px;
 }

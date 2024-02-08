@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 )
 
-func ImportSchemaJson(c context.Context) entity.JsonSchema {
+func ImportJsonSchema(c context.Context) entity.JsonSchema {
 	filePath := ui.PrepareOpenFileDialog(c, "json", "schema")
 	var schema entity.JsonSchema
 	b, err := os.ReadFile(filePath)
@@ -21,7 +21,7 @@ func ImportSchemaJson(c context.Context) entity.JsonSchema {
 	return schema
 }
 
-func ImportCsvFileData(c context.Context) entity.CsvData {
+func ImportCsvData(c context.Context) entity.CsvData {
 	filePath := ui.PrepareOpenFileDialog(c, "csv", "")
 	file, err := os.Open(filePath)
 	if err != nil {

@@ -18,22 +18,18 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 }
 
-func (a *App) ImportSchema() entity.JsonSchema {
-	return core.ImportSchemaJson(a.ctx)
+func (a *App) ImportJsonSchema() entity.JsonSchema {
+	return core.ImportJsonSchema(a.ctx)
 }
 
 func (a *App) ImportCsvData() entity.CsvData {
-	return core.ImportCsvFileData(a.ctx)
+	return core.ImportCsvData(a.ctx)
 }
 
-func (a *App) ExportSchema(schema entity.JsonSchema) {
+func (a *App) ExportJsonSchema(schema entity.JsonSchema) {
 	core.WriteJsonSchema(a.ctx, schema)
 }
 
-func (a *App) ExportCsvModel(schema entity.JsonSchema, model entity.CsvModel) {
-	core.ExportCsvModelJson(a.ctx, schema, model)
+func (a *App) WriteJsonFromCsvModelMap(modelMap entity.CsvModelMap) {
+	core.WriteJsonFromCsvModelMap(a.ctx, modelMap)
 }
-
-// func (a *App) ProcessCsvDescriptor(schema entity.JsonSchema, hd []entity.HeaderDescriptor, csvPath string) {
-// 	core.ExportCsvDescriptor(a.ctx, schema, hd, csvPath)
-// }
