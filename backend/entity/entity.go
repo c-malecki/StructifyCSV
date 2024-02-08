@@ -22,32 +22,12 @@ const (
 	Null    DataType = "null"
 )
 
-type SchemaProperty struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-	Path  string `json:"path"`
-}
-
-type HeaderDescriptor struct {
-	HeaderText     string          `json:"headerText"`
-	HeaderIndex    int             `json:"headerIndex"`
-	SchemaProperty *SchemaProperty `json:"schemaProperty"`
-}
-
-type CsvModelNodeValue struct {
-	DataType   string  `json:"dataType"`
-	Header     *string `json:"header"`
-	HeaderIdx  *int    `json:"headerIdx"`
-	SchemaPath string  `json:"schemaPath"`
+type CsvSchemaProperty struct {
+	HeaderIndexes      []int  `json:"headerIndexes"`
+	SchemaPropertyType string `json:"schemaPropertyType"`
 }
 
 type CsvModelMap map[string]interface{}
-
-type CsvModel struct {
-	HeaderDescriptors []HeaderDescriptor `json:"headerDescriptors"`
-	UsedHeaderIndexes []int              `json:"usedHeaderIndexes"`
-	Map               CsvModelMap        `json:"map"`
-}
 
 type CsvData struct {
 	FileName string   `json:"fileName"`

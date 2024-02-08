@@ -58,31 +58,6 @@ func processCsvModel(modelMap entity.CsvModelMap, lineMapCh chan<- map[string]an
 	}
 }
 
-func parseModelChildMap(child map[string]interface{}, lineData []string, jsonMap map[string]interface{}, lastKey string) {
-	nextMap := make(map[string]interface{})
-
-	for key, value := range child {
-		var nodeStruct entity.CsvModelNodeValue
-		grandChildMap := value.(map[string]interface{})
-
-		_, ok := grandChildMap["headerIdx"]
-		if ok {
-			err := mapstructure.Decode(grandChildMap, &nodeStruct)
-			if err != nil {
-				print(err)
-			}
-			if nodeStruct.HeaderIdx != nil {
-				v, _ := convertLineDataType(lineData[*nodeStruct.HeaderIdx], nodeStruct)
-				nextMap[key] = v
-				jsonMap[lastKey] = nextMap
-			}
-		} else {
-			jsonMap[lastKey] = nextMap
-			parseModelChildMap(grandChildMap, lineData, jsonMap[lastKey].(map[string]interface{}), key)
-		}
-	}
-}
-
 func processCsvLineToMap(headers []string, lineData []string, modelMap entity.CsvModelMap) (map[string]any, error) {
 	if len(lineData) != len(headers) {
 		return nil, errors.New("line doesn't match headers format. skipping")
@@ -91,19 +66,30 @@ func processCsvLineToMap(headers []string, lineData []string, modelMap entity.Cs
 	jsonMap := make(map[string]interface{})
 
 	for key, value := range modelMap {
-		var nodeStruct entity.CsvModelNodeValue
+		var nodeStruct entity.CsvSchemaProperty
 		nodeMap := value.(map[string]interface{})
 
-		_, ok := nodeMap["headerIdx"]
+		_, ok := nodeMap["headerIndexes"]
 		if ok {
 			err := mapstructure.Decode(nodeMap, &nodeStruct)
 			if err != nil {
 				print(err)
 			}
-			if nodeStruct.HeaderIdx != nil {
-				v, _ := convertLineDataType(lineData[*nodeStruct.HeaderIdx], nodeStruct)
-				jsonMap[key] = v
+
+			if len(nodeStruct.HeaderIndexes) > 0 {
+				if nodeStruct.SchemaPropertyType == "array" {
+					slice := make([]any, 0, len(nodeStruct.HeaderIndexes))
+					for _, n := range nodeStruct.HeaderIndexes {
+						v := lineData[n]
+						slice = append(slice, v)
+					}
+					jsonMap[key] = slice
+				} else {
+					v, _ := convertLineDataType(lineData[nodeStruct.HeaderIndexes[0]], nodeStruct)
+					jsonMap[key] = v
+				}
 			}
+
 		} else {
 			parseModelChildMap(nodeMap, lineData, jsonMap, key)
 		}
@@ -112,8 +98,54 @@ func processCsvLineToMap(headers []string, lineData []string, modelMap entity.Cs
 	return jsonMap, nil
 }
 
-func convertLineDataType(lineItem string, node entity.CsvModelNodeValue) (any, error) {
-	switch node.DataType {
+// todo: bug - if nested maps are empty, json output is an empty object
+func parseModelChildMap(child map[string]interface{}, lineData []string, jsonMap map[string]interface{}, lastKey string) {
+	nextMap := make(map[string]interface{})
+
+	for key, value := range child {
+		var nodeStruct entity.CsvSchemaProperty
+		grandChildMap := value.(map[string]interface{})
+
+		_, ok := grandChildMap["headerIndexes"]
+		if ok {
+			err := mapstructure.Decode(grandChildMap, &nodeStruct)
+			if err != nil {
+				print(err)
+			}
+
+			if len(nodeStruct.HeaderIndexes) > 0 {
+				if nodeStruct.SchemaPropertyType == "array" {
+					slice := make([]any, 0, len(nodeStruct.HeaderIndexes))
+					for _, n := range nodeStruct.HeaderIndexes {
+						v := lineData[n]
+						slice = append(slice, v)
+					}
+					nextMap[key] = slice
+					jsonMap[key] = nextMap
+				} else {
+					v, _ := convertLineDataType(lineData[nodeStruct.HeaderIndexes[0]], nodeStruct)
+					nextMap[key] = v
+					jsonMap[lastKey] = nextMap
+				}
+			}
+
+		} else {
+			jsonMap[lastKey] = nextMap
+			parseModelChildMap(grandChildMap, lineData, jsonMap[lastKey].(map[string]interface{}), key)
+		}
+	}
+}
+
+// func createSliceOfType( propType string, len int) []any {
+// 	switch propType {
+// 	case "string":
+// 		slice := make([]string, len)
+// 		return slice
+// 	}
+// }
+
+func convertLineDataType(lineItem string, node entity.CsvSchemaProperty) (any, error) {
+	switch node.SchemaPropertyType {
 	case "string":
 		//  string
 		return lineItem, nil

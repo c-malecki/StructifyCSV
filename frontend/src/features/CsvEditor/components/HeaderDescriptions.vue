@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<!-- <script lang="ts" setup>
 import { ref, computed, inject } from "vue";
 import { CsvSchemaKey, JsonSchemaKey } from "../../../types/editor.types";
 import type { VDataTable } from "vuetify/components";
@@ -87,4 +87,4 @@ const tableHeaders: VDataTable["$props"]["headers"] = [
 .v-table:deep(.v-data-table-header__content) {
   font-weight: bold;
 }
-</style>
+</style> -->

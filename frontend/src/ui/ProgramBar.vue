@@ -48,7 +48,7 @@ defineExpose({ menuControl });
       }`"
       @click="toggleMenu('schema')"
     >
-      Schema
+      File
     </button>
     <div
       :class="`menu included ${
@@ -61,12 +61,12 @@ defineExpose({ menuControl });
     >
       <v-list bg-color="grey-lighten-3" density="compact">
         <v-list-item
-          title="New"
+          title="New Schema"
           prepend-icon="mdi-file-plus-outline"
           @click="emit('newSchema')"
         />
         <v-list-item
-          title="Open..."
+          title="Open Schema"
           prepend-icon="mdi-folder-open-outline"
           @click="emit('importSchema')"
         />
@@ -76,13 +76,18 @@ defineExpose({ menuControl });
           @click="emit('exportSchema')"
         /> -->
         <v-list-item
-          title="Save as"
+          title="Save Schema as"
           prepend-icon="mdi-content-save-edit-outline"
           @click="emit('exportSchema')"
         />
+        <v-list-item
+          title="Import CSV"
+          prepend-icon="mdi-table-arrow-left"
+          @click="emit('importCsv')"
+        />
       </v-list>
     </div>
-
+    <!-- 
     <button
       :class="`menu-button included ${
         menuControl.menu === 'csv' ? 'active' : ''
@@ -107,7 +112,7 @@ defineExpose({ menuControl });
           @click="emit('importCsv')"
         />
       </v-list>
-    </div>
+    </div> -->
   </div>
 </template>
 

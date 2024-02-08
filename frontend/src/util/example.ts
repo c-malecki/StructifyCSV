@@ -1,4 +1,4 @@
-import type { JsonSchema, CsvFile, CsvSchema } from "../types/editor.types";
+import type { JsonSchema, CsvFile, CsvSchemaMap } from "../types/editor.types";
 import type { SchemaProperty } from "../types/properties.types";
 import { transformForCsvModelMap } from "./transform";
 import {
@@ -50,103 +50,124 @@ export const exampleSchema: JsonSchema = {
 export const exampleCsvFile: CsvFile = {
   fileName: "Products.csv",
   fileLocation: "/home/meeps/Documents/Products.csv",
+  headers: [
+    "Product Name",
+    "Product Description",
+    "Featured",
+    "Image 1",
+    "Image 2",
+    "Initial Price",
+    "Last Bid",
+    "Total Bids",
+    "Seller ID",
+    "Seller Name",
+    "Seller Address Line 1",
+    "Seller Address Line 2",
+    "Seller Address City",
+    "Seller Address State",
+    "Seller Address Country",
+    "Seller Postal Code",
+  ],
 };
 
-export const exampleCsvSchema: CsvSchema = {
-  headerDescriptors: [
-    {
-      headerText: "Product Name",
-      headerIndex: 0,
-      propertyDescriptor: undefined,
-      isSelected: false,
-    },
-    {
-      headerText: "Product Description",
-      headerIndex: 1,
-      propertyDescriptor: undefined,
-      isSelected: false,
-    },
-    {
-      headerText: "Featured",
-      headerIndex: 2,
-      propertyDescriptor: undefined,
-      isSelected: false,
-    },
-    {
-      headerText: "Image 1",
-      headerIndex: 3,
-      propertyDescriptor: undefined,
-      isSelected: false,
-    },
-    {
-      headerText: "Initial Price",
-      headerIndex: 4,
-      propertyDescriptor: undefined,
-      isSelected: false,
-    },
-    {
-      headerText: "Last Bid",
-      headerIndex: 5,
-      propertyDescriptor: undefined,
-      isSelected: false,
-    },
-    {
-      headerText: "Total Bids",
-      headerIndex: 6,
-      propertyDescriptor: undefined,
-      isSelected: false,
-    },
-    {
-      headerText: "Seller ID",
-      headerIndex: 7,
-      propertyDescriptor: undefined,
-      isSelected: false,
-    },
-    {
-      headerText: "Seller Name",
-      headerIndex: 8,
-      propertyDescriptor: undefined,
-      isSelected: false,
-    },
-    {
-      headerText: "Seller Address Line 1",
-      headerIndex: 9,
-      propertyDescriptor: undefined,
-      isSelected: false,
-    },
-    {
-      headerText: "Seller Address Line 2",
-      headerIndex: 10,
-      propertyDescriptor: undefined,
-      isSelected: false,
-    },
-    {
-      headerText: "Seller Address City",
-      headerIndex: 11,
-      propertyDescriptor: undefined,
-      isSelected: false,
-    },
-    {
-      headerText: "Seller Address State",
-      headerIndex: 12,
-      propertyDescriptor: undefined,
-      isSelected: false,
-    },
-    {
-      headerText: "Seller Address Country",
-      headerIndex: 13,
-      propertyDescriptor: undefined,
-      isSelected: false,
-    },
-    {
-      headerText: "Seller Postal Code",
-      headerIndex: 14,
-      propertyDescriptor: undefined,
-      isSelected: false,
-    },
-  ],
-  usedHeaderIndexes: [],
-  // should become reference to file path?
-  schema: exampleSchema,
-  map: transformForCsvModelMap(exampleSchema.properties),
-};
+export const exampleCsvSchemaMap: CsvSchemaMap = transformForCsvModelMap(
+  exampleSchema.properties
+);
+
+// export const exampleCsvSchema: CsvSchema = {
+//   headerDescriptors: [
+//     {
+//       headerText: "Product Name",
+//       headerIndex: 0,
+//       propertyDescriptor: undefined,
+//       isSelected: false,
+//     },
+//     {
+//       headerText: "Product Description",
+//       headerIndex: 1,
+//       propertyDescriptor: undefined,
+//       isSelected: false,
+//     },
+//     {
+//       headerText: "Featured",
+//       headerIndex: 2,
+//       propertyDescriptor: undefined,
+//       isSelected: false,
+//     },
+//     {
+//       headerText: "Image 1",
+//       headerIndex: 3,
+//       propertyDescriptor: undefined,
+//       isSelected: false,
+//     },
+//     {
+//       headerText: "Initial Price",
+//       headerIndex: 4,
+//       propertyDescriptor: undefined,
+//       isSelected: false,
+//     },
+//     {
+//       headerText: "Last Bid",
+//       headerIndex: 5,
+//       propertyDescriptor: undefined,
+//       isSelected: false,
+//     },
+//     {
+//       headerText: "Total Bids",
+//       headerIndex: 6,
+//       propertyDescriptor: undefined,
+//       isSelected: false,
+//     },
+//     {
+//       headerText: "Seller ID",
+//       headerIndex: 7,
+//       propertyDescriptor: undefined,
+//       isSelected: false,
+//     },
+//     {
+//       headerText: "Seller Name",
+//       headerIndex: 8,
+//       propertyDescriptor: undefined,
+//       isSelected: false,
+//     },
+//     {
+//       headerText: "Seller Address Line 1",
+//       headerIndex: 9,
+//       propertyDescriptor: undefined,
+//       isSelected: false,
+//     },
+//     {
+//       headerText: "Seller Address Line 2",
+//       headerIndex: 10,
+//       propertyDescriptor: undefined,
+//       isSelected: false,
+//     },
+//     {
+//       headerText: "Seller Address City",
+//       headerIndex: 11,
+//       propertyDescriptor: undefined,
+//       isSelected: false,
+//     },
+//     {
+//       headerText: "Seller Address State",
+//       headerIndex: 12,
+//       propertyDescriptor: undefined,
+//       isSelected: false,
+//     },
+//     {
+//       headerText: "Seller Address Country",
+//       headerIndex: 13,
+//       propertyDescriptor: undefined,
+//       isSelected: false,
+//     },
+//     {
+//       headerText: "Seller Postal Code",
+//       headerIndex: 14,
+//       propertyDescriptor: undefined,
+//       isSelected: false,
+//     },
+//   ],
+//   usedHeaderIndexes: [],
+//   schema: exampleSchema,
+//   map: transformForCsvModelMap(exampleSchema.properties),
+// };

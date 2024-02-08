@@ -9,15 +9,15 @@ import { convertMaptoObject, convertObjectToMap } from "./util/transform";
 import {
   exampleSchema,
   exampleCsvFile,
-  exampleCsvSchema,
+  exampleCsvSchemaMap,
 } from "./util/example";
 import {
   JsonSchemaKey,
   CsvFileKey,
-  CsvSchemaKey,
+  CsvSchemaMapKey,
   type JsonSchema,
   type CsvFile,
-  type CsvSchema,
+  type CsvSchemaMap,
 } from "./types/editor.types";
 import { type PropertiesMap } from "./types/properties.types";
 import ProgramBar from "./ui/ProgramBar.vue";
@@ -31,11 +31,11 @@ const schemaEditorRef = ref<typeof SchemaEditor | null>(null);
 
 const jsonSchema = reactive<JsonSchema>(exampleSchema);
 const csvFile = reactive<CsvFile>(exampleCsvFile);
-const csvSchema = reactive<CsvSchema>(exampleCsvSchema);
+const csvSchemaMap = reactive<CsvSchemaMap>(exampleCsvSchemaMap);
 
 provide(CsvFileKey, csvFile);
 provide(JsonSchemaKey, jsonSchema);
-provide(CsvSchemaKey, csvSchema);
+provide(CsvSchemaMapKey, csvSchemaMap);
 
 const handleCreateNewSchema = () => {
   jsonSchema.title = "New Schema";
@@ -81,16 +81,7 @@ const handleImportCsv = async () => {
     if (csvFileData.headers !== null) {
       csvFile.fileName = csvFileData.fileName;
       csvFile.fileLocation = csvFileData.location;
-      csvSchema.headerDescriptors = csvFileData.headers.map((h, i) => {
-        return {
-          isSelected: false,
-          headerText: h,
-          headerIndex: i,
-          propertyDescriptor: undefined,
-        };
-      });
-      csvSchema.usedHeaderIndexes = [];
-      // csvModel.map = null
+      csvFile.headers = csvFileData.headers;
     } else {
       console.log("canceled import");
     }
@@ -107,6 +98,7 @@ const handleImportCsv = async () => {
         @new-schema="handleCreateNewSchema"
         @import-schema="handleImportSchema"
         @export-schema="handleExportSchema"
+        @import-csv="handleImportCsv"
         ref="programBarRef"
       />
       <v-container fluid class="pa-0">

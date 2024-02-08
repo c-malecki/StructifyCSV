@@ -2,14 +2,15 @@
 import { inject, computed, type PropType } from "vue";
 import { getHoverColorScheme, getLeftIndent } from "../../../util/style";
 import {
-  CsvSchemaKey,
+  HeaderOptsKey,
   type CsvSchemaMap,
+  type CsvSchemaMapValue,
   type CsvSchemaProperty,
 } from "../../../types/editor.types";
 
-const csvSchema = inject(CsvSchemaKey);
-if (!csvSchema) {
-  throw new Error(`Could not resolve ${CsvSchemaKey.description}`);
+const headerOpts = inject(HeaderOptsKey);
+if (!headerOpts) {
+  throw new Error(`Could not resolve ${HeaderOptsKey.description}`);
 }
 
 // make note about directly mutating props and why
@@ -19,7 +20,7 @@ const nodeProps = defineProps({
     required: true,
   },
   nodeValue: {
-    type: Object as PropType<CsvSchemaProperty | CsvSchemaMap>,
+    type: Object as PropType<CsvSchemaMapValue>,
     required: true,
   },
   level: {
@@ -32,35 +33,32 @@ const isMap = computed(() => nodeProps.nodeValue instanceof Map);
 const leftIndent = computed(() => getLeftIndent(nodeProps.level));
 const colorScheme = computed(() => getHoverColorScheme(nodeProps.level));
 
-const headerOpts = computed(() =>
-  csvSchema.headerDescriptors.filter(
-    (h, i) => !csvSchema.usedHeaderIndexes.includes(i)
-  )
-);
+// const handleUpdateCsvHeader = (val: string | string[] | null) => {
+//   const csvSchemaNodeValue = nodeProps.nodeValue as CsvSchemaNodeValue;
+//   if (val !== null) {
+//     if (Array.isArray(val)) {
 
-const handleUpdateCsvHeader = (val: string | null) => {
-  const csvSchemaProperty = nodeProps.nodeValue as CsvSchemaProperty;
-  if (val !== null) {
-    const index = csvSchema.headerDescriptors.findIndex(
-      (h) => h.headerText === val
-    );
-    csvSchema.usedHeaderIndexes.push(index);
-    csvSchemaProperty.headerIdx = index;
-    csvSchema.headerDescriptors[index].propertyDescriptor = {
-      key: nodeProps.nodeKey,
-      path: csvSchemaProperty.schemaPath,
-      type: csvSchemaProperty.dataType,
-    };
-  } else {
-    csvSchema.usedHeaderIndexes = csvSchema.usedHeaderIndexes.filter(
-      (h, i) => i !== csvSchemaProperty.headerIdx!
-    );
-    csvSchema.headerDescriptors[
-      csvSchemaProperty.headerIdx!
-    ].propertyDescriptor = undefined;
-    csvSchemaProperty.headerIdx = null;
-  }
-};
+//     }
+//     const index = csvSchema.headerDescriptors.findIndex(
+//       (h) => h.headerText === val
+//     );
+//     csvSchema.usedHeaderIndexes.push(index);
+//     csvSchemaNodeValue.headerIndex = index;
+//     csvSchema.headerDescriptors[index].propertyDescriptor = {
+//       key: nodeProps.nodeKey,
+//       path: csvSchemaNodeValue.schemaPath,
+//       type: csvSchemaNodeValue.schemaPropertyType,
+//     };
+//   } else {
+//     csvSchema.usedHeaderIndexes = csvSchema.usedHeaderIndexes.filter(
+//       (h, i) => i !== csvSchemaNodeValue.headerIndex!
+//     );
+//     csvSchema.headerDescriptors[
+//       csvSchemaNodeValue.headerIndex!
+//     ].propertyDescriptor = undefined;
+//     csvSchemaNodeValue.headerIndex = null;
+//   }
+// };
 </script>
 
 <template>
@@ -83,16 +81,16 @@ const handleUpdateCsvHeader = (val: string | null) => {
             </p>
 
             <VAutocomplete
-              v-model="(nodeProps.nodeValue as CsvSchemaProperty).header"
+              v-model="(nodeProps.nodeValue as CsvSchemaProperty).headerIndexes"
               :items="headerOpts"
               label="Headers"
-              item-title="headerText"
-              item-value="headerText"
+              item-title="header"
+              item-value="index"
               style="max-width: 300px"
               hide-details
               clearable
               persistent-clear
-              @update:model-value="handleUpdateCsvHeader"
+              :multiple="(nodeProps.nodeValue as CsvSchemaProperty).schemaPropertyType === 'array'"
             />
           </div>
 

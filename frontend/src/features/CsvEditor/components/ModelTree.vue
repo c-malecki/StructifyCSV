@@ -1,21 +1,41 @@
 <script lang="ts" setup>
 import { WriteJsonFromCsvModelMap } from "../../../../wailsjs/go/main/App";
-import { inject } from "vue";
-import { convertMaptoObject } from "../../../util/transform";
-import { CsvSchemaKey, JsonSchemaKey } from "../../../types/editor.types";
+import { computed, provide, inject } from "vue";
+import { transformCsvModelMaptoObject } from "../../../util/transform";
+import {
+  CsvSchemaMapKey,
+  CsvFileKey,
+  JsonSchemaKey,
+  HeaderOptsKey,
+} from "../../../types/editor.types";
 import ModelNode from "./ModelNode.vue";
 
-const csvSchema = inject(CsvSchemaKey);
-if (!csvSchema) {
-  throw new Error(`Could not resolve ${CsvSchemaKey.description}`);
+const csvSchemaMap = inject(CsvSchemaMapKey);
+if (!csvSchemaMap) {
+  throw new Error(`Could not resolve ${CsvSchemaMapKey.description}`);
+}
+const csvFile = inject(CsvFileKey);
+if (!csvFile) {
+  throw new Error(`Could not resolve ${CsvFileKey.description}`);
 }
 const jsonSchema = inject(JsonSchemaKey);
 if (!jsonSchema) {
   throw new Error(`Could not resolve ${JsonSchemaKey.description}`);
 }
 
+const headerOpts = computed(() =>
+  csvFile.headers.map((h, i) => {
+    return {
+      header: h,
+      index: i,
+    };
+  })
+);
+
+provide(HeaderOptsKey, headerOpts);
+
 const handleExport = () => {
-  WriteJsonFromCsvModelMap(convertMaptoObject(csvSchema.map));
+  WriteJsonFromCsvModelMap(transformCsvModelMaptoObject(csvSchemaMap));
 };
 </script>
 
@@ -27,7 +47,7 @@ const handleExport = () => {
 
   <div class="schema_tree pa-4">
     <ModelNode
-      v-for="(node, i) in csvSchema.map"
+      v-for="(node, i) in csvSchemaMap"
       :key="`1-${i}-${typeof node[1]}-csv`"
       :nodeKey="node[0]"
       :nodeValue="node[1]"
