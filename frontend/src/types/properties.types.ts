@@ -41,9 +41,6 @@ export class StringProperty {
     this.maxLength = maxLength ? maxLength : undefined;
   }
 
-  /**
-   * getAttributeDisplay
-   */
   public getAttributeDisplay() {
     const entries = Object.entries(this);
     return entries.filter(([k, v]) => k !== "type" && v !== undefined);
@@ -63,9 +60,6 @@ export class IntegerProperty {
     this.maximum = maximum;
   }
 
-  /**
-   * getAttributeDisplay
-   */
   public getAttributeDisplay() {
     const entries = Object.entries(this);
     return entries.filter(([k, v]) => k !== "type" && v !== undefined);
@@ -83,9 +77,6 @@ export class NumberProperty {
     this.maximum = maximum;
   }
 
-  /**
-   * getAttributeDisplay
-   */
   public getAttributeDisplay() {
     const entries = Object.entries(this);
     return entries.filter(([k, v]) => k !== "type" && v !== undefined);
@@ -104,14 +95,16 @@ export class ArrayProperty {
 
   constructor({ items, minItems, maxItems }: ArrayConstructor = {}) {
     this.type = "array";
-    this.items = items ? { type: items } : undefined;
+    this.items =
+      typeof items === "object"
+        ? items
+        : typeof items === "string"
+        ? { type: items }
+        : undefined;
     this.minItems = minItems;
     this.maxItems = maxItems;
   }
 
-  /**
-   * getAttributeDisplay
-   */
   public getAttributeDisplay() {
     const entries = Object.entries(this);
     return entries.filter(
@@ -139,9 +132,6 @@ export class ObjectProperty {
     this.required = required ? required : undefined;
   }
 
-  /**
-   * getAttributeDisplay
-   */
   public getAttributeDisplay() {
     const entries = Object.entries(this);
     return entries.filter(
@@ -158,9 +148,6 @@ export class BooleanProperty {
     this.type = "boolean";
   }
 
-  /**
-   * getAttributeDisplay
-   */
   public getAttributeDisplay() {
     return [] as [string, any][];
   }
@@ -174,9 +161,6 @@ export class NullProperty {
     this.type = "null";
   }
 
-  /**
-   * getAttributeDisplay
-   */
   public getAttributeDisplay() {
     return [] as [string, any][];
   }

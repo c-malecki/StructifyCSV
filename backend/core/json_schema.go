@@ -8,24 +8,52 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/santhosh-tekuri/jsonschema"
 )
 
-func createStringWriter(filePath string) func(string, bool) {
-	file, err := os.Create(filePath)
-	if err != nil {
-		print(err)
+type ImportSchemaRes struct {
+	Schema *entity.JsonSchema `json:"schema"`
+	Error  error              `json:"error"`
+}
+
+func ImportJsonSchema(c context.Context) ImportSchemaRes {
+	filePath := ui.PrepareOpenFileDialog(c, "json", "schema")
+	var result ImportSchemaRes
+	var schema entity.JsonSchema
+
+	if len(filePath) == 0 {
+		result.Schema = nil
+		result.Error = nil
+		return result
 	}
 
-	return func(data string, close bool) {
-		_, err := file.WriteString(data)
-		if err != nil {
-			print(err)
-		}
+	_, schemaErr := jsonschema.Compile(filePath)
 
-		if close {
-			file.Close()
-		}
+	if schemaErr != nil {
+		print("compile schema error")
+		fmt.Printf("%v", schemaErr)
+		result.Schema = nil
+		result.Error = schemaErr
+		return result
 	}
+
+	b, fileErr := os.ReadFile(filePath)
+	if fileErr != nil {
+		print("read file error")
+		result.Schema = nil
+		result.Error = fileErr
+		return result
+	}
+
+	jsonErr := json.Unmarshal(b, &schema)
+
+	if jsonErr != nil {
+		print("unmarhsal error")
+	}
+	result.Schema = &schema
+	result.Error = nil
+	return result
 }
 
 func createSchemaBoiler(schema entity.JsonSchema) string {
@@ -50,11 +78,9 @@ func createSchemaBoiler(schema entity.JsonSchema) string {
 func WriteJsonSchema(c context.Context, schema entity.JsonSchema) {
 	outPath := ui.PrepareSaveFileDialog(c, schema.Title)
 
-	writeString := createStringWriter(outPath)
+	writeString := CreateStringWriter(outPath)
 	boiler := createSchemaBoiler(schema)
 	writeString(boiler, false)
-
-	fmt.Printf("%v", schema.Properties)
 
 	jsonBytes, err := json.MarshalIndent(schema.Properties, entity.Indent, entity.Indent)
 	if err != nil {
@@ -64,11 +90,6 @@ func WriteJsonSchema(c context.Context, schema entity.JsonSchema) {
 
 	// reqs := []string{"test", "the", "reqs"}
 	// required := createReqProps(indent, reqs)
-
-	// go channel to write each
-
-	// write each property in "properties": { }
-
 	// writeString(required, false)
 
 	writeString("\n}", true)

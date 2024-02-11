@@ -5,7 +5,10 @@ import {
   ImportCsvData,
 } from "../wailsjs/go/main/App";
 import { ref, reactive, provide } from "vue";
-import { convertMaptoObject, convertObjectToMap } from "./util/transform";
+import {
+  transformPropertiesMapToObject,
+  transformWailsObjectToPropertiesMap,
+} from "./util/transform";
 import {
   exampleSchema,
   exampleCsvFile,
@@ -19,15 +22,12 @@ import {
   type CsvFile,
   type CsvSchemaMap,
 } from "./types/editor.types";
-import { type PropertiesMap } from "./types/properties.types";
-import ProgramBar from "./ui/ProgramBar.vue";
+import { type SchemaProperty } from "./types/properties.types";
+import TitleBar from "./ui/TitleBar.vue";
 import CsvEditor from "./features/CsvEditor/CsvEditor.vue";
 import SchemaEditor from "./features/SchemaEditor/SchemaEditor.vue";
 
-// make note about mutating props directly in recursive component trees
-
-const programBarRef = ref<typeof ProgramBar | null>(null);
-const schemaEditorRef = ref<typeof SchemaEditor | null>(null);
+const titleBarRef = ref<typeof TitleBar | null>(null);
 
 const jsonSchema = reactive<JsonSchema>(exampleSchema);
 const csvFile = reactive<CsvFile>(exampleCsvFile);
@@ -41,17 +41,27 @@ const handleCreateNewSchema = () => {
   jsonSchema.title = "New Schema";
   jsonSchema.description =
     "To change the name and description of this Schema, use the EDIT button to the right. \nTo begin building your Schema, click the ADD button below.";
-  jsonSchema.properties = new Map() as PropertiesMap;
-  programBarRef.value!.menuControl.show = false;
+  jsonSchema.properties = new Map<string, SchemaProperty>();
+  titleBarRef.value!.menuControl.show = false;
 };
 
 const handleImportSchema = () => {
   ImportJsonSchema()
     .then((res) => {
-      jsonSchema.title = res.title;
-      jsonSchema.description = res.description;
-      jsonSchema.properties = convertObjectToMap(res.properties);
-      programBarRef.value!.menuControl.show = false;
+      console.log(res);
+      // if (error) {
+      // console.log(error);
+      // show import error somewhere
+      // }
+      // if (schema) {
+      //   jsonSchema.title = schema.title;
+      //   jsonSchema.description = schema.description;
+      //   jsonSchema.properties = transformWailsObjectToPropertiesMap(
+      //     schema.properties
+      //   );
+      // }
+
+      // titleBarRef.value!.menuControl.show = false;
     })
     .catch(() => {});
 };
@@ -59,10 +69,10 @@ const handleImportSchema = () => {
 const handleExportSchema = () => {
   ExportJsonSchema({
     ...jsonSchema,
-    properties: convertMaptoObject(jsonSchema.properties),
+    properties: transformPropertiesMapToObject(jsonSchema.properties),
   })
     .then(() => {
-      programBarRef.value!.menuControl.show = false;
+      titleBarRef.value!.menuControl.show = false;
     })
     .catch((err) => {});
 };
@@ -94,20 +104,19 @@ const handleImportCsv = async () => {
 <template>
   <v-app id="app">
     <v-main>
-      <ProgramBar
+      <TitleBar
         @new-schema="handleCreateNewSchema"
         @import-schema="handleImportSchema"
         @export-schema="handleExportSchema"
         @import-csv="handleImportCsv"
-        ref="programBarRef"
+        ref="titleBarRef"
       />
       <v-container fluid class="pa-0">
         <v-row no-gutters>
           <v-col>
             <SchemaEditor
               @update-schema="handleUpdateSchema"
-              @close-menu="programBarRef!.menuControl.show = false"
-              ref="schemaEditorRef"
+              @close-menu="titleBarRef!.menuControl.show = false"
             />
           </v-col>
           <v-col>

@@ -3,16 +3,36 @@ package core
 import (
 	"context"
 	"csvtoschema/backend/entity"
+	"csvtoschema/backend/ui"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/mitchellh/mapstructure"
 )
+
+func ImportCsvData(c context.Context) entity.CsvData {
+	filePath := ui.PrepareOpenFileDialog(c, "csv", "")
+	file, err := os.Open(filePath)
+	if err != nil {
+		print(err)
+	}
+	defer file.Close()
+
+	name := filepath.Base(filePath)
+
+	reader := csv.NewReader(file)
+	headers, err := reader.Read()
+	if err != nil {
+		print(err)
+	}
+	return entity.CsvData{FileName: name, Location: filePath, Headers: headers}
+}
 
 func WriteJsonFromCsvModelMap(c context.Context, modelMap entity.CsvModelMap) {
 	lineMapCh := make(chan map[string]any)
@@ -177,7 +197,7 @@ func writeModelJson(lineMapCh <-chan map[string]any, done chan<- bool) {
 		jsonData, _ := json.MarshalIndent(lineMap, entity.Indent, entity.Indent)
 		return entity.Indent + string(jsonData)
 	}
-	writeString := createStringWriter("/home/meeps/Documents/ProductsModel.json")
+	writeString := CreateStringWriter("/home/meeps/Documents/ProductsModel.json")
 	writeString("[\n", false)
 
 	first := true

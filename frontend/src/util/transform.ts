@@ -1,30 +1,53 @@
 import type { CsvSchemaMap } from "../types/editor.types";
-import type { PropertiesMap } from "../types/properties.types";
+import {
+  ObjectProperty,
+  type PropertiesMap,
+  type SchemaProperty,
+} from "../types/properties.types";
+import { createSchemaProperty } from "../util/create";
 
-export const convertMaptoObject = (
-  data: PropertiesMap | CsvSchemaMap
+export const transformPropertiesMapToObject = (
+  data: PropertiesMap
 ): Record<string, any> => {
-  let obj = {} as Record<string, any>;
+  let result = {} as Record<string, any>;
   for (let [key, val] of data) {
-    if (val instanceof Map) {
-      obj[key] = convertMaptoObject(val);
+    if (val.type === "object") {
+      result[key] = {
+        ...val,
+        properties: transformPropertiesMapToObject(val.properties),
+      };
     } else {
-      obj[key] = val;
+      result[key] = val;
     }
   }
-  return obj;
+  return result;
 };
 
-export const convertObjectToMap = (obj: Record<string, any>) => {
-  const map = new Map();
+export const transformWailsObjectToPropertiesMap = (
+  obj: Record<string, any>,
+  map: PropertiesMap = new Map<string, SchemaProperty>()
+): PropertiesMap => {
+  const result = map;
   for (let key of Object.keys(obj)) {
-    if (obj[key] instanceof Object) {
-      map.set(key, convertObjectToMap(obj[key]));
+    const value = obj[key];
+    if (value.type === "object") {
+      const propMap = new Map<string, SchemaProperty>();
+      const properties = transformWailsObjectToPropertiesMap(
+        value.properties,
+        propMap
+      );
+      const object = new ObjectProperty({ ...value, properties });
+      result.set(key, object);
     } else {
-      map.set(key, obj[key]);
+      const property = createSchemaProperty(value);
+      if (property instanceof Error) {
+        // how to handle error + should classes validate in constructors?
+      } else {
+        result.set(key, property);
+      }
     }
   }
-  return map;
+  return result;
 };
 
 export const transformForCsvModelMap = (data: PropertiesMap, path = "") => {

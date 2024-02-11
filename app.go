@@ -4,6 +4,7 @@ import (
 	"context"
 	"csvtoschema/backend/core"
 	"csvtoschema/backend/entity"
+	"csvtoschema/backend/ui"
 )
 
 type App struct {
@@ -18,7 +19,7 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 }
 
-func (a *App) ImportJsonSchema() entity.JsonSchema {
+func (a *App) ImportJsonSchema() core.ImportSchemaRes {
 	return core.ImportJsonSchema(a.ctx)
 }
 
@@ -32,4 +33,20 @@ func (a *App) ExportJsonSchema(schema entity.JsonSchema) {
 
 func (a *App) WriteJsonFromCsvModelMap(modelMap entity.CsvModelMap) {
 	core.WriteJsonFromCsvModelMap(a.ctx, modelMap)
+}
+
+func (a *App) MinimizeWindow() {
+	ui.Minimize(a.ctx)
+}
+
+func (a *App) MaximizeWindow() {
+	ui.Maximize(a.ctx)
+}
+
+func (a *App) UnmaximizeWindow() {
+	ui.Unmaximize(a.ctx)
+}
+
+func (a *App) ExitProgram() {
+	ui.Exit(a.ctx)
 }
