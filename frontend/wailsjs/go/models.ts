@@ -1,3 +1,40 @@
+export namespace core {
+	
+	export class ImportSchemaRes {
+	    schema?: entity.JsonSchema;
+	    error: any;
+	
+	    static createFrom(source: any = {}) {
+	        return new ImportSchemaRes(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.schema = this.convertValues(source["schema"], entity.JsonSchema);
+	        this.error = source["error"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
 export namespace entity {
 	
 	export class CsvData {

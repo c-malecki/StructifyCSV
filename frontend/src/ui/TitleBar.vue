@@ -1,5 +1,11 @@
 <script lang="ts" setup>
-import { reactive } from "vue";
+import { ref, reactive } from "vue";
+import {
+  MinimizeWindow,
+  UnmaximizeWindow,
+  MaximizeWindow,
+  ExitProgram,
+} from "../../wailsjs/go/main/App";
 
 type MenuControl = {
   show: boolean;
@@ -12,6 +18,16 @@ const emit = defineEmits([
   "exportSchema",
   "importCsv",
 ]);
+
+const isMaximized = ref(false);
+const toggleMaximize = () => {
+  if (isMaximized.value) {
+    UnmaximizeWindow();
+  } else {
+    MaximizeWindow();
+  }
+  isMaximized.value = !isMaximized.value;
+};
 
 const menuControl = reactive<MenuControl>({
   show: false,
@@ -86,33 +102,20 @@ defineExpose({ menuControl });
           @click="emit('importCsv')"
         />
       </v-list>
+
+      <v-spacer />
     </div>
-    <!-- 
-    <button
-      :class="`menu-button included ${
-        menuControl.menu === 'csv' ? 'active' : ''
-      }`"
-      @click="toggleMenu('csv')"
-    >
-      CSV
+    <button class="ml-auto program-button" @click="MinimizeWindow">
+      <v-icon size="x-small"> mdi-window-minimize </v-icon>
     </button>
-    <div
-      :class="`menu csv-menu included ${
-        menuControl.show && menuControl.menu === 'csv' ? '' : 'hide'
-      }`"
-      v-click-outside="{
-        handler: clickOutside,
-        include,
-      }"
-    >
-      <v-list bg-color="grey-lighten-3" density="compact">
-        <v-list-item
-          title="Import"
-          prepend-icon="mdi-table-arrow-left"
-          @click="emit('importCsv')"
-        />
-      </v-list>
-    </div> -->
+    <button class="program-button" @click="toggleMaximize">
+      <v-icon size="x-small">
+        {{ isMaximized ? "mdi-window-restore" : "mdi-window-maximize" }}
+      </v-icon>
+    </button>
+    <button class="program-button" @click="ExitProgram">
+      <v-icon size="x-small"> mdi-window-close </v-icon>
+    </button>
   </div>
 </template>
 
@@ -126,8 +129,15 @@ defineExpose({ menuControl });
 }
 
 .menu-button {
-  padding: 0 1rem;
-  width: 90px;
+  width: 60px;
+}
+
+.program-button {
+  width: 40px;
+}
+
+.program-button:hover {
+  background-color: #eeeeee;
 }
 
 .menu-button:hover {
@@ -145,23 +155,5 @@ defineExpose({ menuControl });
   background-color: #eeeeee;
   top: 32px;
   z-index: 2;
-}
-
-.csv-menu {
-  left: 90px;
-}
-
-ul {
-  list-style: none;
-  width: 200px;
-  padding: 0.5rem 0;
-}
-
-ul li {
-  padding: 0.2rem 0.5rem;
-}
-
-ul li:hover {
-  background-color: #f5f5f5;
 }
 </style>
