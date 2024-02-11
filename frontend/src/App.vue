@@ -6,8 +6,8 @@ import {
 } from "../wailsjs/go/main/App";
 import { ref, reactive, provide } from "vue";
 import {
-  transformPropertiesMapToObject,
-  transformWailsObjectToPropertiesMap,
+  transformMapToObjectForWails,
+  transformWailsObjectToMap,
 } from "./util/transform";
 import {
   exampleSchema,
@@ -47,21 +47,18 @@ const handleCreateNewSchema = () => {
 
 const handleImportSchema = () => {
   ImportJsonSchema()
-    .then((res) => {
-      console.log(res);
-      // if (error) {
-      // console.log(error);
-      // show import error somewhere
-      // }
-      // if (schema) {
-      //   jsonSchema.title = schema.title;
-      //   jsonSchema.description = schema.description;
-      //   jsonSchema.properties = transformWailsObjectToPropertiesMap(
-      //     schema.properties
-      //   );
-      // }
+    .then(({ schema, error }) => {
+      if (error) {
+        console.log(error);
+        // show import error somewhere
+      }
+      if (schema) {
+        jsonSchema.title = schema.title;
+        jsonSchema.description = schema.description;
+        jsonSchema.properties = transformWailsObjectToMap(schema.properties);
+      }
 
-      // titleBarRef.value!.menuControl.show = false;
+      titleBarRef.value!.menuControl.show = false;
     })
     .catch(() => {});
 };
@@ -69,7 +66,7 @@ const handleImportSchema = () => {
 const handleExportSchema = () => {
   ExportJsonSchema({
     ...jsonSchema,
-    properties: transformPropertiesMapToObject(jsonSchema.properties),
+    properties: transformMapToObjectForWails(jsonSchema.properties),
   })
     .then(() => {
       titleBarRef.value!.menuControl.show = false;

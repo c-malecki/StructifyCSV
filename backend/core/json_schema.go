@@ -32,7 +32,6 @@ func ImportJsonSchema(c context.Context) ImportSchemaRes {
 
 	if schemaErr != nil {
 		print("compile schema error")
-		fmt.Printf("%v", schemaErr)
 		result.Schema = nil
 		result.Error = schemaErr
 		return result
@@ -50,6 +49,8 @@ func ImportJsonSchema(c context.Context) ImportSchemaRes {
 
 	if jsonErr != nil {
 		print("unmarhsal error")
+		result.Schema = nil
+		result.Error = schemaErr
 	}
 	result.Schema = &schema
 	result.Error = nil
@@ -63,7 +64,8 @@ func createSchemaBoiler(schema entity.JsonSchema) string {
 	replaceInner := strings.ReplaceAll(title, " ", "_")
 	trim := strings.TrimSpace(replaceInner)
 	idText := strings.ToLower(trim)
-	return fmt.Sprintf("{\n%[1]v\"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n%[1]v\"$id\": \"https://example.com/%[3]v.schema.json\",\n%[1]v\"title\": \"%[2]v\",\n%[1]v\"description\": \"%[4]v\",\n%[1]v\"type\": \"object\",\n%[1]v\"properties\": ", entity.Indent, title, idText, description)
+	// \n%[1]v\"$id\": \"https://example.com/%[3]v.schema.json\",
+	return fmt.Sprintf("{\n%[1]v\"$schema\": \"http://json-schema.org/draft-07/schema#\",\n%[1]v\"title\": \"%[2]v\",\n%[1]v\"description\": \"%[4]v\",\n%[1]v\"type\": \"object\",\n%[1]v\"properties\": ", entity.Indent, title, idText, description)
 }
 
 // func createReqProps(indent string, required []string) string {

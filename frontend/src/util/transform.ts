@@ -6,7 +6,7 @@ import {
 } from "../types/properties.types";
 import { createSchemaProperty } from "../util/create";
 
-export const transformPropertiesMapToObject = (
+export const transformMapToObjectForWails = (
   data: PropertiesMap
 ): Record<string, any> => {
   let result = {} as Record<string, any>;
@@ -14,7 +14,7 @@ export const transformPropertiesMapToObject = (
     if (val.type === "object") {
       result[key] = {
         ...val,
-        properties: transformPropertiesMapToObject(val.properties),
+        properties: transformMapToObjectForWails(val.properties),
       };
     } else {
       result[key] = val;
@@ -23,7 +23,7 @@ export const transformPropertiesMapToObject = (
   return result;
 };
 
-export const transformWailsObjectToPropertiesMap = (
+export const transformWailsObjectToMap = (
   obj: Record<string, any>,
   map: PropertiesMap = new Map<string, SchemaProperty>()
 ): PropertiesMap => {
@@ -32,10 +32,7 @@ export const transformWailsObjectToPropertiesMap = (
     const value = obj[key];
     if (value.type === "object") {
       const propMap = new Map<string, SchemaProperty>();
-      const properties = transformWailsObjectToPropertiesMap(
-        value.properties,
-        propMap
-      );
+      const properties = transformWailsObjectToMap(value.properties, propMap);
       const object = new ObjectProperty({ ...value, properties });
       result.set(key, object);
     } else {
