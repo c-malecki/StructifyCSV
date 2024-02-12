@@ -7,7 +7,7 @@ export function ExitProgram():Promise<void>;
 
 export function ExportJsonSchema(arg1:entity.JsonSchema):Promise<void>;
 
-export function ImportCsvData():Promise<entity.CsvData>;
+export function ImportCsvFileData():Promise<entity.CsvFileData>;
 
 export function ImportJsonSchema():Promise<core.ImportSchemaRes>;
 

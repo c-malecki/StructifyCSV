@@ -2,46 +2,45 @@
 import {
   ImportJsonSchema,
   ExportJsonSchema,
-  ImportCsvData,
+  ImportCsvFileData,
 } from "../wailsjs/go/main/App";
 import { ref, reactive, provide } from "vue";
 import {
-  transformMapToObjectForWails,
-  transformWailsObjectToMap,
-} from "./util/transform";
-import {
   exampleSchema,
   exampleCsvFile,
-  exampleCsvSchemaMap,
+  // exampleCsvSchemaMap,
 } from "./util/example";
 import {
-  JsonSchemaKey,
   CsvFileKey,
   CsvSchemaMapKey,
-  type JsonSchema,
-  type CsvFile,
   type CsvSchemaMap,
-} from "./types/editor.types";
-import { type SchemaProperty } from "./types/properties.types";
+} from "./features/CsvEditor/CsvEditor.types";
+import { fixWailSchemaImport } from "./util/transform";
+import { JsonSchemaKey } from "./features/SchemaEditor/SchemaEditor.types";
 import TitleBar from "./ui/TitleBar.vue";
 import CsvEditor from "./features/CsvEditor/CsvEditor.vue";
 import SchemaEditor from "./features/SchemaEditor/SchemaEditor.vue";
+import { entity } from "../wailsjs/go/models";
 
 const titleBarRef = ref<typeof TitleBar | null>(null);
 
-const jsonSchema = reactive<JsonSchema>(exampleSchema);
-const csvFile = reactive<CsvFile>(exampleCsvFile);
-const csvSchemaMap = reactive<CsvSchemaMap>(exampleCsvSchemaMap);
+const jsonSchema = ref<entity.JsonSchema>(exampleSchema);
+const csvFile = reactive<entity.CsvFileData>(exampleCsvFile);
+// const csvSchemaMap = reactive<CsvSchemaMap>(exampleCsvSchemaMap);
 
 provide(CsvFileKey, csvFile);
 provide(JsonSchemaKey, jsonSchema);
-provide(CsvSchemaMapKey, csvSchemaMap);
+// provide(CsvSchemaMapKey, csvSchemaMap);
 
 const handleCreateNewSchema = () => {
-  jsonSchema.title = "New Schema";
-  jsonSchema.description =
-    "To change the name and description of this Schema, use the EDIT button to the right. \nTo begin building your Schema, click the ADD button below.";
-  jsonSchema.properties = new Map<string, SchemaProperty>();
+  const schema = new entity.JsonSchema({
+    title: "New Schema",
+    description:
+      "To change the name and description of this Schema, use the EDIT button to the right. \nTo begin building your Schema, click the ADD button below.",
+    properties: {},
+  });
+
+  jsonSchema.value = schema;
   titleBarRef.value!.menuControl.show = false;
 };
 
@@ -53,20 +52,47 @@ const handleImportSchema = () => {
         // show import error somewhere
       }
       if (schema) {
-        jsonSchema.title = schema.title;
-        jsonSchema.description = schema.description;
-        jsonSchema.properties = transformWailsObjectToMap(schema.properties);
+        // when Wails unmarshals the JSON file, values are null instead of undefined
+        // but the generated models.ts class uses undefined
+        const properties = fixWailSchemaImport(schema.properties);
+        jsonSchema.value = { ...schema, properties };
       }
-
       titleBarRef.value!.menuControl.show = false;
     })
     .catch(() => {});
 };
 
+const stripUndefined = (properties: Record<string, any>) => {
+  const result = {} as Record<string, any>;
+  const entries = Object.entries(properties);
+  for (let [k, v] of entries) {
+    if (v === undefined) {
+      continue;
+    }
+
+    if (k === "properties") {
+      result[k] = stripUndefined(v);
+    } else if (k === "items") {
+      result[k] = v;
+    } else if (v instanceof Object) {
+      result[k] = stripUndefined(v);
+    } else {
+      result[k] = v;
+    }
+  }
+  return result;
+};
+
 const handleExportSchema = () => {
+  const result = {} as Record<string, any>;
+  const entries = Object.entries(jsonSchema.value.properties);
+  for (let [k, v] of entries) {
+    result[k] = stripUndefined(v);
+  }
+
   ExportJsonSchema({
-    ...jsonSchema,
-    properties: transformMapToObjectForWails(jsonSchema.properties),
+    ...jsonSchema.value,
+    properties: result as entity.JsonSchema["properties"],
   })
     .then(() => {
       titleBarRef.value!.menuControl.show = false;
@@ -77,17 +103,17 @@ const handleExportSchema = () => {
 const handleUpdateSchema = ({
   title,
   description,
-}: Omit<JsonSchema, "properties">) => {
-  jsonSchema.title = title;
-  jsonSchema.description = description;
+}: Omit<entity.JsonSchema, "properties">) => {
+  jsonSchema.value.title = title;
+  jsonSchema.value.description = description;
 };
 
 const handleImportCsv = async () => {
   try {
-    const csvFileData = await ImportCsvData();
+    const csvFileData = await ImportCsvFileData();
     if (csvFileData.headers !== null) {
       csvFile.fileName = csvFileData.fileName;
-      csvFile.fileLocation = csvFileData.location;
+      csvFile.location = csvFileData.location;
       csvFile.headers = csvFileData.headers;
     } else {
       console.log("canceled import");

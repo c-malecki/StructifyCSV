@@ -1,9 +1,32 @@
 package entity
 
 type JsonSchema struct {
-	Title       string                 `json:"title"`
-	Description string                 `json:"description"`
-	Properties  map[string]interface{} `json:"properties"`
+	Title       string             `json:"title"`
+	Description string             `json:"description"`
+	Properties  map[string]*Schema `json:"properties"`
+}
+
+type Schema struct {
+	Type  string    `json:"type"`
+	OneOf []*Schema `json:"oneOf"`
+	// object
+	MinProperties *int               `json:"minProperties"`
+	MaxProperties *int               `json:"maxProperties"`
+	Required      []string           `json:"required"`
+	Properties    map[string]*Schema `json:"properties"`
+	// array
+	MinItems *int    `json:"minItems"`
+	MaxItems *int    `json:"maxItems"`
+	Items    *string `json:"items"`
+	// string
+	MinLength *int `json:"minLength"`
+	MaxLength *int `json:"maxLength"`
+	// number
+	NumMinimum *float64 `json:"numMinimum"`
+	NumMaximum *float64 `json:"numMaximum"`
+	// integer
+	IntMinimum *int `json:"intMinimum"`
+	IntMaximum *int `json:"intMaximum"`
 }
 
 const (
@@ -29,7 +52,7 @@ type CsvSchemaProperty struct {
 
 type CsvModelMap map[string]interface{}
 
-type CsvData struct {
+type CsvFileData struct {
 	FileName string   `json:"fileName"`
 	Location string   `json:"location"`
 	Headers  []string `json:"headers"`

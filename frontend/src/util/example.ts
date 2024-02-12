@@ -1,55 +1,55 @@
-import type { JsonSchema, CsvFile, CsvSchemaMap } from "../types/editor.types";
-import type { SchemaProperty } from "../types/properties.types";
-import { transformForCsvModelMap } from "./transform";
-import {
-  StringProperty,
-  NumberProperty,
-  NullProperty,
-  IntegerProperty,
-  ObjectProperty,
-  BooleanProperty,
-  ArrayProperty,
-} from "../types/properties.types";
+import type { CsvSchemaMap } from "../features/CsvEditor/CsvEditor.types";
+import { entity } from "../../wailsjs/go/models";
 
-const address = new Map<string, SchemaProperty>([
-  ["line_one", new StringProperty()],
-  ["line_two", new StringProperty()],
-  ["city", new StringProperty()],
-  ["state", new StringProperty()],
-  ["country", new StringProperty()],
-  ["postal_code", new StringProperty()],
-]);
-
-const bids = new Map<string, SchemaProperty>([
-  ["initial_price", new NumberProperty({ minimum: 5.0 })],
-  ["last_bid", new NullProperty()],
-  ["total_bids", new IntegerProperty()],
-]);
-
-const seller = new Map<string, SchemaProperty>([
-  ["id", new IntegerProperty()],
-  ["name", new StringProperty()],
-  ["address", new ObjectProperty({ properties: address })],
-]);
-
-export const product = new Map<string, SchemaProperty>([
-  ["name", new StringProperty()],
-  ["description", new StringProperty()],
-  ["featured", new BooleanProperty()],
-  ["images", new ArrayProperty({ items: "string" })],
-  ["bids", new ObjectProperty({ properties: bids })],
-  ["seller", new ObjectProperty({ properties: seller })],
-]);
-
-export const exampleSchema: JsonSchema = {
-  title: "Product Example Schema",
-  description: "Just a test schema to build out the editor UI with.",
-  properties: product,
+const PropertiesObject = {
+  name: new entity.Schema({ type: "string" }),
+  description: new entity.Schema({ type: "string" }),
+  featured: new entity.Schema({ type: "boolean" }),
+  images: new entity.Schema({ type: "array", items: "string" }),
+  bids: new entity.Schema({
+    type: "object",
+    properties: {
+      initialPrice: new entity.Schema({
+        type: "number",
+        numMinimum: 5,
+      }),
+      lastBid: new entity.Schema({
+        type: "null",
+      }),
+      totalBids: new entity.Schema({
+        type: "integer",
+      }),
+    },
+  }),
+  seller: new entity.Schema({
+    type: "object",
+    properties: {
+      id: new entity.Schema({ type: "integer" }),
+      name: new entity.Schema({ type: "string" }),
+      address: new entity.Schema({
+        type: "object",
+        properties: {
+          lineOne: new entity.Schema({ type: "string" }),
+          lineTwo: new entity.Schema({ type: "string" }),
+          city: new entity.Schema({ type: "string" }),
+          state: new entity.Schema({ type: "string" }),
+          country: new entity.Schema({ type: "string" }),
+          postalCode: new entity.Schema({ type: "string" }),
+        },
+      }),
+    },
+  }),
 };
 
-export const exampleCsvFile: CsvFile = {
+export const exampleSchema = new entity.JsonSchema({
+  title: "Product Example Schema",
+  description: "Just a test schema to build out the editor UI with.",
+  properties: PropertiesObject,
+});
+
+export const exampleCsvFile = new entity.CsvFileData({
   fileName: "Products.csv",
-  fileLocation: "/home/meeps/Documents/Products.csv",
+  location: "/home/meeps/Documents/Products.csv",
   headers: [
     "Product Name",
     "Product Description",
@@ -68,8 +68,8 @@ export const exampleCsvFile: CsvFile = {
     "Seller Address Country",
     "Seller Postal Code",
   ],
-};
+});
 
-export const exampleCsvSchemaMap: CsvSchemaMap = transformForCsvModelMap(
-  exampleSchema.properties
-);
+// export const exampleCsvSchemaMap: CsvSchemaMap = transformForCsvModelMap(
+//   exampleSchema.properties
+// );

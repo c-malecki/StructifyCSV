@@ -2,8 +2,8 @@
 import { ref, inject } from "vue";
 import SchemaNode from "./SchemaNode/SchemaNode.vue";
 import AddPropertyForm from "./AddPropertyForm.vue";
-import { JsonSchemaKey } from "../../../types/editor.types";
-import { type SchemaProperty } from "../../../types/properties.types";
+import { JsonSchemaKey } from "../SchemaEditor.types";
+import { entity } from "../../../../wailsjs/go/models";
 
 const jsonSchema = inject(JsonSchemaKey);
 if (!jsonSchema) {
@@ -19,10 +19,10 @@ const updateBaseKey = ({
 }: {
   editKey: string;
   curKey: string;
-  value: SchemaProperty;
+  value: entity.Schema;
 }) => {
-  jsonSchema.properties.delete(curKey);
-  jsonSchema.properties.set(editKey, value);
+  delete jsonSchema.value.properties[curKey];
+  jsonSchema.value.properties[editKey] = value;
 };
 
 const updateBaseValue = ({
@@ -32,16 +32,16 @@ const updateBaseValue = ({
 }: {
   editKey: string;
   curKey: string;
-  value: SchemaProperty;
+  value: entity.Schema;
 }) => {
   if (editKey !== curKey) {
-    jsonSchema.properties.delete(curKey);
+    delete jsonSchema.value.properties[curKey];
   }
-  jsonSchema.properties.set(editKey, value);
+  jsonSchema.value.properties[editKey] = value;
 };
 
 const deleteBaseProperty = (keyToDelete: string) => {
-  const property = jsonSchema.properties.get(keyToDelete);
+  const property = jsonSchema.value.properties[keyToDelete];
   const isObjorArr = property!.type === "object" || property!.type === "array";
   let message = "";
   switch (isObjorArr) {
@@ -53,7 +53,7 @@ const deleteBaseProperty = (keyToDelete: string) => {
       break;
   }
   if (confirm(message)) {
-    jsonSchema.properties.delete(keyToDelete);
+    delete jsonSchema.value.properties[keyToDelete];
   }
 };
 
@@ -62,18 +62,18 @@ const addNewProperty = ({
   value,
 }: {
   key: string;
-  value: SchemaProperty;
+  value: entity.Schema;
 }) => {
-  jsonSchema.properties.set(key, value);
+  jsonSchema.value.properties[key] = value;
 };
 </script>
 
 <template>
   <div class="schema_tree pa-4">
     <SchemaNode
-      v-for="(node, i) in jsonSchema.properties"
-      :key="`1-${i}-${typeof node[1]}`"
-      :node="node"
+      v-for="([k, v], i) in Object.entries(jsonSchema.properties)"
+      :key="`1-${i}-${k}`"
+      :node="[k, v]"
       :level="1"
       @update-base-key="updateBaseKey"
       @update-base-value="updateBaseValue"

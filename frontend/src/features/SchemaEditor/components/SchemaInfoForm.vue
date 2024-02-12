@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import { reactive, ref, inject } from "vue";
 import type { VForm } from "vuetify/components";
-import { JsonSchemaKey, type JsonSchema } from "../../../types/editor.types";
+import { JsonSchemaKey } from "../SchemaEditor.types";
+import { entity } from "../../../../wailsjs/go/models";
 
 type FormControl = {
   titleRules: ((val: string) => string | boolean)[];
@@ -29,9 +30,9 @@ const formControl: FormControl = {
       "Description cannot be longer than 1000 characters.",
   ],
 };
-const formValues = reactive<Omit<JsonSchema, "properties">>({
-  title: jsonSchema.title,
-  description: jsonSchema.description,
+const formValues = reactive<Omit<entity.JsonSchema, "properties">>({
+  title: jsonSchema.value.title,
+  description: jsonSchema.value.description,
 });
 
 const handleSubmit = () => {

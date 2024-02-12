@@ -3,25 +3,13 @@ import { reactive, ref, type PropType } from "vue";
 import type { VForm } from "vuetify/components";
 import {
   schemaPropertyTypes,
-  StringProperty,
-  NumberProperty,
-  IntegerProperty,
-  ArrayProperty,
-  ObjectProperty,
-  BooleanProperty,
-  NullProperty,
   type SchemaPropertyType,
-  type StringConstructor,
-  type NumOrIntConstructor,
-  type ArrayConstructor,
-} from "../../../types/properties.types";
-import { type SchemaNode } from "../../../types/editor.types";
-import {
-  type PropertyForm,
-  type StringForm,
-  type NumOrIntForm,
-  type ArrayForm,
-} from "../../../util/create";
+  type SchemaNode,
+  type ArrayItemType,
+  type PropertyConstructorFormValues,
+} from "../SchemaEditor.types";
+import { propertyFormNullToUndefined } from "../../../util/transform";
+import { entity } from "../../../../wailsjs/go/models";
 
 const props = defineProps({
   node: {
@@ -32,10 +20,22 @@ const props = defineProps({
 
 const emit = defineEmits(["closeForm", "updateKey", "updateValue"]);
 
-type EditProperty = {
-  key: string;
-  dataType: SchemaPropertyType;
-};
+const formValues = reactive<PropertyConstructorFormValues>({
+  type: props.node[1].type as SchemaPropertyType,
+  minProperties: props.node[1].minProperties?.toString() ?? null,
+  maxProperties: props.node[1].maxProperties?.toString() ?? null,
+  minItems: props.node[1].minItems?.toString() ?? null,
+  maxItems: props.node[1].maxItems?.toString() ?? null,
+  items: (props.node[1].items as ArrayItemType) ?? null,
+  minLength: props.node[1].minLength?.toString() ?? null,
+  maxLength: props.node[1].maxLength?.toString() ?? null,
+  numMinimum: props.node[1].numMinimum?.toString() ?? null,
+  numMaximum: props.node[1].numMaximum?.toString() ?? null,
+  intMinimum: props.node[1].intMinimum?.toString() ?? null,
+  intMaximum: props.node[1].intMaximum?.toString() ?? null,
+});
+const keyName = ref(props.node[0]);
+
 // min max validation
 type FormControl = {
   keyRules: ((val: string) => string | boolean)[];
@@ -46,112 +46,35 @@ const formControl: FormControl = {
 
 const formRef = ref<VForm | null>(null);
 
-const editProperty = reactive<EditProperty>({
-  key: props.node[0],
-  dataType: props.node[1].type,
-});
-
-const getPrevStringVals = (p: StringProperty) => {
-  return {
-    minLength: p.minLength ? p.minLength.toString() : null,
-    maxLength: p.maxLength ? p.maxLength.toString() : null,
-  };
-};
-
-const getPrevNumOrIntVals = (p: NumberProperty | IntegerProperty) => {
-  return {
-    minimum: p.minimum ? p.minimum.toString() : null,
-    maximum: p.maximum ? p.maximum.toString() : null,
-  };
-};
-
-const getPrevArrayVals = (p: ArrayProperty) => {
-  return {
-    items: p.items ? p.items.type : null,
-    minItems: p.minItems ? p.minItems.toString() : null,
-    maxItems: p.maxItems ? p.maxItems.toString() : null,
-  };
-};
-
-const propertyForm = reactive<PropertyForm>({
-  string: getPrevStringVals(props.node[1] as StringProperty),
-  numOrInt: getPrevNumOrIntVals(
-    props.node[1] as NumberProperty | IntegerProperty
-  ),
-  array: getPrevArrayVals(props.node[1] as ArrayProperty),
-});
-
-const createSchemaProperty = (
-  type: SchemaPropertyType,
-  form: StringConstructor | NumOrIntConstructor | ArrayConstructor | {}
-) => {
-  switch (type) {
-    case "string":
-      return new StringProperty(form as StringConstructor);
-    case "number":
-      return new NumberProperty(form as NumOrIntConstructor);
-    case "integer":
-      return new IntegerProperty(form as NumOrIntConstructor);
-    case "object":
-      return new ObjectProperty();
-    case "array":
-      return new ArrayProperty(form as ArrayConstructor);
-    case "boolean":
-      return new BooleanProperty();
-    case "null":
-      return new NullProperty();
-  }
-};
-
-const getPropertyForm = (
-  dataType: SchemaPropertyType
-): StringForm | NumOrIntForm | ArrayForm | {} => {
-  switch (dataType) {
-    case "string":
-      const { minLength, maxLength } = propertyForm.string;
-      return {
-        minLength: minLength !== null ? parseInt(minLength) : undefined,
-        maxLength: maxLength !== null ? parseInt(maxLength) : undefined,
-      };
-    case "integer":
-    case "number":
-      const { minimum, maximum } = propertyForm.numOrInt;
-      return {
-        minimum: minimum !== null ? parseInt(minimum) : undefined,
-        maximum: maximum !== null ? parseInt(maximum) : undefined,
-      };
-    case "array":
-      const { items, minItems, maxItems } = propertyForm.array;
-      return {
-        items: items !== null ? items : null,
-        minItems: minItems !== null ? parseInt(minItems) : undefined,
-        maxItems: maxItems !== null ? parseInt(maxItems) : undefined,
-      };
-    default:
-      return {};
-  }
-};
-
 const handleSubmit = () => {
   if (!formRef.value) return;
 
   formRef.value.validate().then(({ valid }) => {
     if (valid) {
       if (
-        editProperty.dataType === "object" &&
+        formValues.type === "object" &&
         props.node[1].type === "object" &&
-        editProperty.key !== props.node[0]
+        keyName.value !== props.node[0]
       ) {
         emit("updateKey", {
-          editKey: editProperty.key,
+          editKey: keyName.value,
           curKey: props.node[0],
           value: props.node[1],
         });
       } else {
-        const form = getPropertyForm(editProperty.dataType);
-        const value = createSchemaProperty(editProperty.dataType, form);
+        const constructorValues = propertyFormNullToUndefined(formValues);
+        const properties =
+          props.node[1].type === "object" && formValues.type === "object"
+            ? props.node[1].properties
+            : undefined;
+
+        const value = new entity.Schema({
+          ...constructorValues,
+          properties,
+        });
+
         emit("updateValue", {
-          editKey: editProperty.key,
+          editKey: keyName.value,
           curKey: props.node[0],
           value,
         });
@@ -159,6 +82,34 @@ const handleSubmit = () => {
       emit("closeForm");
     }
   });
+};
+
+const resetFormOnTypeChange = (typeVal: SchemaPropertyType) => {
+  if (typeVal === props.node[1].type) {
+    formValues.minProperties = props.node[1].minProperties?.toString() ?? null;
+    formValues.maxProperties = props.node[1].maxProperties?.toString() ?? null;
+    formValues.minItems = props.node[1].minItems?.toString() ?? null;
+    formValues.maxItems = props.node[1].maxItems?.toString() ?? null;
+    formValues.items = (props.node[1].items as ArrayItemType) ?? null;
+    formValues.minLength = props.node[1].minLength?.toString() ?? null;
+    formValues.maxLength = props.node[1].maxLength?.toString() ?? null;
+    formValues.numMinimum = props.node[1].numMinimum?.toString() ?? null;
+    formValues.numMaximum = props.node[1].numMaximum?.toString() ?? null;
+    formValues.intMinimum = props.node[1].intMinimum?.toString() ?? null;
+    formValues.intMaximum = props.node[1].intMaximum?.toString() ?? null;
+  } else {
+    formValues.minProperties = null;
+    formValues.maxProperties = null;
+    formValues.minItems = null;
+    formValues.maxItems = null;
+    formValues.items = null;
+    formValues.minLength = null;
+    formValues.maxLength = null;
+    formValues.numMinimum = null;
+    formValues.numMaximum = null;
+    formValues.intMinimum = null;
+    formValues.intMaximum = null;
+  }
 };
 </script>
 
@@ -170,34 +121,36 @@ const handleSubmit = () => {
         <v-row>
           <v-col cols="6">
             <VTextField
-              v-model="editProperty.key"
+              v-model="keyName"
               label="Name"
               :rules="formControl.keyRules"
               style="width: 200px"
             />
           </v-col>
+
           <v-col cols="6">
             <VSelect
-              v-model="editProperty.dataType"
+              v-model="formValues.type"
               label="Type"
               :items="schemaPropertyTypes"
               style="width: 200px"
+              @update:model-value="resetFormOnTypeChange"
             />
           </v-col>
         </v-row>
         <h4
           v-if="
-            editProperty.dataType !== 'object' &&
-            editProperty.dataType !== 'boolean' &&
-            editProperty.dataType !== 'null'
+            formValues.type !== 'object' &&
+            formValues.type !== 'boolean' &&
+            formValues.type !== 'null'
           "
         >
           Attributes
         </h4>
-        <v-row v-if="editProperty.dataType === 'string'">
+        <v-row v-if="formValues.type === 'string'">
           <v-col cols="6">
             <VTextField
-              v-model="propertyForm.string.minLength"
+              v-model="formValues.minLength"
               type="number"
               label="Min Length"
               style="width: 200px"
@@ -206,9 +159,10 @@ const handleSubmit = () => {
               persistent-clear
             />
           </v-col>
+
           <v-col cols="6">
             <VTextField
-              v-model="propertyForm.string.maxLength"
+              v-model="formValues.maxLength"
               type="number"
               label="Max Length"
               style="width: 200px"
@@ -218,15 +172,10 @@ const handleSubmit = () => {
             />
           </v-col>
         </v-row>
-        <v-row
-          v-if="
-            editProperty.dataType === 'number' ||
-            editProperty.dataType === 'integer'
-          "
-        >
+        <v-row v-if="formValues.type === 'integer'">
           <v-col cols="6">
             <VTextField
-              v-model="propertyForm.numOrInt.minimum"
+              v-model="formValues.intMinimum"
               type="number"
               label="Minimum"
               style="width: 200px"
@@ -235,9 +184,10 @@ const handleSubmit = () => {
               persistent-clear
             />
           </v-col>
+
           <v-col cols="6">
             <VTextField
-              v-model="propertyForm.numOrInt.maximum"
+              v-model="formValues.intMaximum"
               type="number"
               label="Maximum"
               style="width: 200px"
@@ -247,13 +197,35 @@ const handleSubmit = () => {
             />
           </v-col>
         </v-row>
-        <v-row
-          v-if="editProperty.dataType === 'array'"
-          class="d-flex flex-wrap"
-        >
+        <v-row v-if="formValues.type === 'number'">
+          <v-col cols="6">
+            <VTextField
+              v-model="formValues.numMinimum"
+              type="number"
+              label="Minimum"
+              style="width: 200px"
+              hide-details
+              clearable
+              persistent-clear
+            />
+          </v-col>
+
+          <v-col cols="6">
+            <VTextField
+              v-model="formValues.numMaximum"
+              type="number"
+              label="Maximum"
+              style="width: 200px"
+              hide-details
+              clearable
+              persistent-clear
+            />
+          </v-col>
+        </v-row>
+        <v-row v-if="formValues.type === 'array'" class="d-flex flex-wrap">
           <v-col cols="12">
             <VSelect
-              v-model="propertyForm.array.items"
+              v-model="formValues.items"
               label="Item Type"
               :items="['string', 'number', 'integer']"
               style="width: 200px"
@@ -265,7 +237,7 @@ const handleSubmit = () => {
 
           <v-col cols="6">
             <VTextField
-              v-model="propertyForm.array.minItems"
+              v-model="formValues.minItems"
               type="number"
               label="Minimum Items"
               style="width: 200px"
@@ -277,7 +249,7 @@ const handleSubmit = () => {
 
           <v-col cols="6">
             <VTextField
-              v-model="propertyForm.array.maxItems"
+              v-model="formValues.maxItems"
               type="number"
               label="Maximum Items"
               style="width: 200px"
@@ -311,4 +283,3 @@ const handleSubmit = () => {
   padding-bottom: 2px;
 }
 </style>
-../../../types/properties.types
