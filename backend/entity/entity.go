@@ -3,9 +3,14 @@ package entity
 type Properties map[string]*Schema
 
 type JsonSchema struct {
-	Title       string     `json:"title"`
-	Description string     `json:"description"`
-	Properties  Properties `json:"properties"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	// will always default to an object as top level schema for now
+	Type string `json:"type"`
+	// MinProperties *int       `json:"minProperties"`
+	// MaxProperties *int       `json:"maxProperties"`
+	Required   []string   `json:"required"`
+	Properties Properties `json:"properties"`
 }
 
 type Schema struct {

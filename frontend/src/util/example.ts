@@ -2,7 +2,7 @@ import type { CsvSchemaMap } from "../features/CsvEditor/CsvEditor.types";
 import { entity } from "../../wailsjs/go/models";
 
 const PropertiesObject = {
-  name: new entity.Schema({ type: "string", minLength: 3 }),
+  productName: new entity.Schema({ type: "string", minLength: 3 }),
   description: new entity.Schema({ type: "string" }),
   featured: new entity.Schema({ type: "boolean" }),
   images: new entity.Schema({
@@ -11,11 +11,9 @@ const PropertiesObject = {
     minItems: 0,
     maxItems: 3,
   }),
-  test: new entity.Schema({
-    type: "array",
-  }),
   bids: new entity.Schema({
     type: "object",
+    required: ["initialPrice", "lastBid", "totalBids"],
     properties: {
       initialPrice: new entity.Schema({
         type: "number",
@@ -30,7 +28,6 @@ const PropertiesObject = {
         intMinimum: 0,
       }),
     },
-    required: ["initialPrice", "lastBid", "totalBids"],
   }),
   seller: new entity.Schema({
     type: "object",
@@ -55,7 +52,9 @@ const PropertiesObject = {
 export const exampleSchema = new entity.JsonSchema({
   title: "Product Example Schema",
   description: "Just a test schema to build out the editor UI with.",
+  type: "object",
   properties: PropertiesObject,
+  required: ["productName", "description", "bids"],
 });
 
 export const exampleCsvFile = new entity.CsvFileData({

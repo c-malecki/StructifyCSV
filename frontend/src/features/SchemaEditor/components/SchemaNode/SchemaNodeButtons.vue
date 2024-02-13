@@ -1,28 +1,48 @@
 <script lang="ts" setup>
 const props = defineProps({
-  showAddButton: {
+  isObjectProperty: {
     type: Boolean,
-    default: true,
+    required: true,
   },
 });
-const emit = defineEmits(["showAddForm", "showEditForm", "deleteProperty"]);
+const emit = defineEmits(["showForm", "deleteProperty"]);
 </script>
 
 <template>
   <div class="d-flex">
-    <v-btn size="x-small" class="ml-4" @click="emit('deleteProperty')">
+    <v-btn
+      size="x-small"
+      class="ml-4"
+      prepend-icon="mdi-delete-outline"
+      @click="emit('deleteProperty')"
+    >
       delete
     </v-btn>
-    <v-btn size="x-small" class="ml-4" @click="emit('showEditForm')">
+    <v-btn
+      size="x-small"
+      class="ml-4"
+      prepend-icon="mdi-pencil-box-outline"
+      @click="emit('showForm', 'edit')"
+    >
       edit
     </v-btn>
     <v-btn
-      v-if="props.showAddButton"
+      v-if="props.isObjectProperty"
       size="x-small"
       class="ml-4"
-      @click="emit('showAddForm')"
+      prepend-icon="mdi-plus"
+      @click="emit('showForm', 'add')"
     >
       add
+    </v-btn>
+    <v-btn
+      v-if="props.isObjectProperty"
+      size="x-small"
+      class="ml-4"
+      prepend-icon="mdi-pencil-box-outline"
+      @click="emit('showForm', 'required')"
+    >
+      required
     </v-btn>
   </div>
 </template>

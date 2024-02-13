@@ -68,14 +68,15 @@ func createSchemaBoiler(schema entity.JsonSchema) string {
 	return fmt.Sprintf("{\n%[1]v\"$schema\": \"http://json-schema.org/draft-07/schema#\",\n%[1]v\"title\": \"%[2]v\",\n%[1]v\"description\": \"%[3]v\",\n%[1]v\"type\": \"object\",\n%[1]v\"properties\": ", entity.Indent, title, description)
 }
 
-//	func createReqProps(indent string, required []string) string {
-//		j, err := json.Marshal(required)
-//		if err != nil {
-//			print(err)
-//		}
-//		reqsStr := string(j)
-//		return fmt.Sprintf("\n%[1]v},\n%[1]v\"required\": %[2]v", indent, reqsStr)
-//	}
+func createReqProps(required []string) string {
+	j, err := json.Marshal(required)
+	if err != nil {
+		print(err)
+	}
+	reqsStr := string(j)
+	return fmt.Sprintf(",\n%[1]v\"required\": %[2]v", entity.Indent, reqsStr)
+}
+
 func processStringSchema(schema entity.Schema, propertyMap map[string]interface{}) {
 	if schema.MinLength != nil {
 		propertyMap["minLength"] = schema.MinLength
@@ -134,7 +135,7 @@ func processObjectSchema(schema entity.Schema, propertyMap map[string]interface{
 	if schema.MaxProperties != nil {
 		propertyMap["maxProperties"] = schema.MaxProperties
 	}
-	if schema.Required != nil {
+	if schema.Required != nil && len(schema.Required) > 0 {
 		propertyMap["required"] = schema.Required
 	}
 	if schema.Properties != nil {
@@ -186,9 +187,10 @@ func WriteJsonSchema(c context.Context, schema entity.JsonSchema) {
 	}
 	writeString(string(jsonBytes), false)
 
-	// reqs := []string{"test", "the", "reqs"}
-	// required := createReqProps(indent, reqs)
-	// writeString(required, false)
+	if schema.Required != nil && len(schema.Required) > 0 {
+		required := createReqProps(schema.Required)
+		writeString(required, false)
+	}
 
 	writeString("\n}", true)
 }

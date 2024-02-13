@@ -7,10 +7,13 @@ import {
   type SchemaNode,
   type ArrayItemType,
   type PropertyConstructorFormValues,
-} from "../SchemaEditor.types";
-import { propertyFormNullToUndefined } from "../../../util/transform";
-import { enforceNumOnKeyDown, enterNumOnKeyUp } from "../../../util/numInput";
-import { entity } from "../../../../wailsjs/go/models";
+} from "../../SchemaEditor.types";
+import { propertyFormNullToUndefined } from "../../../../util/transform";
+import {
+  enforceNumOnKeyDown,
+  enterNumOnKeyUp,
+} from "../../../../util/numInput";
+import { entity } from "../../../../../wailsjs/go/models";
 
 const props = defineProps({
   node: {
@@ -69,7 +72,7 @@ const handleSubmit = () => {
         const properties =
           props.node[1].type === "object" && formValues.type === "object"
             ? props.node[1].properties
-            : undefined;
+            : {};
 
         const value = new entity.Schema({
           ...constructorValues,
@@ -122,12 +125,12 @@ const resetFormOnTypeChange = (typeVal: SchemaPropertyType) => {
   <VForm @submit.prevent="handleSubmit" ref="formRef">
     <v-sheet border rounded class="d-flex flex-column" max-width="440">
       <v-container class="pa-2">
-        <h4>Property</h4>
+        <h5 class="mb-2">"{{ props.node[0] }}" Property</h5>
         <v-row>
           <v-col cols="6">
             <VTextField
               v-model="keyName"
-              label="Name"
+              label="Key"
               :rules="formControl.keyRules"
               style="width: 200px"
             />
@@ -143,9 +146,12 @@ const resetFormOnTypeChange = (typeVal: SchemaPropertyType) => {
             />
           </v-col>
         </v-row>
-        <h4 v-if="formValues.type !== 'boolean' && formValues.type !== 'null'">
-          Attributes
-        </h4>
+        <h5
+          v-if="formValues.type !== 'boolean' && formValues.type !== 'null'"
+          class="mb-2"
+        >
+          {{ formValues.type }} validators
+        </h5>
         <v-row v-if="formValues.type === 'string'">
           <v-col cols="6">
             <VTextField
@@ -345,5 +351,9 @@ const resetFormOnTypeChange = (typeVal: SchemaPropertyType) => {
   min-height: 36px;
   padding-top: 2px;
   padding-bottom: 2px;
+}
+
+h5:not(:first-of-type) {
+  text-transform: capitalize;
 }
 </style>

@@ -3,7 +3,7 @@ import { JsonSchemaKey } from "./SchemaEditor.types";
 import { ref, inject } from "vue";
 import { entity } from "../../../wailsjs/go/models";
 import SchemaTree from "./components/SchemaTree.vue";
-import SchemaInfoForm from "./components/SchemaInfoForm.vue";
+import SchemaInfoForm from "./components/forms/SchemaInfoForm.vue";
 
 const emit = defineEmits(["updateSchema"]);
 

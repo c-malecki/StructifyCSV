@@ -114,6 +114,8 @@ export namespace entity {
 	export class JsonSchema {
 	    title: string;
 	    description: string;
+	    type: string;
+	    required: string[];
 	    properties: {[key: string]: Schema};
 	
 	    static createFrom(source: any = {}) {
@@ -124,6 +126,8 @@ export namespace entity {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.title = source["title"];
 	        this.description = source["description"];
+	        this.type = source["type"];
+	        this.required = source["required"];
 	        this.properties = source["properties"];
 	    }
 	}

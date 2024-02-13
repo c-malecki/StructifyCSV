@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import { ref, inject } from "vue";
 import SchemaNode from "./SchemaNode/SchemaNode.vue";
-import AddPropertyForm from "./AddPropertyForm.vue";
+import AddPropertyForm from "./forms/AddPropertyForm.vue";
+import EditRequiredForm from "./forms/EditRequiredForm.vue";
 import { JsonSchemaKey } from "../SchemaEditor.types";
 import { entity } from "../../../../wailsjs/go/models";
 
@@ -11,6 +12,7 @@ if (!jsonSchema) {
 }
 
 const showAddForm = ref(false);
+const showEditRequiredForm = ref(false);
 
 const updateBaseKey = ({
   editKey,
@@ -66,6 +68,11 @@ const addNewProperty = ({
 }) => {
   jsonSchema.value.properties[key] = value;
 };
+
+const updateRequired = (required: string[]) => {
+  jsonSchema.value.required = required;
+  showEditRequiredForm.value = false;
+};
 </script>
 
 <template>
@@ -80,19 +87,36 @@ const addNewProperty = ({
       @delete-base-property="deleteBaseProperty"
     />
     <div>
-      <v-btn
-        v-if="!showAddForm"
-        size="x-small"
-        @click="showAddForm = true"
-        class="ml-2"
-      >
-        add
-      </v-btn>
+      <div v-if="!showAddForm && !showEditRequiredForm" class="d-flex">
+        <v-btn
+          size="x-small"
+          @click="showAddForm = true"
+          class="ml-2"
+          prepend-icon="mdi-plus"
+        >
+          add
+        </v-btn>
+        <v-btn
+          size="x-small"
+          @click="showEditRequiredForm = true"
+          class="ml-4"
+          prepend-icon="mdi-pencil-box-outline"
+        >
+          required
+        </v-btn>
+      </div>
+
       <AddPropertyForm
-        v-else
+        v-if="showAddForm"
         :nodeValue="jsonSchema.properties"
         @close-form="showAddForm = false"
         @add-new-property="addNewProperty"
+      />
+      <EditRequiredForm
+        v-if="showEditRequiredForm"
+        :schema="jsonSchema"
+        @close-form="showEditRequiredForm = false"
+        @update-required="updateRequired"
       />
     </div>
   </div>
