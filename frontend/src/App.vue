@@ -62,38 +62,8 @@ const handleImportSchema = () => {
     .catch(() => {});
 };
 
-const stripUndefined = (properties: Record<string, any>) => {
-  const result = {} as Record<string, any>;
-  const entries = Object.entries(properties);
-  for (let [k, v] of entries) {
-    if (v === undefined) {
-      continue;
-    }
-
-    if (k === "properties") {
-      result[k] = stripUndefined(v);
-    } else if (k === "items") {
-      result[k] = v;
-    } else if (v instanceof Object) {
-      result[k] = stripUndefined(v);
-    } else {
-      result[k] = v;
-    }
-  }
-  return result;
-};
-
 const handleExportSchema = () => {
-  const result = {} as Record<string, any>;
-  const entries = Object.entries(jsonSchema.value.properties);
-  for (let [k, v] of entries) {
-    result[k] = stripUndefined(v);
-  }
-
-  ExportJsonSchema({
-    ...jsonSchema.value,
-    properties: result as entity.JsonSchema["properties"],
-  })
+  ExportJsonSchema(jsonSchema.value)
     .then(() => {
       titleBarRef.value!.menuControl.show = false;
     })

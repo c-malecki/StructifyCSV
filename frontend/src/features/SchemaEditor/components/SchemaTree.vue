@@ -42,9 +42,9 @@ const updateBaseValue = ({
 
 const deleteBaseProperty = (keyToDelete: string) => {
   const property = jsonSchema.value.properties[keyToDelete];
-  const isObjorArr = property!.type === "object" || property!.type === "array";
+  const isObjOrArr = property!.type === "object" || property!.type === "array";
   let message = "";
-  switch (isObjorArr) {
+  switch (isObjOrArr) {
     case true:
       message = `Deleting "${keyToDelete}" will also delete any descendents of "${keyToDelete}." Do you wish to proceed?`;
       break;

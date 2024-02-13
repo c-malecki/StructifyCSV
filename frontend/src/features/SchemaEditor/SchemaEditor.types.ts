@@ -48,7 +48,7 @@ export type SchemaPropertyConstructor = {
   maxProperties?: number;
   minItems?: number;
   maxItems?: number;
-  items?: ArrayItemType;
+  items?: { type: ArrayItemType };
   minLength?: number;
   maxLength?: number;
   numMinimum?: number;

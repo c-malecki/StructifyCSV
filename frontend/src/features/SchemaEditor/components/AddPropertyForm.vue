@@ -6,6 +6,7 @@ import {
   type PropertyConstructorFormValues,
 } from "../SchemaEditor.types";
 import { propertyFormNullToUndefined } from "../../../util/transform";
+import { enforceNumOnKeyDown, enterNumOnKeyUp } from "../../../util/numInput";
 import { entity } from "../../../../wailsjs/go/models";
 
 const emit = defineEmits(["closeForm", "addNewProperty"]);
@@ -26,7 +27,7 @@ const formValues = reactive<PropertyConstructorFormValues>({
 });
 const keyName = ref("");
 
-// min max validation
+// todo: min max validation
 type FormControl = {
   keyRules: ((val: string) => string | boolean)[];
 };
@@ -90,87 +91,105 @@ const resetFormOnTypeChange = () => {
             />
           </v-col>
         </v-row>
-        <h4
-          v-if="
-            formValues.type !== 'object' &&
-            formValues.type !== 'boolean' &&
-            formValues.type !== 'null'
-          "
-        >
+        <h4 v-if="formValues.type !== 'boolean' && formValues.type !== 'null'">
           Attributes
         </h4>
         <v-row v-if="formValues.type === 'string'">
           <v-col cols="6">
             <VTextField
-              v-model="formValues.minLength"
+              :model-value="formValues.minLength"
               type="number"
               label="Min Length"
               style="width: 200px"
               hide-details
               clearable
               persistent-clear
+              pattern="[0-9]*"
+              inputmode="numeric"
+              @keydown="(e: KeyboardEvent) => enforceNumOnKeyDown(e)"
+              @keyup="(e: KeyboardEvent) => enterNumOnKeyUp(e, formValues, 'minLength')"
             />
           </v-col>
 
           <v-col cols="6">
             <VTextField
-              v-model="formValues.maxLength"
+              :model-value="formValues.maxLength"
               type="number"
               label="Max Length"
               style="width: 200px"
               hide-details
               clearable
               persistent-clear
+              pattern="[0-9]*"
+              inputmode="numeric"
+              @keydown="(e: KeyboardEvent) => enforceNumOnKeyDown(e)"
+              @keyup="(e: KeyboardEvent) => enterNumOnKeyUp(e, formValues, 'maxLength')"
             />
           </v-col>
         </v-row>
         <v-row v-if="formValues.type === 'integer'">
           <v-col cols="6">
             <VTextField
-              v-model="formValues.intMinimum"
+              :model-value="formValues.intMinimum"
               type="number"
               label="Minimum"
               style="width: 200px"
               hide-details
               clearable
               persistent-clear
+              pattern="[0-9]*"
+              inputmode="numeric"
+              @keydown="(e: KeyboardEvent) => enforceNumOnKeyDown(e)"
+              @keyup="(e: KeyboardEvent) => enterNumOnKeyUp(e, formValues, 'intMinimum')"
             />
           </v-col>
 
           <v-col cols="6">
             <VTextField
-              v-model="formValues.intMaximum"
+              :model-value="formValues.intMaximum"
               type="number"
               label="Maximum"
               style="width: 200px"
               hide-details
               clearable
               persistent-clear
+              pattern="[0-9]*"
+              inputmode="numeric"
+              @keydown="(e: KeyboardEvent) => enforceNumOnKeyDown(e)"
+              @keyup="(e: KeyboardEvent) => enterNumOnKeyUp(e, formValues, 'intMaximum')"
             />
           </v-col>
         </v-row>
         <v-row v-if="formValues.type === 'number'">
           <v-col cols="6">
             <VTextField
-              v-model="formValues.numMinimum"
+              :model-value="formValues.numMinimum"
               type="number"
               label="Minimum"
               style="width: 200px"
               hide-details
               clearable
               persistent-clear
+              pattern="[0-9]*"
+              inputmode="numeric"
+              @keydown="(e: KeyboardEvent) => enforceNumOnKeyDown(e)"
+              @keyup="(e: KeyboardEvent) => enterNumOnKeyUp(e, formValues, 'numMinimum')"
             />
           </v-col>
 
           <v-col cols="6">
             <VTextField
-              v-model="formValues.numMaximum"
+              :model-value="formValues.numMaximum"
               type="number"
               label="Maximum"
               style="width: 200px"
               hide-details
               clearable
               persistent-clear
+              pattern="[0-9]*"
+              inputmode="numeric"
+              @keydown="(e: KeyboardEvent) => enforceNumOnKeyDown(e)"
+              @keyup="(e: KeyboardEvent) => enterNumOnKeyUp(e, formValues, 'numMinimum')"
             />
           </v-col>
         </v-row>
@@ -189,25 +208,66 @@ const resetFormOnTypeChange = () => {
 
           <v-col cols="6">
             <VTextField
-              v-model="formValues.minItems"
+              :model-value="formValues.minItems"
               type="number"
               label="Minimum Items"
               style="width: 200px"
               hide-details
               clearable
               persistent-clear
+              pattern="[0-9]*"
+              inputmode="numeric"
+              @keydown="(e: KeyboardEvent) => enforceNumOnKeyDown(e)"
+              @keyup="(e: KeyboardEvent) => enterNumOnKeyUp(e, formValues, 'minItems')"
             />
           </v-col>
 
           <v-col cols="6">
             <VTextField
-              v-model="formValues.maxItems"
+              :model-value="formValues.maxItems"
               type="number"
               label="Maximum Items"
               style="width: 200px"
               hide-details
               clearable
               persistent-clear
+              pattern="[0-9]*"
+              inputmode="numeric"
+              @keydown="(e: KeyboardEvent) => enforceNumOnKeyDown(e)"
+              @keyup="(e: KeyboardEvent) => enterNumOnKeyUp(e, formValues, 'maxItems')"
+            />
+          </v-col>
+        </v-row>
+        <v-row v-if="formValues.type === 'object'">
+          <v-col cols="6">
+            <VTextField
+              :model-value="formValues.minProperties"
+              type="number"
+              label="Min Properties"
+              style="width: 200px"
+              hide-details
+              clearable
+              persistent-clear
+              pattern="[0-9]*"
+              inputmode="numeric"
+              @keydown="(e: KeyboardEvent) => enforceNumOnKeyDown(e)"
+              @keyup="(e: KeyboardEvent) => enterNumOnKeyUp(e, formValues, 'minProperties')"
+            />
+          </v-col>
+
+          <v-col cols="6">
+            <VTextField
+              :model-value="formValues.maxProperties"
+              type="number"
+              label="Max Properties"
+              style="width: 200px"
+              hide-details
+              clearable
+              persistent-clear
+              pattern="[0-9]*"
+              inputmode="numeric"
+              @keydown="(e: KeyboardEvent) => enforceNumOnKeyDown(e)"
+              @keyup="(e: KeyboardEvent) => enterNumOnKeyUp(e, formValues, 'maxProperties')"
             />
           </v-col>
         </v-row>

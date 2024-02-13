@@ -62,7 +62,7 @@ export namespace entity {
 	    properties: {[key: string]: Schema};
 	    minItems?: number;
 	    maxItems?: number;
-	    items?: string;
+	    items?: any;
 	    minLength?: number;
 	    maxLength?: number;
 	    numMinimum?: number;

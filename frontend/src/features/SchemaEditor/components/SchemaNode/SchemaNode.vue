@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { ref, computed, type PropType } from "vue";
 import { getHoverColorScheme, getLeftIndent } from "../../../../util/style";
+import { getSchemaAttributesDisplay } from "../../../../util/transform";
 import { type SchemaNode } from "../../SchemaEditor.types";
 import { entity } from "../../../../../wailsjs/go/models";
 import SchemaNodeButtons from "./SchemaNodeButtons.vue";
@@ -32,7 +33,9 @@ const showEditForm = ref(false);
 const leftIndent = computed(() => getLeftIndent(props.level));
 const colorScheme = computed(() => getHoverColorScheme(props.level));
 
-// const propertyAttributes = computed(() => props.node[1].getAttributeDisplay());
+const propertyAttributes = computed(() =>
+  getSchemaAttributesDisplay(props.node[1])
+);
 
 const updateKey = (update: {
   editKey: string;
@@ -95,10 +98,10 @@ const deleteProperty = (keyToDelete: string) => {
 };
 
 const deleteParentProperty = (keyToDelete: string) => {
-  const isObjorArr =
+  const isObjOrArr =
     props.node[1].type === "object" || props.node[1].type === "array";
   let message = "";
-  switch (isObjorArr) {
+  switch (isObjOrArr) {
     case true:
       message = `Deleting "${keyToDelete}" will also delete any descendents of "${keyToDelete}." Do you wish to proceed?`;
       break;
@@ -156,7 +159,7 @@ const addNewProperty = ({
 
             <p v-if="!showEditForm && node[1].type === 'array'">
               <b>{{ node[0] }}:</b> {{ node[1].type }}
-              {{ node[1].items ? `[ ${node[1].items} ]` : "" }}
+              {{ node[1].items ? `[ ${node[1].items.type} ]` : "" }}
             </p>
 
             <p v-if="!showEditForm && node[1].type === 'object'">
@@ -179,7 +182,7 @@ const addNewProperty = ({
             />
           </div>
 
-          <!-- <v-expand-transition>
+          <v-expand-transition>
             <div v-show="isHovering">
               <v-chip
                 v-for="(attr, idx) in propertyAttributes"
@@ -189,7 +192,7 @@ const addNewProperty = ({
                 {{ attr[0] }}: {{ attr[1] }}
               </v-chip>
             </div>
-          </v-expand-transition> -->
+          </v-expand-transition>
 
           <AddPropertyForm
             v-if="node[1].type === 'object' && showAddForm"

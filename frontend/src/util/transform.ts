@@ -11,10 +11,12 @@ const nullToUndefined = (properties: Record<string, any>) => {
   const entries = Object.entries(properties);
   for (let [k, v] of entries) {
     if (v === null) {
-      result[k] = v;
+      result[k] = undefined;
     } else if (k === "properties") {
       result[k] = nullToUndefined(v);
     } else if (k === "items") {
+      result[k] = v;
+    } else if (k === "required") {
       result[k] = v;
     } else if (v instanceof Object) {
       result[k] = nullToUndefined(v);
@@ -51,13 +53,13 @@ export const propertyFormNullToUndefined = (
   const result = {} as SchemaPropertyConstructor;
   for (let key of Object.keys(formValues)) {
     const value = formValues[key as keyof PropertyConstructorFormValues];
-    if (value === null) {
+    if (value === null || value === "") {
       result[key as keyof Omit<SchemaPropertyConstructor, "type">] = undefined;
     } else {
       if (key === "type") {
         result[key] = value as SchemaPropertyType;
       } else if (key === "items") {
-        result["items"] = value as ArrayItemType;
+        result["items"] = { type: value as ArrayItemType };
       } else {
         result[key as keyof Omit<SchemaPropertyConstructor, "items" | "type">] =
           parseInt(value as string);
@@ -65,6 +67,41 @@ export const propertyFormNullToUndefined = (
     }
   }
   return result;
+};
+
+export const getSchemaAttributesDisplay = (schema: entity.Schema) => {
+  const entries = Object.entries(schema);
+  const filterNoDisplay = entries.filter(
+    ([k, v]) =>
+      v !== undefined &&
+      k !== "type" &&
+      k !== "properties" &&
+      k !== "required" &&
+      k !== "items" &&
+      k !== "onOf"
+  );
+  return filterNoDisplay.map(([k, v]) => {
+    if (k.includes("numM")) {
+      return [k.replace("num", ""), v];
+    }
+    if (k.includes("intM")) {
+      return [k.replace("int", ""), v];
+    }
+    if (k.includes("min")) {
+      const reformat = k.replace("min", "Min");
+      const str1 = reformat.substring(0, 3);
+      const str2 = reformat.substring(3);
+      return [`${str1} ${str2}`, v];
+    }
+    if (k.includes("max")) {
+      const reformat = k.replace("max", "Max");
+      const str1 = reformat.substring(0, 3);
+      const str2 = reformat.substring(3);
+      return [`${str1} ${str2}`, v];
+    }
+
+    return [k, v];
+  });
 };
 
 // export const transformForCsvModelMap = (data: PropertiesMap, path = "") => {
