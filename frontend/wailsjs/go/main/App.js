@@ -10,8 +10,8 @@ export function ExportJsonSchema(arg1) {
   return window['go']['main']['App']['ExportJsonSchema'](arg1);
 }
 
-export function ImportCsvData() {
-  return window['go']['main']['App']['ImportCsvData']();
+export function ImportCsvFileData() {
+  return window['go']['main']['App']['ImportCsvFileData']();
 }
 
 export function ImportJsonSchema() {

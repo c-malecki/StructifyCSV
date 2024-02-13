@@ -1,8 +1,9 @@
 <script lang="ts" setup>
-import { JsonSchemaKey, type JsonSchema } from "../../types/editor.types";
+import { JsonSchemaKey } from "./SchemaEditor.types";
 import { ref, inject } from "vue";
+import { entity } from "../../../wailsjs/go/models";
 import SchemaTree from "./components/SchemaTree.vue";
-import SchemaInfoForm from "./components/SchemaInfoForm.vue";
+import SchemaInfoForm from "./components/forms/SchemaInfoForm.vue";
 
 const emit = defineEmits(["updateSchema"]);
 
@@ -12,7 +13,7 @@ if (!jsonSchema) {
 }
 const showEditForm = ref(false);
 
-const handleUpdateSchema = (vals: Omit<JsonSchema, "properties">) => {
+const handleUpdateSchema = (vals: Omit<entity.JsonSchema, "properties">) => {
   emit("updateSchema", vals);
   showEditForm.value = false;
 };

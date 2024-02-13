@@ -1,15 +1,15 @@
 <script lang="ts" setup>
 import { ref, computed, type PropType } from "vue";
-import { getHoverColorScheme, getLeftIndent } from "../../../../util/style";
+import { getHoverColorScheme } from "../../../../util/style";
+import { getSchemaAttributesDisplay } from "../../../../util/transform";
+import { type SchemaNode } from "../../SchemaEditor.types";
+import { entity } from "../../../../../wailsjs/go/models";
 import SchemaNodeButtons from "./SchemaNodeButtons.vue";
-import AddPropertyForm from "../AddPropertyForm.vue";
-import EditPropertyForm from "../EditPropertyForm.vue";
-import {
-  type SchemaProperty,
-  ObjectProperty,
-  ArrayProperty,
-} from "../../../../types/properties.types";
-import { type SchemaNode } from "../../../../types/editor.types";
+import AddPropertyForm from "../forms/AddPropertyForm.vue";
+import EditPropertyForm from "../forms/EditPropertyForm.vue";
+import EditRequiredForm from "../forms/EditRequiredForm.vue";
+
+type CurForm = "add" | "edit" | "required" | null;
 
 const props = defineProps({
   node: {
@@ -30,18 +30,16 @@ const emit = defineEmits([
   "deleteParentProperty",
 ]);
 
-const showAddForm = ref(false);
-const showEditForm = ref(false);
+const curForm = ref<CurForm>(null);
+const showForm = (form: CurForm) => {
+  curForm.value = form;
+};
 
-const isObjectProperty = computed(
-  () => props.node[1] instanceof ObjectProperty
-);
-const isArrayProperty = computed(() => props.node[1] instanceof ArrayProperty);
-
-const leftIndent = computed(() => getLeftIndent(props.level));
 const colorScheme = computed(() => getHoverColorScheme(props.level));
 
-const propertyAttributes = computed(() => props.node[1].getAttributeDisplay());
+const propertyAttributes = computed(() =>
+  getSchemaAttributesDisplay(props.node[1])
+);
 
 const updateKey = (update: {
   editKey: string;
@@ -62,16 +60,16 @@ const updateParentKey = ({
 }: {
   editKey: string;
   curKey: string;
-  value: SchemaProperty;
+  value: entity.Schema;
 }) => {
-  (props.node[1] as ObjectProperty).properties.delete(curKey);
-  (props.node[1] as ObjectProperty).properties.set(editKey, value);
+  delete props.node[1].properties[curKey];
+  props.node[1].properties[editKey] = value;
 };
 
 const updateValue = (update: {
   editKey: string;
   curKey: string;
-  value: SchemaNode;
+  value: entity.Schema;
 }) => {
   if (props.level === 1) {
     emit("updateBaseValue", update);
@@ -87,12 +85,12 @@ const updateParentValue = ({
 }: {
   editKey: string;
   curKey: string;
-  value: SchemaProperty;
+  value: entity.Schema;
 }) => {
   if (editKey !== curKey) {
-    (props.node[1] as ObjectProperty).properties.delete(curKey);
+    delete props.node[1].properties[curKey];
   }
-  (props.node[1] as ObjectProperty).properties.set(editKey, value);
+  props.node[1].properties[editKey] = value;
 };
 
 const deleteProperty = (keyToDelete: string) => {
@@ -104,10 +102,10 @@ const deleteProperty = (keyToDelete: string) => {
 };
 
 const deleteParentProperty = (keyToDelete: string) => {
-  const isObjorArr =
+  const isObjOrArr =
     props.node[1].type === "object" || props.node[1].type === "array";
   let message = "";
-  switch (isObjorArr) {
+  switch (isObjOrArr) {
     case true:
       message = `Deleting "${keyToDelete}" will also delete any descendents of "${keyToDelete}." Do you wish to proceed?`;
       break;
@@ -116,7 +114,7 @@ const deleteParentProperty = (keyToDelete: string) => {
       break;
   }
   if (confirm(message)) {
-    (props.node[1] as ObjectProperty).properties.delete(keyToDelete);
+    delete props.node[1].properties[keyToDelete];
   }
 };
 
@@ -125,9 +123,18 @@ const addNewProperty = ({
   value,
 }: {
   key: string;
-  value: SchemaProperty;
+  value: entity.Schema;
 }) => {
-  (props.node[1] as ObjectProperty).properties.set(key, value);
+  if (props.node[1].properties !== undefined) {
+    props.node[1].properties[key] = value;
+  } else {
+    props.node[1].properties = { [key]: value };
+  }
+};
+
+const updateRequired = (required: string[]) => {
+  props.node[1].required = required;
+  curForm.value = null;
 };
 </script>
 
@@ -138,45 +145,48 @@ const addNewProperty = ({
         v-bind="hoverProps"
         :color="isHovering ? colorScheme.hover : undefined"
         variant="flat"
-        :style="leftIndent"
+        style="margin-left: 24px; padding: 6px"
       >
         <div
-          :class="{ closing_bracket: isObjectProperty }"
+          :class="{ closing_bracket: node[1].type === 'object' }"
           :style="`color: ${isHovering ? colorScheme.font : 'black'}`"
         >
           <div
-            :class="`d-flex pb-1 ${isObjectProperty ? 'opening_bracket' : ''}`"
+            :class="`d-flex ${
+              node[1].type === 'object' ? 'opening_bracket pb-1' : ''
+            }`"
           >
-            <p v-if="!showEditForm && !isObjectProperty && !isArrayProperty">
+            <p
+              v-if="
+                curForm !== 'edit' &&
+                node[1].type !== 'object' &&
+                node[1].type !== 'array'
+              "
+            >
               <b>{{ node[0] }}:</b> {{ node[1].type }}
             </p>
 
-            <p v-if="!showEditForm && isArrayProperty">
+            <p v-if="curForm !== 'edit' && node[1].type === 'array'">
               <b>{{ node[0] }}:</b> {{ node[1].type }}
-              {{
-                (node[1] as ArrayProperty).items
-                  ? `[ ${(node[1] as ArrayProperty).items!.type} ]`
-                  : ""
-              }}
+              {{ node[1].items ? `[ ${node[1].items.type} ]` : "" }}
             </p>
 
-            <p v-if="!showEditForm && isObjectProperty">
+            <p v-if="curForm !== 'edit' && node[1].type === 'object'">
               <b>{{ node[0] }}:</b>
             </p>
 
             <SchemaNodeButtons
-              v-if="isHovering && !showEditForm"
-              :show-add-button="props.node[1] instanceof ObjectProperty"
-              @show-edit-form="showEditForm = true"
-              @show-add-form="showAddForm = true"
+              v-if="isHovering && !curForm"
+              :is-object-property="node[1].type === 'object'"
+              @show-form="showForm"
               @delete-property="deleteProperty(node[0])"
             />
             <EditPropertyForm
-              v-if="showEditForm"
+              v-if="curForm === 'edit'"
               :node="node"
               @update-key="updateKey"
               @update-value="updateValue"
-              @close-form="showEditForm = false"
+              @close-form="curForm = null"
             />
           </div>
 
@@ -192,21 +202,28 @@ const addNewProperty = ({
             </div>
           </v-expand-transition>
 
-          <AddPropertyForm
-            v-if="props.node[1] instanceof ObjectProperty && showAddForm"
-            @close-form="showAddForm = false"
-            @add-new-property="addNewProperty"
-          />
-
           <SchemaNode
-            v-if="props.node[1] instanceof ObjectProperty"
-            v-for="(n, i) in (node[1] as ObjectProperty).properties"
-            :key="`${level + 1}-${i}-${typeof node[1]}`"
-            :node="(n as SchemaNode)"
+            v-if="node[1].properties && curForm !== 'required'"
+            v-for="([k, v], i) in Object.entries(node[1].properties)"
+            :key="`${level + 1}-${i}-${k}`"
+            :node="[k, v]"
             :level="level + 1"
             @update-parent-key="updateParentKey"
             @update-parent-value="updateParentValue"
             @delete-parent-property="deleteParentProperty"
+          />
+
+          <AddPropertyForm
+            v-if="node[1].type === 'object' && curForm === 'add'"
+            @close-form="curForm = null"
+            @add-new-property="addNewProperty"
+          />
+
+          <EditRequiredForm
+            v-if="node[1].type === 'object' && curForm === 'required'"
+            :schema="node[1]"
+            @close-form="curForm = null"
+            @update-required="updateRequired"
           />
         </div>
       </v-card>

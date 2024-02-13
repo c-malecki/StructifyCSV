@@ -37,13 +37,13 @@ export namespace core {
 
 export namespace entity {
 	
-	export class CsvData {
+	export class CsvFileData {
 	    fileName: string;
 	    location: string;
 	    headers: string[];
 	
 	    static createFrom(source: any = {}) {
-	        return new CsvData(source);
+	        return new CsvFileData(source);
 	    }
 	
 	    constructor(source: any = {}) {
@@ -53,10 +53,70 @@ export namespace entity {
 	        this.headers = source["headers"];
 	    }
 	}
+	export class Schema {
+	    type: string;
+	    oneOf: Schema[];
+	    minProperties?: number;
+	    maxProperties?: number;
+	    required: string[];
+	    properties: {[key: string]: Schema};
+	    minItems?: number;
+	    maxItems?: number;
+	    items?: any;
+	    minLength?: number;
+	    maxLength?: number;
+	    numMinimum?: number;
+	    numMaximum?: number;
+	    intMinimum?: number;
+	    intMaximum?: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Schema(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.type = source["type"];
+	        this.oneOf = this.convertValues(source["oneOf"], Schema);
+	        this.minProperties = source["minProperties"];
+	        this.maxProperties = source["maxProperties"];
+	        this.required = source["required"];
+	        this.properties = source["properties"];
+	        this.minItems = source["minItems"];
+	        this.maxItems = source["maxItems"];
+	        this.items = source["items"];
+	        this.minLength = source["minLength"];
+	        this.maxLength = source["maxLength"];
+	        this.numMinimum = source["numMinimum"];
+	        this.numMaximum = source["numMaximum"];
+	        this.intMinimum = source["intMinimum"];
+	        this.intMaximum = source["intMaximum"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class JsonSchema {
 	    title: string;
 	    description: string;
-	    properties: {[key: string]: any};
+	    type: string;
+	    required: string[];
+	    properties: {[key: string]: Schema};
 	
 	    static createFrom(source: any = {}) {
 	        return new JsonSchema(source);
@@ -66,6 +126,8 @@ export namespace entity {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.title = source["title"];
 	        this.description = source["description"];
+	        this.type = source["type"];
+	        this.required = source["required"];
 	        this.properties = source["properties"];
 	    }
 	}

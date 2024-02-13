@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import { ref, inject } from "vue";
 import SchemaNode from "./SchemaNode/SchemaNode.vue";
-import AddPropertyForm from "./AddPropertyForm.vue";
-import { JsonSchemaKey } from "../../../types/editor.types";
-import { type SchemaProperty } from "../../../types/properties.types";
+import AddPropertyForm from "./forms/AddPropertyForm.vue";
+import EditRequiredForm from "./forms/EditRequiredForm.vue";
+import { JsonSchemaKey } from "../SchemaEditor.types";
+import { entity } from "../../../../wailsjs/go/models";
 
 const jsonSchema = inject(JsonSchemaKey);
 if (!jsonSchema) {
@@ -11,6 +12,7 @@ if (!jsonSchema) {
 }
 
 const showAddForm = ref(false);
+const showEditRequiredForm = ref(false);
 
 const updateBaseKey = ({
   editKey,
@@ -19,10 +21,10 @@ const updateBaseKey = ({
 }: {
   editKey: string;
   curKey: string;
-  value: SchemaProperty;
+  value: entity.Schema;
 }) => {
-  jsonSchema.properties.delete(curKey);
-  jsonSchema.properties.set(editKey, value);
+  delete jsonSchema.value.properties[curKey];
+  jsonSchema.value.properties[editKey] = value;
 };
 
 const updateBaseValue = ({
@@ -32,19 +34,19 @@ const updateBaseValue = ({
 }: {
   editKey: string;
   curKey: string;
-  value: SchemaProperty;
+  value: entity.Schema;
 }) => {
   if (editKey !== curKey) {
-    jsonSchema.properties.delete(curKey);
+    delete jsonSchema.value.properties[curKey];
   }
-  jsonSchema.properties.set(editKey, value);
+  jsonSchema.value.properties[editKey] = value;
 };
 
 const deleteBaseProperty = (keyToDelete: string) => {
-  const property = jsonSchema.properties.get(keyToDelete);
-  const isObjorArr = property!.type === "object" || property!.type === "array";
+  const property = jsonSchema.value.properties[keyToDelete];
+  const isObjOrArr = property!.type === "object" || property!.type === "array";
   let message = "";
-  switch (isObjorArr) {
+  switch (isObjOrArr) {
     case true:
       message = `Deleting "${keyToDelete}" will also delete any descendents of "${keyToDelete}." Do you wish to proceed?`;
       break;
@@ -53,7 +55,7 @@ const deleteBaseProperty = (keyToDelete: string) => {
       break;
   }
   if (confirm(message)) {
-    jsonSchema.properties.delete(keyToDelete);
+    delete jsonSchema.value.properties[keyToDelete];
   }
 };
 
@@ -62,37 +64,59 @@ const addNewProperty = ({
   value,
 }: {
   key: string;
-  value: SchemaProperty;
+  value: entity.Schema;
 }) => {
-  jsonSchema.properties.set(key, value);
+  jsonSchema.value.properties[key] = value;
+};
+
+const updateRequired = (required: string[]) => {
+  jsonSchema.value.required = required;
+  showEditRequiredForm.value = false;
 };
 </script>
 
 <template>
   <div class="schema_tree pa-4">
     <SchemaNode
-      v-for="(node, i) in jsonSchema.properties"
-      :key="`1-${i}-${typeof node[1]}`"
-      :node="node"
+      v-for="([k, v], i) in Object.entries(jsonSchema.properties)"
+      :key="`1-${i}-${k}`"
+      :node="[k, v]"
       :level="1"
       @update-base-key="updateBaseKey"
       @update-base-value="updateBaseValue"
       @delete-base-property="deleteBaseProperty"
     />
     <div>
-      <v-btn
-        v-if="!showAddForm"
-        size="x-small"
-        @click="showAddForm = true"
-        class="ml-2"
-      >
-        add
-      </v-btn>
+      <div v-if="!showAddForm && !showEditRequiredForm" class="d-flex">
+        <v-btn
+          size="x-small"
+          @click="showAddForm = true"
+          class="ml-2"
+          prepend-icon="mdi-plus"
+        >
+          add
+        </v-btn>
+        <v-btn
+          size="x-small"
+          @click="showEditRequiredForm = true"
+          class="ml-4"
+          prepend-icon="mdi-pencil-box-outline"
+        >
+          required
+        </v-btn>
+      </div>
+
       <AddPropertyForm
-        v-else
+        v-if="showAddForm"
         :nodeValue="jsonSchema.properties"
         @close-form="showAddForm = false"
         @add-new-property="addNewProperty"
+      />
+      <EditRequiredForm
+        v-if="showEditRequiredForm"
+        :schema="jsonSchema"
+        @close-form="showEditRequiredForm = false"
+        @update-required="updateRequired"
       />
     </div>
   </div>

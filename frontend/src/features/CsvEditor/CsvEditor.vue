@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import { inject } from "vue";
-import { CsvFileKey } from "../../types/editor.types";
+import { CsvFileKey } from "./CsvEditor.types";
 // import HeaderDescriptions from "./components/HeaderDescriptions.vue";
 import ModelTree from "./components/ModelTree.vue";
 
-const csvFile = inject(CsvFileKey);
-if (!csvFile) {
-  throw new Error(`Could not resolve ${CsvFileKey.description}`);
-}
+// const csvFile = inject(CsvFileKey);
+// if (!csvFile) {
+//   throw new Error(`Could not resolve ${CsvFileKey.description}`);
+// }
 
 // const tab = ref(1);
 </script>
@@ -15,7 +15,7 @@ if (!csvFile) {
 <template>
   <v-card border rounded="0" flat>
     <template #title>
-      <h3>{{ csvFile.fileName }}</h3>
+      <!-- <h3>{{ csvFile.fileName }}</h3> -->
     </template>
 
     <v-divider />

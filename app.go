@@ -23,8 +23,8 @@ func (a *App) ImportJsonSchema() core.ImportSchemaRes {
 	return core.ImportJsonSchema(a.ctx)
 }
 
-func (a *App) ImportCsvData() entity.CsvData {
-	return core.ImportCsvData(a.ctx)
+func (a *App) ImportCsvFileData() entity.CsvFileData {
+	return core.ImportCsvFileData(a.ctx)
 }
 
 func (a *App) ExportJsonSchema(schema entity.JsonSchema) {

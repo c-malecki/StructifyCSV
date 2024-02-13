@@ -16,7 +16,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-func ImportCsvData(c context.Context) entity.CsvData {
+func ImportCsvFileData(c context.Context) entity.CsvFileData {
 	filePath := ui.PrepareOpenFileDialog(c, "csv", "")
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -31,7 +31,7 @@ func ImportCsvData(c context.Context) entity.CsvData {
 	if err != nil {
 		print(err)
 	}
-	return entity.CsvData{FileName: name, Location: filePath, Headers: headers}
+	return entity.CsvFileData{FileName: name, Location: filePath, Headers: headers}
 }
 
 func WriteJsonFromCsvModelMap(c context.Context, modelMap entity.CsvModelMap) {

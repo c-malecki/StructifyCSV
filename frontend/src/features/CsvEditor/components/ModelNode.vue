@@ -6,7 +6,7 @@ import {
   type CsvSchemaMap,
   type CsvSchemaMapValue,
   type CsvSchemaProperty,
-} from "../../../types/editor.types";
+} from "../CsvEditor.types";
 
 const headerOpts = inject(HeaderOptsKey);
 if (!headerOpts) {
