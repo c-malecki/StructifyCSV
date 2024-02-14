@@ -31,8 +31,8 @@ func (a *App) ExportJsonSchema(schema entity.JsonSchema) {
 	core.WriteJsonSchema(a.ctx, schema)
 }
 
-func (a *App) WriteJsonFromCsvModelMap(modelMap entity.CsvModelMap) {
-	core.WriteJsonFromCsvModelMap(a.ctx, modelMap)
+func (a *App) ProcessCsvWithSchema(schema entity.JsonSchema) {
+	core.ProcessCsvWithSchema(a.ctx, schema)
 }
 
 func (a *App) MinimizeWindow() {

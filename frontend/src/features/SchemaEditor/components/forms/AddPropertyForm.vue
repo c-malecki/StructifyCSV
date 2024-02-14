@@ -47,7 +47,7 @@ const handleSubmit = () => {
     if (valid) {
       const constructorValues = propertyFormNullToUndefined(formValues);
       const properties = constructorValues.type === "object" ? {} : undefined;
-      const value = new entity.Schema({
+      const value = new entity.SchemaProperty({
         ...constructorValues,
         properties,
       });

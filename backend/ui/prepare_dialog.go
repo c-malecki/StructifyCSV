@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -32,7 +33,7 @@ func PrepareSaveFileDialog(c context.Context, entityName string) string {
 	opts := buildSaveDialogOpts(entityName)
 	filePath, err := runtime.SaveFileDialog(c, opts)
 	if err != nil {
-		print(err)
+		fmt.Printf("Error: %s\n", err)
 	}
 	return filePath
 }
@@ -41,7 +42,7 @@ func PrepareOpenFileDialog(c context.Context, fileType string, entityType string
 	opts := buildOpenDialogOptions(fileType, entityType)
 	filePath, err := runtime.OpenFileDialog(c, opts)
 	if err != nil {
-		print(err)
+		fmt.Printf("Error: %s\n", err)
 	}
 	return filePath
 }

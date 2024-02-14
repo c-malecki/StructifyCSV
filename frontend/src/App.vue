@@ -4,33 +4,23 @@ import {
   ExportJsonSchema,
   ImportCsvFileData,
 } from "../wailsjs/go/main/App";
+import { entity } from "../wailsjs/go/models";
 import { ref, reactive, provide } from "vue";
-import {
-  exampleSchema,
-  exampleCsvFile,
-  // exampleCsvSchemaMap,
-} from "./util/example";
-import {
-  CsvFileKey,
-  CsvSchemaMapKey,
-  type CsvSchemaMap,
-} from "./features/CsvEditor/CsvEditor.types";
+import { exampleSchema, exampleCsvFile } from "./util/example";
+import { CsvFileKey } from "./features/CsvEditor/CsvEditor.types";
 import { fixWailSchemaImport } from "./util/transform";
 import { JsonSchemaKey } from "./features/SchemaEditor/SchemaEditor.types";
 import TitleBar from "./ui/TitleBar.vue";
 import CsvEditor from "./features/CsvEditor/CsvEditor.vue";
 import SchemaEditor from "./features/SchemaEditor/SchemaEditor.vue";
-import { entity } from "../wailsjs/go/models";
 
 const titleBarRef = ref<typeof TitleBar | null>(null);
 
 const jsonSchema = ref<entity.JsonSchema>(exampleSchema);
 const csvFile = reactive<entity.CsvFileData>(exampleCsvFile);
-// const csvSchemaMap = reactive<CsvSchemaMap>(exampleCsvSchemaMap);
 
 provide(CsvFileKey, csvFile);
 provide(JsonSchemaKey, jsonSchema);
-// provide(CsvSchemaMapKey, csvSchemaMap);
 
 const handleCreateNewSchema = () => {
   const schema = new entity.JsonSchema({

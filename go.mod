@@ -5,7 +5,6 @@ go 1.21
 toolchain go1.21.4
 
 require (
-	github.com/mitchellh/mapstructure v1.5.0
 	github.com/santhosh-tekuri/jsonschema v1.2.4
 	github.com/wailsapp/wails/v2 v2.7.1
 )

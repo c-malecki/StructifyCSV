@@ -1,48 +1,73 @@
-import type { CsvSchemaMap } from "../features/CsvEditor/CsvEditor.types";
 import { entity } from "../../wailsjs/go/models";
 
 const PropertiesObject = {
-  productName: new entity.Schema({ type: "string", minLength: 3 }),
-  description: new entity.Schema({ type: "string" }),
-  featured: new entity.Schema({ type: "boolean" }),
-  images: new entity.Schema({
+  productName: new entity.SchemaProperty({
+    type: "string",
+    minLength: 3,
+    csvHeaderIndex: 0,
+  }),
+  description: new entity.SchemaProperty({ type: "string", csvHeaderIndex: 1 }),
+  featured: new entity.SchemaProperty({ type: "boolean", csvHeaderIndex: 2 }),
+  images: new entity.SchemaProperty({
     type: "array",
     items: { type: "string" },
     minItems: 0,
     maxItems: 3,
+    csvHeaderIndex: [3, 4],
   }),
-  bids: new entity.Schema({
+  bids: new entity.SchemaProperty({
     type: "object",
     required: ["initialPrice", "lastBid", "totalBids"],
     properties: {
-      initialPrice: new entity.Schema({
+      initialPrice: new entity.SchemaProperty({
         type: "number",
         numMinimum: 5.0,
         numMaximum: 99.99,
+        csvHeaderIndex: 5,
       }),
-      lastBid: new entity.Schema({
+      lastBid: new entity.SchemaProperty({
         type: "null",
+        csvHeaderIndex: 6,
       }),
-      totalBids: new entity.Schema({
+      totalBids: new entity.SchemaProperty({
         type: "integer",
         intMinimum: 0,
+        csvHeaderIndex: 7,
       }),
     },
   }),
-  seller: new entity.Schema({
+  seller: new entity.SchemaProperty({
     type: "object",
     properties: {
-      id: new entity.Schema({ type: "integer" }),
-      name: new entity.Schema({ type: "string" }),
-      address: new entity.Schema({
+      id: new entity.SchemaProperty({ type: "integer", csvHeaderIndex: 8 }),
+      name: new entity.SchemaProperty({ type: "string", csvHeaderIndex: 9 }),
+      address: new entity.SchemaProperty({
         type: "object",
         properties: {
-          lineOne: new entity.Schema({ type: "string" }),
-          lineTwo: new entity.Schema({ type: "string" }),
-          city: new entity.Schema({ type: "string" }),
-          state: new entity.Schema({ type: "string" }),
-          country: new entity.Schema({ type: "string" }),
-          postalCode: new entity.Schema({ type: "string" }),
+          lineOne: new entity.SchemaProperty({
+            type: "string",
+            csvHeaderIndex: 10,
+          }),
+          lineTwo: new entity.SchemaProperty({
+            type: "string",
+            csvHeaderIndex: 11,
+          }),
+          city: new entity.SchemaProperty({
+            type: "string",
+            csvHeaderIndex: 12,
+          }),
+          state: new entity.SchemaProperty({
+            type: "string",
+            csvHeaderIndex: 13,
+          }),
+          country: new entity.SchemaProperty({
+            type: "string",
+            csvHeaderIndex: 14,
+          }),
+          postalCode: new entity.SchemaProperty({
+            type: "string",
+            csvHeaderIndex: 15,
+          }),
         },
       }),
     },
@@ -79,7 +104,3 @@ export const exampleCsvFile = new entity.CsvFileData({
     "Seller Postal Code",
   ],
 });
-
-// export const exampleCsvSchemaMap: CsvSchemaMap = transformForCsvModelMap(
-//   exampleSchema.properties
-// );

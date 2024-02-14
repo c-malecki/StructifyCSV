@@ -53,13 +53,13 @@ export namespace entity {
 	        this.headers = source["headers"];
 	    }
 	}
-	export class Schema {
+	export class SchemaProperty {
 	    type: string;
-	    oneOf: Schema[];
+	    oneOf: SchemaProperty[];
 	    minProperties?: number;
 	    maxProperties?: number;
 	    required: string[];
-	    properties: {[key: string]: Schema};
+	    properties: {[key: string]: SchemaProperty};
 	    minItems?: number;
 	    maxItems?: number;
 	    items?: any;
@@ -69,15 +69,16 @@ export namespace entity {
 	    numMaximum?: number;
 	    intMinimum?: number;
 	    intMaximum?: number;
+	    csvHeaderIndex: any;
 	
 	    static createFrom(source: any = {}) {
-	        return new Schema(source);
+	        return new SchemaProperty(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.type = source["type"];
-	        this.oneOf = this.convertValues(source["oneOf"], Schema);
+	        this.oneOf = this.convertValues(source["oneOf"], SchemaProperty);
 	        this.minProperties = source["minProperties"];
 	        this.maxProperties = source["maxProperties"];
 	        this.required = source["required"];
@@ -91,6 +92,7 @@ export namespace entity {
 	        this.numMaximum = source["numMaximum"];
 	        this.intMinimum = source["intMinimum"];
 	        this.intMaximum = source["intMaximum"];
+	        this.csvHeaderIndex = source["csvHeaderIndex"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -116,7 +118,7 @@ export namespace entity {
 	    description: string;
 	    type: string;
 	    required: string[];
-	    properties: {[key: string]: Schema};
+	    properties: {[key: string]: SchemaProperty};
 	
 	    static createFrom(source: any = {}) {
 	        return new JsonSchema(source);

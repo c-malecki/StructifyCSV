@@ -1,6 +1,6 @@
 package entity
 
-type Properties map[string]*Schema
+type Properties map[string]*SchemaProperty
 
 type JsonSchema struct {
 	Title       string `json:"title"`
@@ -13,27 +13,29 @@ type JsonSchema struct {
 	Properties Properties `json:"properties"`
 }
 
-type Schema struct {
-	Type  string    `json:"type"`
-	OneOf []*Schema `json:"oneOf"`
-	// object
+type SchemaProperty struct {
+	Type  string            `json:"type"`
+	OneOf []*SchemaProperty `json:"oneOf"`
+	// object property validators
 	MinProperties *int       `json:"minProperties"`
 	MaxProperties *int       `json:"maxProperties"`
 	Required      []string   `json:"required"`
 	Properties    Properties `json:"properties"`
-	// array
+	// array property validators
 	MinItems *int         `json:"minItems"`
 	MaxItems *int         `json:"maxItems"`
 	Items    *interface{} `json:"items"`
-	// string
+	// string property validators
 	MinLength *int `json:"minLength"`
 	MaxLength *int `json:"maxLength"`
-	// number
+	// number property validators
 	NumMinimum *float64 `json:"numMinimum"`
 	NumMaximum *float64 `json:"numMaximum"`
-	// integer
+	// integer property validators
 	IntMinimum *int `json:"intMinimum"`
 	IntMaximum *int `json:"intMaximum"`
+	// csv header index to map to
+	CsvHeaderIndex interface{} `json:"csvHeaderIndex"`
 }
 
 const (
@@ -51,13 +53,6 @@ const (
 	Boolean DataType = "boolean"
 	Null    DataType = "null"
 )
-
-type CsvSchemaProperty struct {
-	HeaderIndexes      []int  `json:"headerIndexes"`
-	SchemaPropertyType string `json:"schemaPropertyType"`
-}
-
-type CsvModelMap map[string]interface{}
 
 type CsvFileData struct {
 	FileName string   `json:"fileName"`
