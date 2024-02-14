@@ -1,14 +1,10 @@
 <script lang="ts" setup>
-import { WriteJsonFromCsvModelMap } from "../../../../wailsjs/go/main/App";
+import { ProcessCsvWithSchema } from "../../../../wailsjs/go/main/App";
 import { computed, provide, inject } from "vue";
-import { CsvSchemaMapKey, CsvFileKey, HeaderOptsKey } from "../CsvEditor.types";
+import { CsvFileKey, HeaderOptsKey } from "../CsvEditor.types";
 import { JsonSchemaKey } from "../../SchemaEditor/SchemaEditor.types";
 import ModelNode from "./ModelNode.vue";
 
-// const csvSchemaMap = inject(CsvSchemaMapKey);
-// if (!csvSchemaMap) {
-//   throw new Error(`Could not resolve ${CsvSchemaMapKey.description}`);
-// }
 const csvFile = inject(CsvFileKey);
 if (!csvFile) {
   throw new Error(`Could not resolve ${CsvFileKey.description}`);
@@ -30,7 +26,7 @@ const headerOpts = computed(() =>
 provide(HeaderOptsKey, headerOpts);
 
 const handleExport = () => {
-  // WriteJsonFromCsvModelMap(transformCsvModelMaptoObject(csvSchemaMap));
+  ProcessCsvWithSchema(jsonSchema.value);
 };
 </script>
 
@@ -41,13 +37,12 @@ const handleExport = () => {
   </div>
 
   <div class="schema_tree pa-4">
-    <!-- <ModelNode
-      v-for="(node, i) in csvSchemaMap"
-      :key="`1-${i}-${typeof node[1]}-csv`"
-      :nodeKey="node[0]"
-      :nodeValue="node[1]"
+    <ModelNode
+      v-for="([k, v], i) in Object.entries(jsonSchema.properties)"
+      :key="`1-csv-${k}`"
+      :node="[k, v]"
       :level="1"
-    /> -->
+    />
   </div>
 </template>
 

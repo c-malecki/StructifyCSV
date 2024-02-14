@@ -26,10 +26,10 @@ export function MinimizeWindow() {
   return window['go']['main']['App']['MinimizeWindow']();
 }
 
-export function UnmaximizeWindow() {
-  return window['go']['main']['App']['UnmaximizeWindow']();
+export function ProcessCsvWithSchema(arg1) {
+  return window['go']['main']['App']['ProcessCsvWithSchema'](arg1);
 }
 
-export function WriteJsonFromCsvModelMap(arg1) {
-  return window['go']['main']['App']['WriteJsonFromCsvModelMap'](arg1);
+export function UnmaximizeWindow() {
+  return window['go']['main']['App']['UnmaximizeWindow']();
 }

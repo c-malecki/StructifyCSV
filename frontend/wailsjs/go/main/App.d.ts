@@ -15,6 +15,6 @@ export function MaximizeWindow():Promise<void>;
 
 export function MinimizeWindow():Promise<void>;
 
-export function UnmaximizeWindow():Promise<void>;
+export function ProcessCsvWithSchema(arg1:entity.JsonSchema):Promise<void>;
 
-export function WriteJsonFromCsvModelMap(arg1:entity.CsvModelMap):Promise<void>;
+export function UnmaximizeWindow():Promise<void>;

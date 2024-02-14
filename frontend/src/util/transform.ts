@@ -33,7 +33,7 @@ const nullToUndefined = (properties: Record<string, any>) => {
  * To align with the Wails generated `models.ts` TypeScript class `Schema`, this converts the `null` form to `undefined`.
  */
 export const fixWailSchemaImport = (
-  properties: entity.Schema["properties"]
+  properties: entity.SchemaProperty["properties"]
 ) => {
   const result = {} as Record<string, any>;
   const entries = Object.entries(properties);
@@ -69,7 +69,7 @@ export const propertyFormNullToUndefined = (
   return result;
 };
 
-export const getSchemaAttributesDisplay = (schema: entity.Schema) => {
+export const getSchemaAttributesDisplay = (schema: entity.SchemaProperty) => {
   const entries = Object.entries(schema);
   const filterNoDisplay = entries.filter(
     ([k, v]) =>
@@ -78,7 +78,8 @@ export const getSchemaAttributesDisplay = (schema: entity.Schema) => {
       k !== "properties" &&
       k !== "required" &&
       k !== "items" &&
-      k !== "onOf"
+      k !== "onOf" &&
+      k !== "csvHeaderIndex"
   );
   return filterNoDisplay.map(([k, v]) => {
     if (k.includes("numM")) {

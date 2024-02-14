@@ -22,7 +22,7 @@ export const schemaPropertyTypes: SchemaPropertyType[] = [
 
 export type ArrayItemType = "string" | "number" | "integer";
 
-export type SchemaNode = [string, entity.Schema];
+export type SchemaNode = [string, entity.SchemaProperty];
 
 export const JsonSchemaKey: InjectionKey<Ref<entity.JsonSchema>> =
   Symbol("JsonSchema");

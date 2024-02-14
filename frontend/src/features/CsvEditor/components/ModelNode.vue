@@ -1,12 +1,8 @@
 <script lang="ts" setup>
 import { inject, computed, type PropType } from "vue";
-import { getHoverColorScheme, getLeftIndent } from "../../../util/style";
-import {
-  HeaderOptsKey,
-  type CsvSchemaMap,
-  type CsvSchemaMapValue,
-  type CsvSchemaProperty,
-} from "../CsvEditor.types";
+import { getHoverColorScheme } from "../../../util/style";
+import { HeaderOptsKey } from "../CsvEditor.types";
+import { type SchemaNode } from "../../SchemaEditor/SchemaEditor.types";
 
 const headerOpts = inject(HeaderOptsKey);
 if (!headerOpts) {
@@ -14,13 +10,9 @@ if (!headerOpts) {
 }
 
 // make note about directly mutating props and why
-const nodeProps = defineProps({
-  nodeKey: {
-    type: String,
-    required: true,
-  },
-  nodeValue: {
-    type: Object as PropType<CsvSchemaMapValue>,
+const props = defineProps({
+  node: {
+    type: Object as PropType<SchemaNode>,
     required: true,
   },
   level: {
@@ -29,59 +21,34 @@ const nodeProps = defineProps({
   },
 });
 
-const isMap = computed(() => nodeProps.nodeValue instanceof Map);
-const leftIndent = computed(() => getLeftIndent(nodeProps.level));
-const colorScheme = computed(() => getHoverColorScheme(nodeProps.level));
-
-// const handleUpdateCsvHeader = (val: string | string[] | null) => {
-//   const csvSchemaNodeValue = nodeProps.nodeValue as CsvSchemaNodeValue;
-//   if (val !== null) {
-//     if (Array.isArray(val)) {
-
-//     }
-//     const index = csvSchema.headerDescriptors.findIndex(
-//       (h) => h.headerText === val
-//     );
-//     csvSchema.usedHeaderIndexes.push(index);
-//     csvSchemaNodeValue.headerIndex = index;
-//     csvSchema.headerDescriptors[index].propertyDescriptor = {
-//       key: nodeProps.nodeKey,
-//       path: csvSchemaNodeValue.schemaPath,
-//       type: csvSchemaNodeValue.schemaPropertyType,
-//     };
-//   } else {
-//     csvSchema.usedHeaderIndexes = csvSchema.usedHeaderIndexes.filter(
-//       (h, i) => i !== csvSchemaNodeValue.headerIndex!
-//     );
-//     csvSchema.headerDescriptors[
-//       csvSchemaNodeValue.headerIndex!
-//     ].propertyDescriptor = undefined;
-//     csvSchemaNodeValue.headerIndex = null;
-//   }
-// };
+const colorScheme = computed(() => getHoverColorScheme(props.level));
 </script>
 
 <template>
   <v-hover>
-    <template v-slot:default="{ isHovering, props }">
+    <template v-slot:default="{ isHovering, props: hoverProps }">
       <v-card
-        v-bind="props"
+        v-bind="hoverProps"
         :color="isHovering ? colorScheme.hover : undefined"
         variant="flat"
-        :style="leftIndent"
+        style="margin-left: 24px; padding: 6px"
       >
         <div
-          :class="{ closing_bracket: isMap }"
+          :class="{ closing_bracket: props.node[1].type === 'object' }"
           :style="`color: ${isHovering ? colorScheme.font : 'black'}`"
-          class="pl-1 pt-1 pb-1"
         >
-          <div v-if="!isMap" class="d-flex align-center">
+          <div
+            :class="`d-flex align-center ${
+              props.node[1].type === 'object' ? 'opening_bracket pb-1' : ''
+            }`"
+          >
             <p class="mr-2">
-              <b>{{ nodeKey }}: </b>
+              <b>{{ props.node[0] }}: </b>
             </p>
 
             <VAutocomplete
-              v-model="(nodeProps.nodeValue as CsvSchemaProperty).headerIndexes"
+              v-if="props.node[1].type !== 'object'"
+              v-model="props.node[1].csvHeaderIndex"
               :items="headerOpts"
               label="Headers"
               item-title="header"
@@ -90,22 +57,17 @@ const colorScheme = computed(() => getHoverColorScheme(nodeProps.level));
               hide-details
               clearable
               persistent-clear
-              :multiple="(nodeProps.nodeValue as CsvSchemaProperty).schemaPropertyType === 'array'"
+              :multiple="props.node[1].type === 'array'"
             />
           </div>
 
-          <div v-else>
-            <p class="opening_bracket">
-              <b>{{ nodeKey }}: </b>
-            </p>
-            <ModelNode
-              v-for="(node, i) in (nodeProps.nodeValue as CsvSchemaMap)"
-              :key="`${nodeProps.level + 1}-${i}-${typeof node[1]}-csv`"
-              :nodeKey="node[0]"
-              :nodeValue="node[1]"
-              :level="nodeProps.level + 1"
-            />
-          </div>
+          <ModelNode
+            v-if="node[1].properties"
+            v-for="([k, v], i) in Object.entries(node[1].properties)"
+            :key="`${level + 1}-csv-${k}`"
+            :node="[k, v]"
+            :level="props.level + 1"
+          />
         </div>
       </v-card>
     </template>

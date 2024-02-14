@@ -11,8 +11,8 @@ if (!jsonSchema) {
   throw new Error(`Could not resolve ${JsonSchemaKey.description}`);
 }
 
-const showAddForm = ref(false);
-const showEditRequiredForm = ref(false);
+type CurForm = "add" | "required" | null;
+const curForm = ref<CurForm>(null);
 
 const updateBaseKey = ({
   editKey,
@@ -21,7 +21,7 @@ const updateBaseKey = ({
 }: {
   editKey: string;
   curKey: string;
-  value: entity.Schema;
+  value: entity.SchemaProperty;
 }) => {
   delete jsonSchema.value.properties[curKey];
   jsonSchema.value.properties[editKey] = value;
@@ -34,7 +34,7 @@ const updateBaseValue = ({
 }: {
   editKey: string;
   curKey: string;
-  value: entity.Schema;
+  value: entity.SchemaProperty;
 }) => {
   if (editKey !== curKey) {
     delete jsonSchema.value.properties[curKey];
@@ -64,14 +64,14 @@ const addNewProperty = ({
   value,
 }: {
   key: string;
-  value: entity.Schema;
+  value: entity.SchemaProperty;
 }) => {
   jsonSchema.value.properties[key] = value;
 };
 
 const updateRequired = (required: string[]) => {
   jsonSchema.value.required = required;
-  showEditRequiredForm.value = false;
+  curForm.value = null;
 };
 </script>
 
@@ -79,7 +79,7 @@ const updateRequired = (required: string[]) => {
   <div class="schema_tree pa-4">
     <SchemaNode
       v-for="([k, v], i) in Object.entries(jsonSchema.properties)"
-      :key="`1-${i}-${k}`"
+      :key="`1-json-${k}`"
       :node="[k, v]"
       :level="1"
       @update-base-key="updateBaseKey"
@@ -87,10 +87,10 @@ const updateRequired = (required: string[]) => {
       @delete-base-property="deleteBaseProperty"
     />
     <div>
-      <div v-if="!showAddForm && !showEditRequiredForm" class="d-flex">
+      <div v-if="!curForm" class="d-flex">
         <v-btn
           size="x-small"
-          @click="showAddForm = true"
+          @click="curForm = 'add'"
           class="ml-2"
           prepend-icon="mdi-plus"
         >
@@ -98,7 +98,7 @@ const updateRequired = (required: string[]) => {
         </v-btn>
         <v-btn
           size="x-small"
-          @click="showEditRequiredForm = true"
+          @click="curForm = 'required'"
           class="ml-4"
           prepend-icon="mdi-pencil-box-outline"
         >
@@ -107,15 +107,15 @@ const updateRequired = (required: string[]) => {
       </div>
 
       <AddPropertyForm
-        v-if="showAddForm"
+        v-if="curForm === 'add'"
         :nodeValue="jsonSchema.properties"
-        @close-form="showAddForm = false"
+        @close-form="curForm = null"
         @add-new-property="addNewProperty"
       />
       <EditRequiredForm
-        v-if="showEditRequiredForm"
+        v-if="curForm === 'required'"
         :schema="jsonSchema"
-        @close-form="showEditRequiredForm = false"
+        @close-form="curForm = null"
         @update-required="updateRequired"
       />
     </div>

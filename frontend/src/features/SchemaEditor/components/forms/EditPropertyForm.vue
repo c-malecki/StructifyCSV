@@ -74,7 +74,7 @@ const handleSubmit = () => {
             ? props.node[1].properties
             : {};
 
-        const value = new entity.Schema({
+        const value = new entity.SchemaProperty({
           ...constructorValues,
           properties,
         });

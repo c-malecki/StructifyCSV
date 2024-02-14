@@ -60,7 +60,7 @@ const updateParentKey = ({
 }: {
   editKey: string;
   curKey: string;
-  value: entity.Schema;
+  value: entity.SchemaProperty;
 }) => {
   delete props.node[1].properties[curKey];
   props.node[1].properties[editKey] = value;
@@ -69,7 +69,7 @@ const updateParentKey = ({
 const updateValue = (update: {
   editKey: string;
   curKey: string;
-  value: entity.Schema;
+  value: entity.SchemaProperty;
 }) => {
   if (props.level === 1) {
     emit("updateBaseValue", update);
@@ -85,7 +85,7 @@ const updateParentValue = ({
 }: {
   editKey: string;
   curKey: string;
-  value: entity.Schema;
+  value: entity.SchemaProperty;
 }) => {
   if (editKey !== curKey) {
     delete props.node[1].properties[curKey];
@@ -123,7 +123,7 @@ const addNewProperty = ({
   value,
 }: {
   key: string;
-  value: entity.Schema;
+  value: entity.SchemaProperty;
 }) => {
   if (props.node[1].properties !== undefined) {
     props.node[1].properties[key] = value;
@@ -205,7 +205,7 @@ const updateRequired = (required: string[]) => {
           <SchemaNode
             v-if="node[1].properties && curForm !== 'required'"
             v-for="([k, v], i) in Object.entries(node[1].properties)"
-            :key="`${level + 1}-${i}-${k}`"
+            :key="`${level + 1}-json-${k}`"
             :node="[k, v]"
             :level="level + 1"
             @update-parent-key="updateParentKey"

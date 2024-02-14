@@ -12,15 +12,13 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-
-	"github.com/mitchellh/mapstructure"
 )
 
 func ImportCsvFileData(c context.Context) entity.CsvFileData {
 	filePath := ui.PrepareOpenFileDialog(c, "csv", "")
 	file, err := os.Open(filePath)
 	if err != nil {
-		print(err)
+		fmt.Printf("Error: %s\n", err)
 	}
 	defer file.Close()
 
@@ -29,24 +27,24 @@ func ImportCsvFileData(c context.Context) entity.CsvFileData {
 	reader := csv.NewReader(file)
 	headers, err := reader.Read()
 	if err != nil {
-		print(err)
+		fmt.Printf("Error: %s\n", err)
 	}
 	return entity.CsvFileData{FileName: name, Location: filePath, Headers: headers}
 }
 
-func WriteJsonFromCsvModelMap(c context.Context, modelMap entity.CsvModelMap) {
+func ProcessCsvWithSchema(c context.Context, schema entity.JsonSchema) {
 	lineMapCh := make(chan map[string]any)
 	doneCh := make(chan bool)
 
-	go processCsvModel(modelMap, lineMapCh)
+	go processCsvModel(schema, lineMapCh)
 	go writeModelJson(lineMapCh, doneCh)
 	<-doneCh
 }
 
-func processCsvModel(modelMap entity.CsvModelMap, lineMapCh chan<- map[string]any) {
+func processCsvModel(schema entity.JsonSchema, lineMapCh chan<- map[string]any) {
 	file, err := os.Open("/home/meeps/Documents/Products.csv")
 	if err != nil {
-		print(err)
+		fmt.Printf("Error: %s\n", err)
 	}
 	defer file.Close()
 
@@ -55,7 +53,7 @@ func processCsvModel(modelMap entity.CsvModelMap, lineMapCh chan<- map[string]an
 	var headers, line []string
 	headers, err = reader.Read()
 	if err != nil {
-		print(err)
+		fmt.Printf("Error: %s\n", err)
 	}
 
 	for {
@@ -65,10 +63,16 @@ func processCsvModel(modelMap entity.CsvModelMap, lineMapCh chan<- map[string]an
 			close(lineMapCh)
 			break
 		} else if err != nil {
-			print(err)
+			fmt.Printf("Line: %sError: %s\n", line, err)
 		}
 
-		record, err := processCsvLineToMap(headers, line, modelMap)
+		if len(line) != len(headers) {
+			err := errors.New("line doesn't match headers format. skipping")
+			fmt.Printf("Error: %s\n", err)
+		}
+
+		jsonMap := make(map[string]interface{})
+		record := processCsvLineToMap(line, schema.Properties, jsonMap)
 
 		if err != nil {
 			fmt.Printf("Line: %sError: %s\n", line, err)
@@ -78,82 +82,41 @@ func processCsvModel(modelMap entity.CsvModelMap, lineMapCh chan<- map[string]an
 	}
 }
 
-func processCsvLineToMap(headers []string, lineData []string, modelMap entity.CsvModelMap) (map[string]any, error) {
-	if len(lineData) != len(headers) {
-		return nil, errors.New("line doesn't match headers format. skipping")
-	}
+func processCsvLineToMap(lineData []string, properties entity.Properties, jsonMap map[string]interface{}) map[string]any {
+	for key, schema := range properties {
+		if schema.Type != "object" && schema.CsvHeaderIndex == nil {
+			continue
+		}
 
-	jsonMap := make(map[string]interface{})
+		switch schema.Type {
+		case "array":
+			arr := schema.CsvHeaderIndex.([]interface{})
+			indexes := make([]int, 0, len(arr))
 
-	for key, value := range modelMap {
-		var nodeStruct entity.CsvSchemaProperty
-		nodeMap := value.(map[string]interface{})
-
-		_, ok := nodeMap["headerIndexes"]
-		if ok {
-			err := mapstructure.Decode(nodeMap, &nodeStruct)
-			if err != nil {
-				print(err)
+			for _, v := range arr {
+				i64 := v.(float64)
+				index := int(i64)
+				indexes = append(indexes, index)
 			}
 
-			if len(nodeStruct.HeaderIndexes) > 0 {
-				if nodeStruct.SchemaPropertyType == "array" {
-					slice := make([]any, 0, len(nodeStruct.HeaderIndexes))
-					for _, n := range nodeStruct.HeaderIndexes {
-						v := lineData[n]
-						slice = append(slice, v)
-					}
-					jsonMap[key] = slice
-				} else {
-					v, _ := convertLineDataType(lineData[nodeStruct.HeaderIndexes[0]], nodeStruct)
-					jsonMap[key] = v
-				}
+			slice := make([]any, 0, len(indexes))
+			for _, i := range indexes {
+				v := lineData[i]
+				slice = append(slice, v)
 			}
 
-		} else {
-			parseModelChildMap(nodeMap, lineData, jsonMap, key)
+			jsonMap[key] = slice
+		case "object":
+			nextMap := make(map[string]interface{})
+			jsonMap[key] = processCsvLineToMap(lineData, schema.Properties, nextMap)
+		default:
+			i64 := schema.CsvHeaderIndex.(float64)
+			index := int(i64)
+			v, _ := convertLineDataType(lineData[index], *schema)
+			jsonMap[key] = v
 		}
 	}
-
-	return jsonMap, nil
-}
-
-// todo: bug - if nested maps are empty, json output is an empty object
-func parseModelChildMap(child map[string]interface{}, lineData []string, jsonMap map[string]interface{}, lastKey string) {
-	nextMap := make(map[string]interface{})
-
-	for key, value := range child {
-		var nodeStruct entity.CsvSchemaProperty
-		grandChildMap := value.(map[string]interface{})
-
-		_, ok := grandChildMap["headerIndexes"]
-		if ok {
-			err := mapstructure.Decode(grandChildMap, &nodeStruct)
-			if err != nil {
-				print(err)
-			}
-
-			if len(nodeStruct.HeaderIndexes) > 0 {
-				if nodeStruct.SchemaPropertyType == "array" {
-					slice := make([]any, 0, len(nodeStruct.HeaderIndexes))
-					for _, n := range nodeStruct.HeaderIndexes {
-						v := lineData[n]
-						slice = append(slice, v)
-					}
-					nextMap[key] = slice
-					jsonMap[key] = nextMap
-				} else {
-					v, _ := convertLineDataType(lineData[nodeStruct.HeaderIndexes[0]], nodeStruct)
-					nextMap[key] = v
-					jsonMap[lastKey] = nextMap
-				}
-			}
-
-		} else {
-			jsonMap[lastKey] = nextMap
-			parseModelChildMap(grandChildMap, lineData, jsonMap[lastKey].(map[string]interface{}), key)
-		}
-	}
+	return jsonMap
 }
 
 // func createSliceOfType( propType string, len int) []any {
@@ -164,8 +127,8 @@ func parseModelChildMap(child map[string]interface{}, lineData []string, jsonMap
 // 	}
 // }
 
-func convertLineDataType(lineItem string, node entity.CsvSchemaProperty) (any, error) {
-	switch node.SchemaPropertyType {
+func convertLineDataType(lineItem string, schema entity.SchemaProperty) (any, error) {
+	switch schema.Type {
 	case "string":
 		//  string
 		return lineItem, nil
@@ -185,8 +148,8 @@ func convertLineDataType(lineItem string, node entity.CsvSchemaProperty) (any, e
 		// handle error for improper value conversion result
 		v, err := strconv.ParseBool(lineItem)
 		return v, err
-	// case "null":
-	//  nil ??
+	case "null":
+		return nil, nil
 	default:
 		return lineItem, errors.New("schema property value data type doesn't match accepted data types")
 	}

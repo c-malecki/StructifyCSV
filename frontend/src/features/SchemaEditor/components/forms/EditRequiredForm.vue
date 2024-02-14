@@ -5,7 +5,7 @@ import { entity } from "../../../../../wailsjs/go/models";
 
 const props = defineProps({
   schema: {
-    type: Object as PropType<entity.Schema | entity.JsonSchema>,
+    type: Object as PropType<entity.SchemaProperty | entity.JsonSchema>,
     required: true,
   },
 });
