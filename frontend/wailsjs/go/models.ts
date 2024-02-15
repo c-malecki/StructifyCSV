@@ -53,6 +53,54 @@ export namespace entity {
 	        this.headers = source["headers"];
 	    }
 	}
+	export class CsvProcessingError {
+	    rowNum: number;
+	    colNum?: number;
+	    error: any;
+	
+	    static createFrom(source: any = {}) {
+	        return new CsvProcessingError(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.rowNum = source["rowNum"];
+	        this.colNum = source["colNum"];
+	        this.error = source["error"];
+	    }
+	}
+	export class CsvProcessingReport {
+	    successes: number[];
+	    errors: CsvProcessingError[];
+	
+	    static createFrom(source: any = {}) {
+	        return new CsvProcessingReport(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.successes = source["successes"];
+	        this.errors = this.convertValues(source["errors"], CsvProcessingError);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class SchemaProperty {
 	    type: string;
 	    oneOf: SchemaProperty[];
@@ -62,7 +110,7 @@ export namespace entity {
 	    properties: {[key: string]: SchemaProperty};
 	    minItems?: number;
 	    maxItems?: number;
-	    items?: any;
+	    items: any;
 	    minLength?: number;
 	    maxLength?: number;
 	    numMinimum?: number;

@@ -22,9 +22,9 @@ type SchemaProperty struct {
 	Required      []string   `json:"required"`
 	Properties    Properties `json:"properties"`
 	// array property validators
-	MinItems *int         `json:"minItems"`
-	MaxItems *int         `json:"maxItems"`
-	Items    *interface{} `json:"items"`
+	MinItems *int        `json:"minItems"`
+	MaxItems *int        `json:"maxItems"`
+	Items    interface{} `json:"items"`
 	// string property validators
 	MinLength *int `json:"minLength"`
 	MaxLength *int `json:"maxLength"`
@@ -58,4 +58,25 @@ type CsvFileData struct {
 	FileName string   `json:"fileName"`
 	Location string   `json:"location"`
 	Headers  []string `json:"headers"`
+}
+
+type ArrayItems struct {
+	Type string
+}
+
+type CsvRowSchema struct {
+	RowNum     int
+	RowData    []string
+	Properties Properties
+}
+
+type CsvProcessingError struct {
+	RowNum int   `json:"rowNum"`
+	ColNum *int  `json:"colNum"`
+	Error  error `json:"error"`
+}
+
+type CsvProcessingReport struct {
+	Successes []int                `json:"successes"`
+	Errors    []CsvProcessingError `json:"errors"`
 }
