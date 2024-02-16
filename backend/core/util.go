@@ -1,6 +1,7 @@
 package core
 
 import (
+	"csvtoschema/backend/entity"
 	"fmt"
 	"os"
 )
@@ -21,4 +22,9 @@ func CreateStringWriter(filePath string) func(string, bool) {
 			file.Close()
 		}
 	}
+}
+
+func CreatePErr(msg string, rowNum int) entity.CsvProcessingError {
+	pErr := entity.CsvProcessingError{RowNum: rowNum, Error: msg}
+	return pErr
 }

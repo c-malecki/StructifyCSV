@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { ProcessCsvWithSchema } from "../../../../wailsjs/go/main/App";
 import { computed, provide, inject } from "vue";
 import { CsvFileKey, HeaderOptsKey } from "../CsvEditor.types";
 import { JsonSchemaKey } from "../../SchemaEditor/SchemaEditor.types";
@@ -24,15 +23,10 @@ const headerOpts = computed(() =>
 );
 
 provide(HeaderOptsKey, headerOpts);
-
-const handleExport = () => {
-  ProcessCsvWithSchema(jsonSchema.value);
-};
 </script>
 
 <template>
   <div class="pl-4 pt-4">
-    <v-btn @click="handleExport">test</v-btn>
     <h3>{{ jsonSchema.title }}</h3>
   </div>
 

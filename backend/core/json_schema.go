@@ -107,10 +107,6 @@ func processIntSchema(schema entity.SchemaProperty, propertyMap map[string]inter
 	propertyMap["type"] = "integer"
 }
 
-type ArrayItems struct {
-	Type string `json:"type"`
-}
-
 func processArraySchema(schema entity.SchemaProperty, propertyMap map[string]interface{}) {
 	if schema.MinItems != nil {
 		propertyMap["minItems"] = schema.MinItems
@@ -119,7 +115,8 @@ func processArraySchema(schema entity.SchemaProperty, propertyMap map[string]int
 		propertyMap["maxItems"] = schema.MaxItems
 	}
 	if schema.Items != nil {
-		propertyMap["items"] = *schema.Items
+		// ex: { items: { type: "string" } }
+		propertyMap["items"] = schema.Items
 	}
 	propertyMap["type"] = "array"
 }
