@@ -71,9 +71,9 @@ type CsvRowSchema struct {
 }
 
 type CsvProcessingError struct {
-	RowNum int   `json:"rowNum"`
-	ColNum *int  `json:"colNum"`
-	Error  error `json:"error"`
+	RowNum int    `json:"rowNum"`
+	ColNum int    `json:"colNum"`
+	Error  string `json:"error"`
 }
 
 type CsvProcessingReport struct {

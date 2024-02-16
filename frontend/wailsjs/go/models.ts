@@ -55,8 +55,8 @@ export namespace entity {
 	}
 	export class CsvProcessingError {
 	    rowNum: number;
-	    colNum?: number;
-	    error: any;
+	    colNum: number;
+	    error: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new CsvProcessingError(source);

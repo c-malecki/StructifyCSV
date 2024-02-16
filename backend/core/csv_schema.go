@@ -34,28 +34,51 @@ func ImportCsvFileData(c context.Context) entity.CsvFileData {
 
 func ProcessCsvWithJsonSchema(jsonSchema entity.JsonSchema) entity.CsvProcessingReport {
 	var wg sync.WaitGroup
+	var report entity.CsvProcessingReport
 	var csvProcessingErrs []entity.CsvProcessingError
 	var successfulRowNums []int
 
 	successCh := make(chan int)
-	pErrMapCh := make(chan entity.CsvProcessingError)
+	pErrCh := make(chan entity.CsvProcessingError)
 	rowMapCh := make(chan map[string]any)
 
-	wg.Add(2)
-	go processCsv(jsonSchema, rowMapCh, pErrMapCh, successCh, &wg)
+	wg.Add(4)
+	go processCsv(jsonSchema, rowMapCh, pErrCh, successCh, &wg)
+	go aggregateSuccess(successCh, successfulRowNums, &report, &wg)
+	go aggregatePErrs(pErrCh, csvProcessingErrs, &report, &wg)
 	go writeJsonFromCsv(rowMapCh, &wg)
 	wg.Wait()
 
-	for pErr := range pErrMapCh {
-		csvProcessingErrs = append(csvProcessingErrs, pErr)
-	}
-	for rowNum := range successCh {
-		successfulRowNums = append(successfulRowNums, rowNum)
-	}
-	return entity.CsvProcessingReport{Successes: successfulRowNums, Errors: csvProcessingErrs}
+	return report
 }
 
-func processCsv(schema entity.JsonSchema, rowMapCh chan<- map[string]any, pErrMapCh chan<- entity.CsvProcessingError, successCh chan<- int, wg *sync.WaitGroup) {
+func aggregateSuccess(successCh <-chan int, successfulRowNums []int, report *entity.CsvProcessingReport, wg *sync.WaitGroup) {
+	for {
+		colNum, more := <-successCh
+		if more {
+			successfulRowNums = append(successfulRowNums, colNum)
+			report.Successes = successfulRowNums
+		} else {
+			wg.Done()
+			break
+		}
+	}
+}
+
+func aggregatePErrs(pErrCh <-chan entity.CsvProcessingError, csvProcessingErrs []entity.CsvProcessingError, report *entity.CsvProcessingReport, wg *sync.WaitGroup) {
+	for {
+		pErr, more := <-pErrCh
+		if more {
+			csvProcessingErrs = append(csvProcessingErrs, pErr)
+			report.Errors = csvProcessingErrs
+		} else {
+			wg.Done()
+			break
+		}
+	}
+}
+
+func processCsv(schema entity.JsonSchema, rowMapCh chan<- map[string]any, pErrCh chan<- entity.CsvProcessingError, successCh chan<- int, wg *sync.WaitGroup) {
 	file, err := os.Open("/home/meeps/Documents/Products.csv")
 	if err != nil {
 		// return error that file could not be opened
@@ -78,9 +101,8 @@ func processCsv(schema entity.JsonSchema, rowMapCh chan<- map[string]any, pErrMa
 		row, err = reader.Read()
 
 		if err == io.EOF {
-			fmt.Printf("\nRow: %v end\n", rowNum)
 			close(rowMapCh)
-			close(pErrMapCh)
+			close(pErrCh)
 			close(successCh)
 			wg.Done()
 			break
@@ -95,14 +117,13 @@ func processCsv(schema entity.JsonSchema, rowMapCh chan<- map[string]any, pErrMa
 			print("row len != header len")
 			msg := fmt.Sprintf("row %v doesn't match headers format", rowNum)
 			pErr := CreatePErr(msg, rowNum)
-			pErrMapCh <- pErr
+			pErrCh <- pErr
 			continue
 		}
 
 		jsonMap := make(map[string]interface{})
 		rowSchema := entity.CsvRowSchema{RowNum: rowNum, RowData: row, Properties: schema.Properties}
-		rowMap := processRowToMap(rowSchema, jsonMap, pErrMapCh)
-		fmt.Printf("\n%v: %+v\n", rowNum, rowMap)
+		rowMap := processRowToMap(rowSchema, jsonMap, pErrCh)
 
 		// if err != nil {
 		// 	fmt.Printf("Line: %sError: %s\n", row, err)
@@ -120,12 +141,10 @@ func writeJsonFromCsv(rowMapCh <-chan map[string]any, wg *sync.WaitGroup) {
 	}
 	writeString := CreateStringWriter("/home/meeps/Documents/ProductsModel.json")
 	writeString("[\n", false)
-	print("write")
 
 	first := true
 	for {
 		rowMap, more := <-rowMapCh
-		fmt.Printf("\n%+v\n", rowMap)
 		if more {
 			if !first {
 				writeString(",\n", false)
@@ -143,7 +162,7 @@ func writeJsonFromCsv(rowMapCh <-chan map[string]any, wg *sync.WaitGroup) {
 	}
 }
 
-func processRowToMap(lineSchema entity.CsvRowSchema, jsonMap map[string]interface{}, pErrMapCh chan<- entity.CsvProcessingError) map[string]any {
+func processRowToMap(lineSchema entity.CsvRowSchema, jsonMap map[string]interface{}, pErrCh chan<- entity.CsvProcessingError) map[string]any {
 	for key, propSchema := range lineSchema.Properties {
 		if propSchema.Type != "object" && propSchema.CsvHeaderIndex == nil {
 			continue
@@ -159,10 +178,11 @@ func processRowToMap(lineSchema entity.CsvRowSchema, jsonMap map[string]interfac
 				index := int(i64)
 				colNums = append(colNums, index)
 			}
+			fmt.Printf("%v", colNums)
 
 			arr := make([]any, 0, len(colNums))
 			for _, num := range colNums {
-				v := convertArrayItemType(*propSchema, lineSchema, num, pErrMapCh)
+				v := convertArrayItemType(*propSchema, lineSchema, num, pErrCh)
 				arr = append(arr, v)
 			}
 			jsonMap[key] = arr
@@ -170,15 +190,15 @@ func processRowToMap(lineSchema entity.CsvRowSchema, jsonMap map[string]interfac
 			nextMap := make(map[string]interface{})
 			// if map len > 0
 			lineSchema.Properties = propSchema.Properties
-			resultMap := processRowToMap(lineSchema, nextMap, pErrMapCh)
+			resultMap := processRowToMap(lineSchema, nextMap, pErrCh)
 
 			jsonMap[key] = resultMap
 		default:
 			i64 := propSchema.CsvHeaderIndex.(float64)
 			index := int(i64)
 			// convert then validate
-			v := convertLineItemType(*propSchema, lineSchema, index, pErrMapCh)
-			// isValid := validateColumnValue(*propSchema, lineSchema.RowNum, index, v, pErrMapCh)
+			v := convertLineItemType(*propSchema, lineSchema, index, pErrCh)
+			// isValid := validateColumnValue(*propSchema, lineSchema.RowNum, index, v, pErrCh)
 			// if !isValid {
 			// 	continue
 			// }
@@ -188,14 +208,14 @@ func processRowToMap(lineSchema entity.CsvRowSchema, jsonMap map[string]interfac
 	return jsonMap
 }
 
-func validateStringSchema(propSchema entity.SchemaProperty, rowNum int, colNum int, str string, pErrMapCh chan<- entity.CsvProcessingError) bool {
+func validateStringSchema(propSchema entity.SchemaProperty, rowNum int, colNum int, str string, pErrCh chan<- entity.CsvProcessingError) bool {
 	isValid := true
 	if propSchema.MinLength != nil {
 		min := int(*propSchema.MinLength)
 		if len(str) != min {
 			msg := fmt.Sprintf("row %v column %v: string value \"%v\"'s length is less than %v", rowNum, colNum, str, min)
 			pErr := CreatePErr(msg, rowNum)
-			pErrMapCh <- pErr
+			pErrCh <- pErr
 			isValid = false
 		}
 	}
@@ -204,17 +224,17 @@ func validateStringSchema(propSchema entity.SchemaProperty, rowNum int, colNum i
 		if len(str) != max {
 			msg := fmt.Sprintf("row %v column %v: string value \"%v\"'s length is greater than %v", rowNum, colNum, str, max)
 			pErr := CreatePErr(msg, rowNum)
-			pErrMapCh <- pErr
+			pErrCh <- pErr
 			isValid = false
 		}
 	}
 	return isValid
 }
 
-func validateColumnValue(propSchema entity.SchemaProperty, rowNum int, colNum int, value any, pErrMapCh chan<- entity.CsvProcessingError) bool {
+func validateColumnValue(propSchema entity.SchemaProperty, rowNum int, colNum int, value any, pErrCh chan<- entity.CsvProcessingError) bool {
 	switch propSchema.Type {
 	case "string":
-		isValid := validateStringSchema(propSchema, rowNum, colNum, value.(string), pErrMapCh)
+		isValid := validateStringSchema(propSchema, rowNum, colNum, value.(string), pErrCh)
 		return isValid
 	// case "number":
 	// handle error for improper value conversion result
@@ -237,17 +257,16 @@ func validateColumnValue(propSchema entity.SchemaProperty, rowNum int, colNum in
 	default:
 		msg := fmt.Sprintf("row %v column %v: column value \"%v\" doesn't match accepted data types", rowNum, colNum, value)
 		pErr := CreatePErr(msg, rowNum)
-		pErr.ColNum = &colNum
-		pErrMapCh <- pErr
+		pErr.ColNum = colNum
+		pErrCh <- pErr
 		return false
 	}
 }
 
 // add error for conversion
-func convertArrayItemType(propSchema entity.SchemaProperty, lineSchema entity.CsvRowSchema, colNum int, pErrMapCh chan<- entity.CsvProcessingError) any {
+func convertArrayItemType(propSchema entity.SchemaProperty, lineSchema entity.CsvRowSchema, colNum int, pErrCh chan<- entity.CsvProcessingError) any {
 	var value any
 	if propSchema.Items != nil {
-
 		arrayItem := propSchema.Items.(map[string]interface{})
 		itemType := arrayItem["type"]
 		// itemType := propSchema.Items.(entity.ArrayItems).Type
@@ -266,7 +285,7 @@ func convertArrayItemType(propSchema entity.SchemaProperty, lineSchema entity.Cs
 }
 
 // add error for conversion
-func convertLineItemType(propSchema entity.SchemaProperty, lineSchema entity.CsvRowSchema, colNum int, pErrMapCh chan<- entity.CsvProcessingError) any {
+func convertLineItemType(propSchema entity.SchemaProperty, lineSchema entity.CsvRowSchema, colNum int, pErrCh chan<- entity.CsvProcessingError) any {
 	switch propSchema.Type {
 	case "string":
 		return lineSchema.RowData[colNum]
