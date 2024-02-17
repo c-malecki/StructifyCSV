@@ -1,70 +1,70 @@
 import { entity } from "../../wailsjs/go/models";
 
 const PropertiesObject = {
-  productName: new entity.SchemaProperty({
+  productName: new entity.PropertySchema({
     type: "string",
-    minLength: 3,
+    minLength: 6,
     csvHeaderIndex: 0,
   }),
-  description: new entity.SchemaProperty({ type: "string", csvHeaderIndex: 1 }),
-  featured: new entity.SchemaProperty({ type: "boolean", csvHeaderIndex: 2 }),
-  images: new entity.SchemaProperty({
+  description: new entity.PropertySchema({ type: "string", csvHeaderIndex: 1 }),
+  featured: new entity.PropertySchema({ type: "boolean", csvHeaderIndex: 2 }),
+  images: new entity.PropertySchema({
     type: "array",
     items: { type: "string" },
     minItems: 0,
     maxItems: 3,
     csvHeaderIndex: [3, 4],
   }),
-  bids: new entity.SchemaProperty({
+  bids: new entity.PropertySchema({
     type: "object",
     required: ["initialPrice", "lastBid", "totalBids"],
     properties: {
-      initialPrice: new entity.SchemaProperty({
+      initialPrice: new entity.PropertySchema({
         type: "number",
         numMinimum: 5.0,
         numMaximum: 99.99,
         csvHeaderIndex: 5,
       }),
-      lastBid: new entity.SchemaProperty({
+      lastBid: new entity.PropertySchema({
         type: "null",
         csvHeaderIndex: 6,
       }),
-      totalBids: new entity.SchemaProperty({
+      totalBids: new entity.PropertySchema({
         type: "integer",
         intMinimum: 0,
         csvHeaderIndex: 7,
       }),
     },
   }),
-  seller: new entity.SchemaProperty({
+  seller: new entity.PropertySchema({
     type: "object",
     properties: {
-      id: new entity.SchemaProperty({ type: "integer", csvHeaderIndex: 8 }),
-      name: new entity.SchemaProperty({ type: "string", csvHeaderIndex: 9 }),
-      address: new entity.SchemaProperty({
+      id: new entity.PropertySchema({ type: "integer", csvHeaderIndex: 8 }),
+      name: new entity.PropertySchema({ type: "string", csvHeaderIndex: 9 }),
+      address: new entity.PropertySchema({
         type: "object",
         properties: {
-          lineOne: new entity.SchemaProperty({
+          lineOne: new entity.PropertySchema({
             type: "string",
             csvHeaderIndex: 10,
           }),
-          lineTwo: new entity.SchemaProperty({
+          lineTwo: new entity.PropertySchema({
             type: "string",
             csvHeaderIndex: 11,
           }),
-          city: new entity.SchemaProperty({
+          city: new entity.PropertySchema({
             type: "string",
             csvHeaderIndex: 12,
           }),
-          state: new entity.SchemaProperty({
+          state: new entity.PropertySchema({
             type: "string",
             csvHeaderIndex: 13,
           }),
-          country: new entity.SchemaProperty({
+          country: new entity.PropertySchema({
             type: "string",
             csvHeaderIndex: 14,
           }),
-          postalCode: new entity.SchemaProperty({
+          postalCode: new entity.PropertySchema({
             type: "string",
             csvHeaderIndex: 15,
           }),

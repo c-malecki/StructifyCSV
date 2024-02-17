@@ -2,7 +2,7 @@
 import { inject, computed, type PropType } from "vue";
 import { getHoverColorScheme } from "../../../util/style";
 import { HeaderOptsKey } from "../CsvEditor.types";
-import { type SchemaNode } from "../../SchemaEditor/SchemaEditor.types";
+import { type PropertyNode } from "../../SchemaEditor/SchemaEditor.types";
 
 const headerOpts = inject(HeaderOptsKey);
 if (!headerOpts) {
@@ -12,7 +12,7 @@ if (!headerOpts) {
 // make note about directly mutating props and why
 const props = defineProps({
   node: {
-    type: Object as PropType<SchemaNode>,
+    type: Object as PropType<PropertyNode>,
     required: true,
   },
   level: {

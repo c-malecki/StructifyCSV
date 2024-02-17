@@ -8,7 +8,7 @@ import { entity } from "../wailsjs/go/models";
 import { ref, reactive, provide } from "vue";
 import { exampleSchema, exampleCsvFile } from "./util/example";
 import { CsvFileKey } from "./features/CsvEditor/CsvEditor.types";
-import { fixWailSchemaImport } from "./util/transform";
+import { fixWailsJsonSchemaImport } from "./util/transform";
 import { JsonSchemaKey } from "./features/SchemaEditor/SchemaEditor.types";
 import TitleBar from "./ui/TitleBar.vue";
 import CsvEditor from "./features/CsvEditor/CsvEditor.vue";
@@ -44,7 +44,7 @@ const handleImportSchema = () => {
       if (schema) {
         // when Wails unmarshals the JSON file, values are null instead of undefined
         // but the generated models.ts class uses undefined
-        const properties = fixWailSchemaImport(schema.properties);
+        const properties = fixWailsJsonSchemaImport(schema.properties);
         jsonSchema.value = { ...schema, properties };
       }
       titleBarRef.value!.menuControl.show = false;

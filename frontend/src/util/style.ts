@@ -10,10 +10,6 @@ const hoverColorScheme = {
   9: { hover: "blue-darken-4", font: "white" },
 };
 
-export const getHoverColorScheme = (schemaNodeLevel: number) => {
-  return hoverColorScheme[schemaNodeLevel as keyof typeof hoverColorScheme];
-};
-
-export const getLeftIndent = (schemaNodeLevel: number) => {
-  return `margin-left: ${schemaNodeLevel * 16}px`;
+export const getHoverColorScheme = (level: number) => {
+  return hoverColorScheme[level as keyof typeof hoverColorScheme];
 };

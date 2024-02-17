@@ -1,6 +1,6 @@
 package entity
 
-type Properties map[string]*SchemaProperty
+type Properties map[string]*PropertySchema
 
 type JsonSchema struct {
 	Title       string `json:"title"`
@@ -13,9 +13,9 @@ type JsonSchema struct {
 	Properties Properties `json:"properties"`
 }
 
-type SchemaProperty struct {
+type PropertySchema struct {
 	Type  string            `json:"type"`
-	OneOf []*SchemaProperty `json:"oneOf"`
+	OneOf []*PropertySchema `json:"oneOf"`
 	// object property validators
 	MinProperties *int       `json:"minProperties"`
 	MaxProperties *int       `json:"maxProperties"`

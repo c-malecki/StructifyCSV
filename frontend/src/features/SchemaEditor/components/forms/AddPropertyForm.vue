@@ -2,7 +2,7 @@
 import { ref, reactive } from "vue";
 import type { VForm } from "vuetify/components";
 import {
-  schemaPropertyTypes,
+  propertyTypes,
   type PropertyConstructorFormValues,
 } from "../../SchemaEditor.types";
 import { propertyFormNullToUndefined } from "../../../../util/transform";
@@ -47,7 +47,7 @@ const handleSubmit = () => {
     if (valid) {
       const constructorValues = propertyFormNullToUndefined(formValues);
       const properties = constructorValues.type === "object" ? {} : undefined;
-      const value = new entity.SchemaProperty({
+      const value = new entity.PropertySchema({
         ...constructorValues,
         properties,
       });
@@ -92,7 +92,7 @@ const resetFormOnTypeChange = () => {
             <VSelect
               v-model="formValues.type"
               label="Type"
-              :items="schemaPropertyTypes"
+              :items="propertyTypes"
               style="width: 200px"
               @update:model-value="resetFormOnTypeChange"
             />

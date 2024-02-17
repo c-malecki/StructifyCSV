@@ -2,7 +2,7 @@
 import { JsonSchemaKey } from "./SchemaEditor.types";
 import { ref, inject } from "vue";
 import { entity } from "../../../wailsjs/go/models";
-import SchemaTree from "./components/SchemaTree.vue";
+import PropertyTree from "./components/PropertyTree.vue";
 import SchemaInfoForm from "./components/forms/SchemaInfoForm.vue";
 
 const emit = defineEmits(["updateSchema"]);
@@ -48,7 +48,7 @@ const handleUpdateSchema = (vals: Omit<entity.JsonSchema, "properties">) => {
 
     <v-divider />
 
-    <SchemaTree />
+    <PropertyTree />
   </v-card>
 </template>
 
