@@ -3,7 +3,7 @@ import { entity } from "../../wailsjs/go/models";
 const PropertiesObject = {
   productName: new entity.PropertySchema({
     type: "string",
-    minLength: 3,
+    minLength: 6,
     csvHeaderIndex: 0,
   }),
   description: new entity.PropertySchema({ type: "string", csvHeaderIndex: 1 }),

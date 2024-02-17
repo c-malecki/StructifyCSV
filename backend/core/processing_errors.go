@@ -11,6 +11,8 @@ func CreateHeaderMismatchErr(rowNum int, rowLen int, headerLen int) entity.CsvPr
 	return pErr
 }
 
+// todo add keys (property names) to errors
+
 func CreateColValErr(rowNum int, colNum int, val string, cType string) entity.CsvProcessingError {
 	msg := fmt.Sprintf("row %v column %v: \"%v\" could not be converted to type %v.", rowNum, colNum, val, cType)
 	pErr := entity.CsvProcessingError{RowNum: rowNum, ColNum: colNum, Error: msg}

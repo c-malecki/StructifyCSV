@@ -41,40 +41,12 @@ func ProcessCsv(jsonSchema entity.JsonSchema) entity.CsvProcessingReport {
 
 	wg.Add(4)
 	go processCsvWithJsonSchema(jsonSchema, resultCh, pErrCh, successCh, &wg)
+	go writeJsonFromResults(resultCh, &wg)
 	go buildReportSuccesses(successCh, &report, &wg)
 	go buildReportFailures(pErrCh, &report, &wg)
-	go writeJsonFromResults(resultCh, &wg)
 	wg.Wait()
 
 	return report
-}
-
-func buildReportSuccesses(successCh <-chan int, report *entity.CsvProcessingReport, wg *sync.WaitGroup) {
-	var successfulRowNums []int
-	for {
-		colNum, more := <-successCh
-		if more {
-			successfulRowNums = append(successfulRowNums, colNum)
-			report.Successes = successfulRowNums
-		} else {
-			wg.Done()
-			break
-		}
-	}
-}
-
-func buildReportFailures(pErrCh <-chan entity.CsvProcessingError, report *entity.CsvProcessingReport, wg *sync.WaitGroup) {
-	var csvProcessingErrs []entity.CsvProcessingError
-	for {
-		pErr, more := <-pErrCh
-		if more {
-			csvProcessingErrs = append(csvProcessingErrs, pErr)
-			report.Errors = csvProcessingErrs
-		} else {
-			wg.Done()
-			break
-		}
-	}
 }
 
 func processCsvWithJsonSchema(schema entity.JsonSchema, resultCh chan<- map[string]any, pErrCh chan<- entity.CsvProcessingError, successCh chan<- int, wg *sync.WaitGroup) {
@@ -118,6 +90,7 @@ func processCsvWithJsonSchema(schema entity.JsonSchema, resultCh chan<- map[stri
 			continue
 		}
 
+		// need to check required properties
 		jsonMap := make(map[string]interface{})
 		rowSchema := entity.CsvRowSchema{RowNum: rowNum, RowData: row, Properties: schema.Properties}
 		rowMap := processCsvRowToMap(rowSchema, jsonMap, pErrCh)
@@ -132,8 +105,8 @@ func processCsvWithJsonSchema(schema entity.JsonSchema, resultCh chan<- map[stri
 }
 
 func writeJsonFromResults(resultCh <-chan map[string]any, wg *sync.WaitGroup) {
-	jsonFunc := func(rowMap map[string]any) string {
-		jsonData, _ := json.MarshalIndent(rowMap, entity.Indent, entity.Indent)
+	jsonFunc := func(resultMap map[string]any) string {
+		jsonData, _ := json.MarshalIndent(resultMap, entity.Indent, entity.Indent)
 		return entity.Indent + string(jsonData)
 	}
 	writeString := CreateStringWriter("/home/meeps/Documents/ProductsModel.json")
@@ -141,7 +114,7 @@ func writeJsonFromResults(resultCh <-chan map[string]any, wg *sync.WaitGroup) {
 
 	first := true
 	for {
-		rowMap, more := <-resultCh
+		resultMap, more := <-resultCh
 		if more {
 			if !first {
 				writeString(",\n", false)
@@ -149,7 +122,7 @@ func writeJsonFromResults(resultCh <-chan map[string]any, wg *sync.WaitGroup) {
 				first = false
 			}
 
-			jsonData := jsonFunc(rowMap)
+			jsonData := jsonFunc(resultMap)
 			writeString(jsonData, false)
 		} else {
 			writeString("\n]", true)
@@ -159,52 +132,104 @@ func writeJsonFromResults(resultCh <-chan map[string]any, wg *sync.WaitGroup) {
 	}
 }
 
-func processCsvRowToMap(lineSchema entity.CsvRowSchema, jsonMap map[string]interface{}, pErrCh chan<- entity.CsvProcessingError) map[string]any {
-	for key, propSchema := range lineSchema.Properties {
+func processCsvRowToMap(rowSchema entity.CsvRowSchema, jsonMap map[string]interface{}, pErrCh chan<- entity.CsvProcessingError) map[string]any {
+	for key, propSchema := range rowSchema.Properties {
 		if propSchema.Type != "object" && propSchema.CsvHeaderIndex == nil {
 			continue
 		}
 
 		switch propSchema.Type {
+		case "string":
+			i64 := propSchema.CsvHeaderIndex.(float64)
+			colNum := int(i64)
+			v := rowSchema.RowData[colNum]
+			isValid := ValidateStringProperty(*propSchema, rowSchema.RowNum, colNum, v, pErrCh)
+			if isValid {
+				jsonMap[key] = v
+			}
+		case "number":
+			i64 := propSchema.CsvHeaderIndex.(float64)
+			colNum := int(i64)
+			v, ok := ConvertToFloat(*propSchema, rowSchema, colNum, pErrCh)
+			if ok {
+				isValid := ValidateNumberProperty(*propSchema, rowSchema.RowNum, colNum, v, pErrCh)
+				if isValid {
+					jsonMap[key] = v
+				}
+			}
+		case "integer":
+			i64 := propSchema.CsvHeaderIndex.(float64)
+			colNum := int(i64)
+			v, ok := ConvertToInt(*propSchema, rowSchema, colNum, pErrCh)
+			if ok {
+				isValid := ValidateIntegerProperty(*propSchema, rowSchema.RowNum, colNum, v, pErrCh)
+				if isValid {
+					jsonMap[key] = v
+				}
+			}
+		case "boolean":
+			i64 := propSchema.CsvHeaderIndex.(float64)
+			colNum := int(i64)
+			v, ok := ConvertToBool(*propSchema, rowSchema, colNum, pErrCh)
+			if ok {
+				jsonMap[key] = v
+			}
+		case "null":
+			jsonMap[key] = nil
 		case "array":
-			colNums := getArrayItemsColNums(propSchema.CsvHeaderIndex)
+			colNums := ConvertIndexArrToInts(propSchema.CsvHeaderIndex)
 
 			arrItems := make([]any, 0, len(colNums))
-			for _, num := range colNums {
-				v, isValid := ConvertArrayItemType(*propSchema, lineSchema, num, pErrCh)
-				if isValid {
+			for _, colNum := range colNums {
+				v, ok := ConvertArrayItemType(*propSchema, rowSchema, colNum, pErrCh)
+				if ok {
 					arrItems = append(arrItems, v)
 				}
 			}
-			// validate array schema min max
-			jsonMap[key] = arrItems
+
+			isValid := ValidateArrayProperty(*propSchema, rowSchema.RowNum, arrItems, pErrCh)
+			if isValid {
+				jsonMap[key] = arrItems
+			}
 		case "object":
 			nextMap := make(map[string]interface{})
 			// if map len > 0
-			lineSchema.Properties = propSchema.Properties
-			resultMap := processCsvRowToMap(lineSchema, nextMap, pErrCh)
+			rowSchema.Properties = propSchema.Properties
+			resultMap := processCsvRowToMap(rowSchema, nextMap, pErrCh)
 
-			jsonMap[key] = resultMap
-		default:
-			i64 := propSchema.CsvHeaderIndex.(float64)
-			colNum := int(i64)
-			v, isValid := ConvertColumnValueType(*propSchema, lineSchema, colNum, pErrCh)
+			isValid := ValidateObjectProperty(*propSchema, "", rowSchema.RowNum, pErrCh)
 			if isValid {
-				// validate schema type min max etc...
-				jsonMap[key] = v
+				jsonMap[key] = resultMap
 			}
 		}
 	}
 	return jsonMap
 }
 
-func getArrayItemsColNums(csvHeaderIndex interface{}) []int {
-	indexes := csvHeaderIndex.([]interface{})
-	colNums := make([]int, 0, len(indexes))
-	for _, v := range indexes {
-		i64 := v.(float64)
-		index := int(i64)
-		colNums = append(colNums, index)
+func buildReportSuccesses(successCh <-chan int, report *entity.CsvProcessingReport, wg *sync.WaitGroup) {
+	var successfulRowNums []int
+	for {
+		colNum, more := <-successCh
+		if more {
+			successfulRowNums = append(successfulRowNums, colNum)
+			report.Successes = successfulRowNums
+		} else {
+			wg.Done()
+			break
+		}
 	}
-	return colNums
+}
+
+func buildReportFailures(pErrCh <-chan entity.CsvProcessingError, report *entity.CsvProcessingReport, wg *sync.WaitGroup) {
+	var csvProcessingErrs []entity.CsvProcessingError
+	for {
+		pErr, more := <-pErrCh
+		if more {
+			csvProcessingErrs = append(csvProcessingErrs, pErr)
+			report.Errors = csvProcessingErrs
+		} else {
+			wg.Done()
+			break
+		}
+	}
 }
