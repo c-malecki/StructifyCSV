@@ -1,7 +1,7 @@
 import { InjectionKey, type Ref } from "vue";
 import { entity } from "../../../wailsjs/go/models";
 
-export type SchemaPropertyType =
+export type PropertyType =
   | "string"
   | "number"
   | "integer"
@@ -10,7 +10,7 @@ export type SchemaPropertyType =
   | "boolean"
   | "null";
 
-export const schemaPropertyTypes: SchemaPropertyType[] = [
+export const propertyTypes: PropertyType[] = [
   "string",
   "number",
   "integer",
@@ -22,13 +22,13 @@ export const schemaPropertyTypes: SchemaPropertyType[] = [
 
 export type ArrayItemType = "string" | "number" | "integer";
 
-export type SchemaNode = [string, entity.SchemaProperty];
+export type PropertyNode = [string, entity.PropertySchema];
 
 export const JsonSchemaKey: InjectionKey<Ref<entity.JsonSchema>> =
   Symbol("JsonSchema");
 
 export type PropertyConstructorFormValues = {
-  type: SchemaPropertyType;
+  type: PropertyType;
   minProperties: string | null;
   maxProperties: string | null;
   minItems: string | null;
@@ -42,8 +42,8 @@ export type PropertyConstructorFormValues = {
   intMaximum: string | null;
 };
 
-export type SchemaPropertyConstructor = {
-  type: SchemaPropertyType;
+export type PropertyConstructor = {
+  type: PropertyType;
   minProperties?: number;
   maxProperties?: number;
   minItems?: number;

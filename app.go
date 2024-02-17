@@ -32,7 +32,7 @@ func (a *App) ExportJsonSchema(schema entity.JsonSchema) {
 }
 
 func (a *App) ProcessCsvWithSchema(jsonSchema entity.JsonSchema) entity.CsvProcessingReport {
-	report := core.ProcessCsvWithJsonSchema(jsonSchema)
+	report := core.ProcessCsv(jsonSchema)
 	return report
 }
 

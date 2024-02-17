@@ -1,19 +1,19 @@
 <script lang="ts" setup>
 import { ref, computed, type PropType } from "vue";
 import { getHoverColorScheme } from "../../../../util/style";
-import { getSchemaAttributesDisplay } from "../../../../util/transform";
-import { type SchemaNode } from "../../SchemaEditor.types";
+import { getPropertyAttributesDisplay } from "../../../../util/transform";
+import { type PropertyNode } from "../../SchemaEditor.types";
 import { entity } from "../../../../../wailsjs/go/models";
-import SchemaNodeButtons from "./SchemaNodeButtons.vue";
+import PropertyNodeButtons from "./PropertyNodeButtons.vue";
 import AddPropertyForm from "../forms/AddPropertyForm.vue";
 import EditPropertyForm from "../forms/EditPropertyForm.vue";
-import EditRequiredForm from "../forms/EditRequiredForm.vue";
+import EditObjectRequiredForm from "../forms/EditObjectRequiredForm.vue";
 
 type CurForm = "add" | "edit" | "required" | null;
 
 const props = defineProps({
   node: {
-    type: Object as PropType<SchemaNode>,
+    type: Object as PropType<PropertyNode>,
     required: true,
   },
   level: {
@@ -38,13 +38,13 @@ const showForm = (form: CurForm) => {
 const colorScheme = computed(() => getHoverColorScheme(props.level));
 
 const propertyAttributes = computed(() =>
-  getSchemaAttributesDisplay(props.node[1])
+  getPropertyAttributesDisplay(props.node[1])
 );
 
 const updateKey = (update: {
   editKey: string;
   curKey: string;
-  value: SchemaNode;
+  value: PropertyNode;
 }) => {
   if (props.level === 1) {
     emit("updateBaseKey", update);
@@ -60,7 +60,7 @@ const updateParentKey = ({
 }: {
   editKey: string;
   curKey: string;
-  value: entity.SchemaProperty;
+  value: entity.PropertySchema;
 }) => {
   delete props.node[1].properties[curKey];
   props.node[1].properties[editKey] = value;
@@ -69,7 +69,7 @@ const updateParentKey = ({
 const updateValue = (update: {
   editKey: string;
   curKey: string;
-  value: entity.SchemaProperty;
+  value: entity.PropertySchema;
 }) => {
   if (props.level === 1) {
     emit("updateBaseValue", update);
@@ -85,7 +85,7 @@ const updateParentValue = ({
 }: {
   editKey: string;
   curKey: string;
-  value: entity.SchemaProperty;
+  value: entity.PropertySchema;
 }) => {
   if (editKey !== curKey) {
     delete props.node[1].properties[curKey];
@@ -123,7 +123,7 @@ const addNewProperty = ({
   value,
 }: {
   key: string;
-  value: entity.SchemaProperty;
+  value: entity.PropertySchema;
 }) => {
   if (props.node[1].properties !== undefined) {
     props.node[1].properties[key] = value;
@@ -175,7 +175,7 @@ const updateRequired = (required: string[]) => {
               <b>{{ node[0] }}:</b>
             </p>
 
-            <SchemaNodeButtons
+            <PropertyNodeButtons
               v-if="isHovering && !curForm"
               :is-object-property="node[1].type === 'object'"
               @show-form="showForm"
@@ -202,7 +202,7 @@ const updateRequired = (required: string[]) => {
             </div>
           </v-expand-transition>
 
-          <SchemaNode
+          <PropertyNode
             v-if="node[1].properties && curForm !== 'required'"
             v-for="([k, v], i) in Object.entries(node[1].properties)"
             :key="`${level + 1}-json-${k}`"
@@ -219,9 +219,9 @@ const updateRequired = (required: string[]) => {
             @add-new-property="addNewProperty"
           />
 
-          <EditRequiredForm
+          <EditObjectRequiredForm
             v-if="node[1].type === 'object' && curForm === 'required'"
-            :schema="node[1]"
+            :objectProperty="node[1]"
             @close-form="curForm = null"
             @update-required="updateRequired"
           />

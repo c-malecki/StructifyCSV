@@ -1,9 +1,9 @@
 import { entity } from "../../wailsjs/go/models";
 import {
   type PropertyConstructorFormValues,
-  type SchemaPropertyConstructor,
+  type PropertyConstructor,
   type ArrayItemType,
-  SchemaPropertyType,
+  PropertyType,
 } from "../features/SchemaEditor/SchemaEditor.types";
 
 const nullToUndefined = (properties: Record<string, any>) => {
@@ -28,12 +28,12 @@ const nullToUndefined = (properties: Record<string, any>) => {
 };
 
 /**
- * When a schema.json file is unmarshalled, Wails returns `Schema` struct.
+ * When a "_.schema.json" file is unmarshalled, Wails returns `PropertySchema` struct.
  * Values unprovided to the struct from the unmarshalled JSON are returned as `null` instead of `undefined`.
- * To align with the Wails generated `models.ts` TypeScript class `Schema`, this converts the `null` form to `undefined`.
+ * To align with the Wails generated `models.ts` TypeScript class `PropertySchema`, this converts the `null` form to `undefined`.
  */
-export const fixWailSchemaImport = (
-  properties: entity.SchemaProperty["properties"]
+export const fixWailsJsonSchemaImport = (
+  properties: entity.PropertySchema["properties"]
 ) => {
   const result = {} as Record<string, any>;
   const entries = Object.entries(properties);
@@ -45,23 +45,23 @@ export const fixWailSchemaImport = (
 
 /**
  * Vuetify inputs use `null` as a default value. To align with the Wails generated `models.ts`
- * TypeScript class `Schema`, this converts the `null` values to `undefined`.
+ * TypeScript class `PropertySchema`, this converts the `null` values to `undefined`.
  */
 export const propertyFormNullToUndefined = (
   formValues: PropertyConstructorFormValues
 ) => {
-  const result = {} as SchemaPropertyConstructor;
+  const result = {} as PropertyConstructor;
   for (let key of Object.keys(formValues)) {
     const value = formValues[key as keyof PropertyConstructorFormValues];
     if (value === null || value === "") {
-      result[key as keyof Omit<SchemaPropertyConstructor, "type">] = undefined;
+      result[key as keyof Omit<PropertyConstructor, "type">] = undefined;
     } else {
       if (key === "type") {
-        result[key] = value as SchemaPropertyType;
+        result[key] = value as PropertyType;
       } else if (key === "items") {
         result["items"] = { type: value as ArrayItemType };
       } else {
-        result[key as keyof Omit<SchemaPropertyConstructor, "items" | "type">] =
+        result[key as keyof Omit<PropertyConstructor, "items" | "type">] =
           parseInt(value as string);
       }
     }
@@ -69,8 +69,10 @@ export const propertyFormNullToUndefined = (
   return result;
 };
 
-export const getSchemaAttributesDisplay = (schema: entity.SchemaProperty) => {
-  const entries = Object.entries(schema);
+export const getPropertyAttributesDisplay = (
+  property: entity.PropertySchema
+) => {
+  const entries = Object.entries(property);
   const filterNoDisplay = entries.filter(
     ([k, v]) =>
       v !== undefined &&
@@ -104,46 +106,3 @@ export const getSchemaAttributesDisplay = (schema: entity.SchemaProperty) => {
     return [k, v];
   });
 };
-
-// export const transformForCsvModelMap = (data: PropertiesMap, path = "") => {
-//   const map: CsvSchemaMap = new Map();
-//   for (let [key, val] of data) {
-//     let schemaPath = path.length ? `${path}.${key}` : key;
-//     if (val.type === "object") {
-//       map.set(key, transformForCsvModelMap(val.properties, schemaPath));
-//     } else {
-//       if (val.type === "array") {
-//         map.set(key, {
-//           headerIndexes: [],
-//           schemaPropertyType: val.type,
-//         });
-//       } else {
-//         map.set(key, {
-//           headerIndexes: null,
-//           schemaPropertyType: val.type,
-//         });
-//       }
-//     }
-//   }
-//   return map;
-// };
-
-// export const transformCsvModelMaptoObject = (
-//   data: CsvSchemaMap
-// ): Record<string, any> => {
-//   let obj = {} as Record<string, any>;
-//   for (let [key, val] of data) {
-//     if (val instanceof Map) {
-//       obj[key] = transformCsvModelMaptoObject(val);
-//     } else {
-//       let indexes = [] as number[];
-//       if (val.schemaPropertyType !== "array" && val.headerIndexes !== null) {
-//         indexes = [val.headerIndexes as number];
-//       } else if (val.schemaPropertyType === "array") {
-//         indexes = [...(val.headerIndexes as number[])];
-//       }
-//       obj[key] = { ...val, headerIndexes: indexes };
-//     }
-//   }
-//   return obj;
-// };

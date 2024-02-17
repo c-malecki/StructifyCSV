@@ -77,7 +77,7 @@ func createReqProps(required []string) string {
 	return fmt.Sprintf(",\n%[1]v\"required\": %[2]v", entity.Indent, reqsStr)
 }
 
-func processStringSchema(schema entity.SchemaProperty, propertyMap map[string]interface{}) {
+func processStringSchema(schema entity.PropertySchema, propertyMap map[string]interface{}) {
 	if schema.MinLength != nil {
 		propertyMap["minLength"] = schema.MinLength
 	}
@@ -87,7 +87,7 @@ func processStringSchema(schema entity.SchemaProperty, propertyMap map[string]in
 	propertyMap["type"] = "string"
 }
 
-func processNumberSchema(schema entity.SchemaProperty, propertyMap map[string]interface{}) {
+func processNumberSchema(schema entity.PropertySchema, propertyMap map[string]interface{}) {
 	if schema.NumMinimum != nil {
 		propertyMap["minimum"] = schema.NumMinimum
 	}
@@ -97,7 +97,7 @@ func processNumberSchema(schema entity.SchemaProperty, propertyMap map[string]in
 	propertyMap["type"] = "number"
 }
 
-func processIntSchema(schema entity.SchemaProperty, propertyMap map[string]interface{}) {
+func processIntSchema(schema entity.PropertySchema, propertyMap map[string]interface{}) {
 	if schema.IntMinimum != nil {
 		propertyMap["minimum"] = schema.IntMinimum
 	}
@@ -107,7 +107,7 @@ func processIntSchema(schema entity.SchemaProperty, propertyMap map[string]inter
 	propertyMap["type"] = "integer"
 }
 
-func processArraySchema(schema entity.SchemaProperty, propertyMap map[string]interface{}) {
+func processArraySchema(schema entity.PropertySchema, propertyMap map[string]interface{}) {
 	if schema.MinItems != nil {
 		propertyMap["minItems"] = schema.MinItems
 	}
@@ -125,7 +125,7 @@ type EmptyStruct struct {
 	Empty string `json:"empty,omitempty"`
 }
 
-func processObjectSchema(schema entity.SchemaProperty, propertyMap map[string]interface{}) {
+func processObjectSchema(schema entity.PropertySchema, propertyMap map[string]interface{}) {
 	if schema.MinProperties != nil {
 		propertyMap["minProperties"] = schema.MinProperties
 	}

@@ -4,21 +4,21 @@ import { type VForm } from "vuetify/components";
 import { entity } from "../../../../../wailsjs/go/models";
 
 const props = defineProps({
-  schema: {
-    type: Object as PropType<entity.SchemaProperty | entity.JsonSchema>,
+  objectProperty: {
+    type: Object as PropType<entity.PropertySchema | entity.JsonSchema>,
     required: true,
   },
 });
 
 const emit = defineEmits(["updateRequired", "closeForm"]);
-const required = ref<string[]>(props.schema.required);
+const required = ref<string[]>(props.objectProperty.required);
 
 const childPropertyOpts = computed(() => {
-  const childPropertyKeys = Object.keys(props.schema.properties);
+  const childPropertyKeys = Object.keys(props.objectProperty.properties);
   return childPropertyKeys.map((k) => {
     return {
       propertyKey: k,
-      type: props.schema.properties[k].type,
+      type: props.objectProperty.properties[k].type,
     };
   });
 });

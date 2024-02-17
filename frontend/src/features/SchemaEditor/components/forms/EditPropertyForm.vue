@@ -2,9 +2,9 @@
 import { reactive, ref, type PropType } from "vue";
 import type { VForm } from "vuetify/components";
 import {
-  schemaPropertyTypes,
-  type SchemaPropertyType,
-  type SchemaNode,
+  propertyTypes,
+  type PropertyType,
+  type PropertyNode,
   type ArrayItemType,
   type PropertyConstructorFormValues,
 } from "../../SchemaEditor.types";
@@ -17,7 +17,7 @@ import { entity } from "../../../../../wailsjs/go/models";
 
 const props = defineProps({
   node: {
-    type: Object as PropType<SchemaNode>,
+    type: Object as PropType<PropertyNode>,
     required: true,
   },
 });
@@ -25,7 +25,7 @@ const props = defineProps({
 const emit = defineEmits(["closeForm", "updateKey", "updateValue"]);
 
 const formValues = reactive<PropertyConstructorFormValues>({
-  type: props.node[1].type as SchemaPropertyType,
+  type: props.node[1].type as PropertyType,
   minProperties: props.node[1].minProperties?.toString() ?? null,
   maxProperties: props.node[1].maxProperties?.toString() ?? null,
   minItems: props.node[1].minItems?.toString() ?? null,
@@ -74,7 +74,7 @@ const handleSubmit = () => {
             ? props.node[1].properties
             : {};
 
-        const value = new entity.SchemaProperty({
+        const value = new entity.PropertySchema({
           ...constructorValues,
           properties,
         });
@@ -90,7 +90,7 @@ const handleSubmit = () => {
   });
 };
 
-const resetFormOnTypeChange = (typeVal: SchemaPropertyType) => {
+const resetFormOnTypeChange = (typeVal: PropertyType) => {
   if (typeVal === props.node[1].type) {
     formValues.minProperties = props.node[1].minProperties?.toString() ?? null;
     formValues.maxProperties = props.node[1].maxProperties?.toString() ?? null;
@@ -140,7 +140,7 @@ const resetFormOnTypeChange = (typeVal: SchemaPropertyType) => {
             <VSelect
               v-model="formValues.type"
               label="Type"
-              :items="schemaPropertyTypes"
+              :items="propertyTypes"
               style="width: 200px"
               @update:model-value="resetFormOnTypeChange"
             />

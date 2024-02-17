@@ -101,13 +101,13 @@ export namespace entity {
 		    return a;
 		}
 	}
-	export class SchemaProperty {
+	export class PropertySchema {
 	    type: string;
-	    oneOf: SchemaProperty[];
+	    oneOf: PropertySchema[];
 	    minProperties?: number;
 	    maxProperties?: number;
 	    required: string[];
-	    properties: {[key: string]: SchemaProperty};
+	    properties: {[key: string]: PropertySchema};
 	    minItems?: number;
 	    maxItems?: number;
 	    items: any;
@@ -120,13 +120,13 @@ export namespace entity {
 	    csvHeaderIndex: any;
 	
 	    static createFrom(source: any = {}) {
-	        return new SchemaProperty(source);
+	        return new PropertySchema(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.type = source["type"];
-	        this.oneOf = this.convertValues(source["oneOf"], SchemaProperty);
+	        this.oneOf = this.convertValues(source["oneOf"], PropertySchema);
 	        this.minProperties = source["minProperties"];
 	        this.maxProperties = source["maxProperties"];
 	        this.required = source["required"];
@@ -166,7 +166,7 @@ export namespace entity {
 	    description: string;
 	    type: string;
 	    required: string[];
-	    properties: {[key: string]: SchemaProperty};
+	    properties: {[key: string]: PropertySchema};
 	
 	    static createFrom(source: any = {}) {
 	        return new JsonSchema(source);
