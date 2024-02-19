@@ -48,7 +48,7 @@ const handleSubmit = () => {
 </script>
 
 <template>
-  <VForm @submit.prevent="handleSubmit" ref="formRef">
+  <VForm @submit.prevent="handleSubmit" ref="formRef" class="pa-4">
     <VTextField
       v-model="formValues.title"
       label="Schema Name"

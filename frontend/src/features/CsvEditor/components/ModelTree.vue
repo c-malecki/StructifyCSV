@@ -8,8 +8,8 @@ const csvFile = inject(CsvFileKey);
 if (!csvFile) {
   throw new Error(`Could not resolve ${CsvFileKey.description}`);
 }
-const jsonSchema = inject(JsonSchemaKey);
-if (!jsonSchema) {
+const selectedSchema = inject(JsonSchemaKey);
+if (!selectedSchema) {
   throw new Error(`Could not resolve ${JsonSchemaKey.description}`);
 }
 
@@ -27,12 +27,12 @@ provide(HeaderOptsKey, headerOpts);
 
 <template>
   <div class="pl-4 pt-4">
-    <h3>{{ jsonSchema.title }}</h3>
+    <h3>{{ selectedSchema.title }}</h3>
   </div>
 
   <div class="schema_tree pa-4">
     <ModelNode
-      v-for="([k, v], i) in Object.entries(jsonSchema.properties)"
+      v-for="([k, v], i) in Object.entries(selectedSchema.properties)"
       :key="`1-csv-${k}`"
       :node="[k, v]"
       :level="1"

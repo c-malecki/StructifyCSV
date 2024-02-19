@@ -15,6 +15,12 @@ const PropertiesObject = {
     maxItems: 3,
     csvHeaderIndex: [3, 4],
   }),
+  numArr: new entity.PropertySchema({
+    type: "array",
+    items: { type: "number" },
+    minItems: 2,
+    csvHeaderIndex: [16, 17],
+  }),
   bids: new entity.PropertySchema({
     type: "object",
     required: ["initialPrice", "lastBid", "totalBids"],
@@ -102,5 +108,7 @@ export const exampleCsvFile = new entity.CsvFileData({
     "Seller Address State",
     "Seller Address Country",
     "Seller Postal Code",
+    "Num Array 1",
+    "Num Array 2",
   ],
 });

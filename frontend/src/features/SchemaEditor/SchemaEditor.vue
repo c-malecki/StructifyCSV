@@ -1,64 +1,102 @@
 <script lang="ts" setup>
-import { JsonSchemaKey } from "./SchemaEditor.types";
-import { ref, inject } from "vue";
+import { ref, provide } from "vue";
 import { entity } from "../../../wailsjs/go/models";
+import {
+  ImportJsonSchema,
+  ExportJsonSchema,
+} from "../../../wailsjs/go/main/App";
+import { JsonSchemaKey } from "./SchemaEditor.types";
+import SchemaInfoDisplayVue from "./components/SchemaInfoDisplay.vue";
 import PropertyTree from "./components/PropertyTree.vue";
 import SchemaInfoForm from "./components/forms/SchemaInfoForm.vue";
+import { fixWailsJsonSchemaImport } from "../../util/transform";
+import { exampleSchema } from "../../util/example";
 
-const emit = defineEmits(["updateSchema"]);
+const props = defineProps({
+  hidden: {
+    type: Boolean,
+    required: true,
+  },
+});
 
-const jsonSchema = inject(JsonSchemaKey);
-if (!jsonSchema) {
-  throw new Error(`Could not resolve ${JsonSchemaKey.description}`);
-}
+const jsonSchema = ref<entity.JsonSchema>(exampleSchema);
+provide(JsonSchemaKey, jsonSchema);
+
+const emit = defineEmits(["changeTab"]);
+
 const showEditForm = ref(false);
 
-const handleUpdateSchema = (vals: Omit<entity.JsonSchema, "properties">) => {
-  emit("updateSchema", vals);
-  showEditForm.value = false;
+const newSchema = () => {
+  const schema = new entity.JsonSchema({
+    title: "New Schema",
+    description:
+      "To change the name and description of this Schema, use the EDIT button to the right. \nTo begin building your Schema, click the ADD button below.",
+    properties: {},
+  });
+
+  jsonSchema.value = schema;
+  emit("changeTab", "schema");
+};
+
+const importSchema = () => {
+  ImportJsonSchema()
+    .then(({ schema, error }) => {
+      if (error) {
+        console.log(error);
+        // show import error somewhere
+      }
+      if (schema) {
+        // when Wails unmarshals the JSON file, values are null instead of undefined
+        // but the generated models.ts class uses undefined
+        const properties = fixWailsJsonSchemaImport(schema.properties);
+        jsonSchema.value = { ...schema, properties };
+      }
+      emit("changeTab", "schema");
+    })
+    .catch(() => {});
+};
+
+const exportSchema = () => {
+  ExportJsonSchema(jsonSchema.value)
+    .then(() => {
+      emit("changeTab", "schema");
+    })
+    .catch((err) => {});
+};
+
+defineExpose({ newSchema, importSchema, exportSchema });
+
+const handleUpdateSchema = ({
+  title,
+  description,
+}: Omit<entity.JsonSchema, "properties">) => {
+  jsonSchema.value.title = title;
+  jsonSchema.value.description = description;
 };
 </script>
 
 <template>
-  <v-card border rounded="0" flat>
-    <template v-if="!showEditForm" #title>
-      <div class="relative">
-        <h3>{{ jsonSchema.title }}</h3>
-        <v-btn
-          position="absolute"
-          size="small"
-          location="top right"
-          @click="showEditForm = true"
-        >
-          edit
-        </v-btn>
-      </div>
-    </template>
+  <v-sheet rounded="0" flat :class="{ hide: props.hidden }">
+    <SchemaInfoDisplayVue
+      v-if="!showEditForm"
+      :schema="jsonSchema"
+      @show-edit="showEditForm = true"
+    />
 
-    <template v-if="!showEditForm" #subtitle>
-      <p>{{ jsonSchema.description }}</p>
-    </template>
-
-    <template v-if="showEditForm" #text>
-      <SchemaInfoForm
-        @close-form="showEditForm = false"
-        @update-schema="handleUpdateSchema"
-      />
-    </template>
+    <SchemaInfoForm
+      v-if="showEditForm"
+      @close-form="showEditForm = false"
+      @update-schema="handleUpdateSchema"
+    />
 
     <v-divider />
 
     <PropertyTree />
-  </v-card>
+  </v-sheet>
 </template>
 
 <style scoped>
-.relative {
-  position: relative;
-}
-
-.v-card:deep(.v-card-subtitle) {
-  opacity: 1;
-  white-space: pre;
+.hide {
+  display: none;
 }
 </style>

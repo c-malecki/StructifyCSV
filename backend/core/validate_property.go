@@ -1,76 +1,76 @@
 package core
 
 import (
-	"csvtoschema/backend/entity"
+	"StructifyCSV/backend/entity"
 	"fmt"
 )
 
 // todo add keys (property names) to errors
 
-func ValidateStringProperty(propSchema entity.PropertySchema, rowNum int, colNum int, str string, pErrCh chan<- entity.CsvProcessingError) bool {
+func ValidateStringProperty(val string, propKey string, propSchema entity.PropertySchema, rowNum int, colNum int, rowErrCh chan<- entity.RowError) bool {
 	isValid := true
 	if propSchema.MinLength != nil {
 		min := int(*propSchema.MinLength)
-		if len(str) < min {
+		if len(val) < min {
 			isValid = false
-			msg := fmt.Sprintf("row %v column %v: String value \"%v\"'s length is less than %v.", rowNum, colNum, str, min)
-			pErr := CreatePErr(msg, rowNum)
-			pErrCh <- pErr
+			msg := fmt.Sprintf("length is less than %v", min)
+			rowErr := CreateValidationError(val, propKey, rowNum, colNum, propSchema.Type, msg)
+			rowErrCh <- rowErr
 		}
 	}
 	if propSchema.MaxLength != nil {
 		max := int(*propSchema.MaxLength)
-		if len(str) > max {
+		if len(val) > max {
 			isValid = false
-			msg := fmt.Sprintf("row %v column %v: String value \"%v\"'s length is greater than %v.", rowNum, colNum, str, max)
-			pErr := CreatePErr(msg, rowNum)
-			pErrCh <- pErr
+			msg := fmt.Sprintf("length is greater than %v", max)
+			rowErr := CreateValidationError(val, propKey, rowNum, colNum, propSchema.Type, msg)
+			rowErrCh <- rowErr
 		}
 	}
 	return isValid
 }
 
-func ValidateNumberProperty(propSchema entity.PropertySchema, rowNum int, colNum int, num float64, pErrCh chan<- entity.CsvProcessingError) bool {
+func ValidateNumberProperty(val float64, propKey string, propSchema entity.PropertySchema, rowNum int, colNum int, rowErrCh chan<- entity.RowError) bool {
 	isValid := true
 	if propSchema.NumMinimum != nil {
 		min := float64(*propSchema.NumMinimum)
-		if num < min {
+		if val < min {
 			isValid = false
-			msg := fmt.Sprintf("row %v column %v: Number value \"%v\" is less than %v.", rowNum, colNum, num, min)
-			pErr := CreatePErr(msg, rowNum)
-			pErrCh <- pErr
+			msg := fmt.Sprintf("is less than %v.", min)
+			rowErr := CreateValidationError(val, propKey, rowNum, colNum, propSchema.Type, msg)
+			rowErrCh <- rowErr
 		}
 	}
 	if propSchema.NumMaximum != nil {
 		max := float64(*propSchema.NumMaximum)
-		if num > max {
+		if val > max {
 			isValid = false
-			msg := fmt.Sprintf("row %v column %v: Number value \"%v\" is greater than %v.", rowNum, colNum, num, max)
-			pErr := CreatePErr(msg, rowNum)
-			pErrCh <- pErr
+			msg := fmt.Sprintf("is greater than %v.", max)
+			rowErr := CreateValidationError(val, propKey, rowNum, colNum, propSchema.Type, msg)
+			rowErrCh <- rowErr
 		}
 	}
 	return isValid
 }
 
-func ValidateIntegerProperty(propSchema entity.PropertySchema, rowNum int, colNum int, vInt int, pErrCh chan<- entity.CsvProcessingError) bool {
+func ValidateIntegerProperty(val int, propKey string, propSchema entity.PropertySchema, rowNum int, colNum int, rowErrCh chan<- entity.RowError) bool {
 	isValid := true
 	if propSchema.IntMinimum != nil {
 		min := int(*propSchema.IntMinimum)
-		if vInt < min {
+		if val < min {
 			isValid = false
-			msg := fmt.Sprintf("row %v column %v: Integer value \"%v\" is less than %v.", rowNum, colNum, vInt, min)
-			pErr := CreatePErr(msg, rowNum)
-			pErrCh <- pErr
+			msg := fmt.Sprintf("is less than %v.", min)
+			rowErr := CreateValidationError(val, propKey, rowNum, colNum, propSchema.Type, msg)
+			rowErrCh <- rowErr
 		}
 	}
 	if propSchema.IntMaximum != nil {
 		max := int(*propSchema.IntMaximum)
-		if vInt > max {
+		if val > max {
 			isValid = false
-			msg := fmt.Sprintf("row %v column %v: Integer value \"%v\" is greater than %v.", rowNum, colNum, vInt, max)
-			pErr := CreatePErr(msg, rowNum)
-			pErrCh <- pErr
+			msg := fmt.Sprintf("is greater than %v.", max)
+			rowErr := CreateValidationError(val, propKey, rowNum, colNum, propSchema.Type, msg)
+			rowErrCh <- rowErr
 		}
 	}
 	return isValid
@@ -78,48 +78,48 @@ func ValidateIntegerProperty(propSchema entity.PropertySchema, rowNum int, colNu
 
 // needs more complex error for why an array length may not match due to value of converting
 // items types
-func ValidateArrayProperty(propSchema entity.PropertySchema, rowNum int, arr []any, pErrCh chan<- entity.CsvProcessingError) bool {
+func ValidateArrayProperty(val []any, propKey string, propSchema entity.PropertySchema, rowNum int, rowErrCh chan<- entity.RowError) bool {
 	isValid := true
 	if propSchema.MinItems != nil {
 		min := int(*propSchema.MinItems)
-		if len(arr) < min {
+		if len(val) < min {
 			isValid = false
-			msg := fmt.Sprintf("row %v: Array \"%v\"'s length is less than %v.", rowNum, arr, min)
-			pErr := CreatePErr(msg, rowNum)
-			pErrCh <- pErr
+			msg := fmt.Sprintf("length is less than %v.", min)
+			rowErr := entity.RowError{Row: rowNum, PropertyKey: propKey, PropertyType: propSchema.Type, ErrorType: "property validation failure", ErrorMessage: msg}
+			rowErrCh <- rowErr
 		}
 	}
 	if propSchema.MaxItems != nil {
 		max := int(*propSchema.MaxItems)
-		if len(arr) > max {
+		if len(val) > max {
 			isValid = false
-			msg := fmt.Sprintf("row %v: Array \"%v\"'s length is greater than %v.", rowNum, arr, max)
-			pErr := CreatePErr(msg, rowNum)
-			pErrCh <- pErr
+			msg := fmt.Sprintf("length is greater than %v.", max)
+			rowErr := entity.RowError{Row: rowNum, PropertyKey: propKey, PropertyType: propSchema.Type, ErrorType: "property validation failure", ErrorMessage: msg}
+			rowErrCh <- rowErr
 		}
 	}
 	return isValid
 }
 
 // needs more complex validation for required
-func ValidateObjectProperty(propSchema entity.PropertySchema, key string, rowNum int, pErrCh chan<- entity.CsvProcessingError) bool {
+func ValidateObjectProperty(val map[string]interface{}, propKey string, propSchema entity.PropertySchema, rowNum int, rowErrCh chan<- entity.RowError) bool {
 	isValid := true
 	if propSchema.MinProperties != nil {
 		min := int(*propSchema.MinProperties)
-		if len(propSchema.Properties) < min {
+		if len(val) < min {
 			isValid = false
-			msg := fmt.Sprintf("row %v: Object \"%v\"'s total properties is less than %v.", rowNum, key, min)
-			pErr := CreatePErr(msg, rowNum)
-			pErrCh <- pErr
+			msg := fmt.Sprintf("total properties is less than %v.", min)
+			rowErr := entity.RowError{Row: rowNum, PropertyKey: propKey, PropertyType: propSchema.Type, ErrorType: "property validation failure", ErrorMessage: msg}
+			rowErrCh <- rowErr
 		}
 	}
 	if propSchema.MaxProperties != nil {
 		max := int(*propSchema.MaxProperties)
-		if len(propSchema.Properties) > max {
+		if len(val) > max {
 			isValid = false
-			msg := fmt.Sprintf("row %v: Object \"%v\"'s total properties is greater than %v.", rowNum, key, max)
-			pErr := CreatePErr(msg, rowNum)
-			pErrCh <- pErr
+			msg := fmt.Sprintf("total properties is greater than %v.", max)
+			rowErr := entity.RowError{Row: rowNum, PropertyKey: propKey, PropertyType: propSchema.Type, ErrorType: "property validation failure", ErrorMessage: msg}
+			rowErrCh <- rowErr
 		}
 	}
 	return isValid

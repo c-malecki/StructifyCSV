@@ -1,76 +1,39 @@
 package core
 
 import (
-	"csvtoschema/backend/entity"
+	"StructifyCSV/backend/entity"
 	"strconv"
 )
 
-func ConvertColumnValueType(propSchema entity.PropertySchema, rowSchema entity.CsvRowSchema, colNum int, pErrCh chan<- entity.CsvProcessingError) (any, bool) {
+func ConvertToFloat(val string, propKey string, propSchema entity.PropertySchema, rowNum int, colNum int, rowErrCh chan<- entity.RowError) (float64, bool) {
 	ok := true
-	switch propSchema.Type {
-	case "string":
-		// valid by default since CSV values are all strings
-		return rowSchema.RowData[colNum], true
-	case "number":
-		v, err := strconv.ParseFloat(rowSchema.RowData[colNum], 64)
-		if err != nil {
-			ok = false
-			pErr := CreateColValErr(rowSchema.RowNum, colNum, rowSchema.RowData[colNum], propSchema.Type)
-			pErrCh <- pErr
-		}
-		return v, ok
-	case "integer":
-		v, err := strconv.Atoi(rowSchema.RowData[colNum])
-		if err != nil {
-			ok = false
-			pErr := CreateColValErr(rowSchema.RowNum, colNum, rowSchema.RowData[colNum], propSchema.Type)
-			pErrCh <- pErr
-		}
-		return v, ok
-	case "boolean":
-		v, err := strconv.ParseBool(rowSchema.RowData[colNum])
-		if err != nil {
-			ok = false
-			pErr := CreateColValErr(rowSchema.RowNum, colNum, rowSchema.RowData[colNum], propSchema.Type)
-			pErrCh <- pErr
-		}
-		return v, ok
-	case "null":
-		return nil, ok
-	default:
-		return rowSchema.RowData[colNum], false
-	}
-}
-
-func ConvertToFloat(propSchema entity.PropertySchema, rowSchema entity.CsvRowSchema, colNum int, pErrCh chan<- entity.CsvProcessingError) (float64, bool) {
-	ok := true
-	v, err := strconv.ParseFloat(rowSchema.RowData[colNum], 64)
+	v, err := strconv.ParseFloat(val, 64)
 	if err != nil {
 		ok = false
-		pErr := CreateColValErr(rowSchema.RowNum, colNum, rowSchema.RowData[colNum], propSchema.Type)
-		pErrCh <- pErr
+		rowErr := CreateConversionError(val, propKey, rowNum, colNum, propSchema.Type)
+		rowErrCh <- rowErr
 	}
 	return v, ok
 }
 
-func ConvertToInt(propSchema entity.PropertySchema, rowSchema entity.CsvRowSchema, colNum int, pErrCh chan<- entity.CsvProcessingError) (int, bool) {
+func ConvertToInt(val string, propKey string, propSchema entity.PropertySchema, rowNum int, colNum int, rowErrCh chan<- entity.RowError) (int, bool) {
 	ok := true
-	v, err := strconv.Atoi(rowSchema.RowData[colNum])
+	v, err := strconv.Atoi(val)
 	if err != nil {
 		ok = false
-		pErr := CreateColValErr(rowSchema.RowNum, colNum, rowSchema.RowData[colNum], propSchema.Type)
-		pErrCh <- pErr
+		rowErr := CreateConversionError(val, propKey, rowNum, colNum, propSchema.Type)
+		rowErrCh <- rowErr
 	}
 	return v, ok
 }
 
-func ConvertToBool(propSchema entity.PropertySchema, rowSchema entity.CsvRowSchema, colNum int, pErrCh chan<- entity.CsvProcessingError) (bool, bool) {
+func ConvertToBool(val string, propKey string, propSchema entity.PropertySchema, rowNum int, colNum int, rowErrCh chan<- entity.RowError) (bool, bool) {
 	ok := true
-	v, err := strconv.ParseBool(rowSchema.RowData[colNum])
+	v, err := strconv.ParseBool(val)
 	if err != nil {
 		ok = false
-		pErr := CreateColValErr(rowSchema.RowNum, colNum, rowSchema.RowData[colNum], propSchema.Type)
-		pErrCh <- pErr
+		rowErr := CreateConversionError(val, propKey, rowNum, colNum, propSchema.Type)
+		rowErrCh <- rowErr
 	}
 	return v, ok
 }
@@ -86,7 +49,7 @@ func ConvertIndexArrToInts(csvHeaderIndex interface{}) []int {
 	return colNums
 }
 
-func ConvertArrayItemType(propSchema entity.PropertySchema, rowSchema entity.CsvRowSchema, colNum int, pErrCh chan<- entity.CsvProcessingError) (any, bool) {
+func ConvertArrayItemType(val string, propKey string, propSchema entity.PropertySchema, rowNum int, colNum int, rowErrCh chan<- entity.RowError) (any, bool) {
 	ok := true
 	if propSchema.Items != nil {
 		// Wonky because Wails won't generate a correct TypeScript class when using a struct
@@ -96,28 +59,28 @@ func ConvertArrayItemType(propSchema entity.PropertySchema, rowSchema entity.Csv
 		itemType := itemTypeAttr.(string)
 		switch itemType {
 		case "string":
-			return rowSchema.RowData[colNum], true
+			return val, true
 		case "number":
-			v, err := strconv.ParseFloat(rowSchema.RowData[colNum], 64)
+			v, err := strconv.ParseFloat(val, 64)
 			if err != nil {
 				ok = false
-				pErr := CreateArrItemErr(rowSchema.RowNum, colNum, rowSchema.RowData[colNum], itemType)
-				pErrCh <- pErr
+				rowErr := CreateConversionError(val, propKey, rowNum, colNum, itemType)
+				rowErrCh <- rowErr
 			}
 			return v, ok
 		case "integer":
-			v, err := strconv.Atoi(rowSchema.RowData[colNum])
+			v, err := strconv.Atoi(val)
 			if err != nil {
 				ok = false
-				pErr := CreateArrItemErr(rowSchema.RowNum, colNum, rowSchema.RowData[colNum], itemType)
-				pErrCh <- pErr
+				rowErr := CreateConversionError(val, propKey, rowNum, colNum, itemType)
+				rowErrCh <- rowErr
 			}
 			return v, ok
 		default:
 			// if itemType is provided but doesn't match any case, type is invalid
-			return rowSchema.RowData[colNum], false
+			return val, false
 		}
 	}
 	// if itemType is not provided, any type is valid
-	return rowSchema.RowData[colNum], false
+	return val, false
 }

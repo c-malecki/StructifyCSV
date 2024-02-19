@@ -70,13 +70,18 @@ type CsvRowSchema struct {
 	Properties Properties
 }
 
-type CsvProcessingError struct {
-	RowNum int    `json:"rowNum"`
-	ColNum int    `json:"colNum"`
-	Error  string `json:"error"`
+type RowError struct {
+	Row          int    `json:"row"`
+	Column       string `json:"column"`
+	PropertyKey  string `json:"propertyKey"`
+	PropertyType string `json:"propertyType"`
+	Value        any    `json:"value"`
+	ErrorType    string `json:"errorType"`
+	ErrorMessage string `json:"errorMessage"`
 }
 
 type CsvProcessingReport struct {
-	Successes []int                `json:"successes"`
-	Errors    []CsvProcessingError `json:"errors"`
+	Successes []int `json:"successes"`
+	// Failures []int        `json:"failures"`
+	RowErrors []RowError `json:"rowErrors"`
 }

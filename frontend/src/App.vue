@@ -1,85 +1,25 @@
 <script lang="ts" setup>
-import {
-  ImportJsonSchema,
-  ExportJsonSchema,
-  ImportCsvFileData,
-} from "../wailsjs/go/main/App";
-import { entity } from "../wailsjs/go/models";
-import { ref, reactive, provide } from "vue";
-import { exampleSchema, exampleCsvFile } from "./util/example";
-import { CsvFileKey } from "./features/CsvEditor/CsvEditor.types";
-import { fixWailsJsonSchemaImport } from "./util/transform";
-import { JsonSchemaKey } from "./features/SchemaEditor/SchemaEditor.types";
+import { computed, ref } from "vue";
 import TitleBar from "./ui/TitleBar.vue";
 import CsvEditor from "./features/CsvEditor/CsvEditor.vue";
 import SchemaEditor from "./features/SchemaEditor/SchemaEditor.vue";
 
-const titleBarRef = ref<typeof TitleBar | null>(null);
+const schemaEditor = ref<typeof SchemaEditor | null>(null);
+const csvEditor = ref<typeof CsvEditor | null>(null);
 
-const jsonSchema = ref<entity.JsonSchema>(exampleSchema);
-const csvFile = reactive<entity.CsvFileData>(exampleCsvFile);
+const tab = ref(0);
+const curMenu = ref<"schema" | "csv">("schema");
 
-provide(CsvFileKey, csvFile);
-provide(JsonSchemaKey, jsonSchema);
+const debounce = ref<number | undefined>(undefined);
+const isHovering = ref(false);
 
-const handleCreateNewSchema = () => {
-  const schema = new entity.JsonSchema({
-    title: "New Schema",
-    description:
-      "To change the name and description of this Schema, use the EDIT button to the right. \nTo begin building your Schema, click the ADD button below.",
-    properties: {},
-  });
-
-  jsonSchema.value = schema;
-  titleBarRef.value!.menuControl.show = false;
-};
-
-const handleImportSchema = () => {
-  ImportJsonSchema()
-    .then(({ schema, error }) => {
-      if (error) {
-        console.log(error);
-        // show import error somewhere
-      }
-      if (schema) {
-        // when Wails unmarshals the JSON file, values are null instead of undefined
-        // but the generated models.ts class uses undefined
-        const properties = fixWailsJsonSchemaImport(schema.properties);
-        jsonSchema.value = { ...schema, properties };
-      }
-      titleBarRef.value!.menuControl.show = false;
-    })
-    .catch(() => {});
-};
-
-const handleExportSchema = () => {
-  ExportJsonSchema(jsonSchema.value)
-    .then(() => {
-      titleBarRef.value!.menuControl.show = false;
-    })
-    .catch((err) => {});
-};
-
-const handleUpdateSchema = ({
-  title,
-  description,
-}: Omit<entity.JsonSchema, "properties">) => {
-  jsonSchema.value.title = title;
-  jsonSchema.value.description = description;
-};
-
-const handleImportCsv = async () => {
-  try {
-    const csvFileData = await ImportCsvFileData();
-    if (csvFileData.headers !== null) {
-      csvFile.fileName = csvFileData.fileName;
-      csvFile.location = csvFileData.location;
-      csvFile.headers = csvFileData.headers;
-    } else {
-      console.log("canceled import");
-    }
-  } catch (err) {
-    console.log(err);
+const checkHovering = (bool: boolean, menu: "schema" | "csv") => {
+  clearTimeout(debounce.value);
+  if (!bool) {
+    debounce.value = setTimeout(() => (isHovering.value = false), 200);
+  } else {
+    curMenu.value = menu;
+    isHovering.value = bool;
   }
 };
 </script>
@@ -87,26 +27,88 @@ const handleImportCsv = async () => {
 <template>
   <v-app id="app">
     <v-main>
-      <TitleBar
-        @new-schema="handleCreateNewSchema"
-        @import-schema="handleImportSchema"
-        @export-schema="handleExportSchema"
-        @import-csv="handleImportCsv"
-        ref="titleBarRef"
-      />
-      <v-container fluid class="pa-0">
-        <v-row no-gutters>
-          <v-col>
-            <SchemaEditor
-              @update-schema="handleUpdateSchema"
-              @close-menu="titleBarRef!.menuControl.show = false"
-            />
-          </v-col>
-          <v-col>
-            <CsvEditor />
-          </v-col>
-        </v-row>
-      </v-container>
+      <TitleBar />
+
+      <v-toolbar density="compact" :extended="isHovering">
+        <v-tabs v-model="tab" density="compact" bg-color="blue-grey-lighten-5">
+          <v-hover
+            @update:model-value="(b: boolean) => checkHovering(b, 'schema')"
+          >
+            <template v-slot:default="{ props: hoverProps }">
+              <v-tab v-bind="hoverProps" :value="0"> Schema Editor </v-tab>
+            </template>
+          </v-hover>
+          <v-hover
+            @update:model-value="(b: boolean) => checkHovering(b, 'csv')"
+          >
+            <template v-slot:default="{ props: hoverProps }">
+              <v-tab v-bind="hoverProps" :value="1"> CSV Parser </v-tab>
+            </template>
+          </v-hover>
+        </v-tabs>
+        <template v-if="isHovering" #extension>
+          <v-hover
+            @update:model-value="(b: boolean) => checkHovering(b, curMenu)"
+          >
+            <template v-slot:default="{ props: hoverProps }">
+              <v-toolbar
+                v-if="curMenu === 'schema'"
+                v-bind="hoverProps"
+                density="compact"
+                border
+              >
+                <v-btn
+                  prepend-icon="mdi-file-plus-outline"
+                  size="small"
+                  @click="schemaEditor!.newSchema()"
+                >
+                  new
+                </v-btn>
+                <v-btn
+                  prepend-icon="mdi-folder-open-outline"
+                  size="small"
+                  @click="schemaEditor!.importSchema()"
+                >
+                  open
+                </v-btn>
+                <v-btn
+                  prepend-icon="mdi-content-save-edit-outline"
+                  size="small"
+                  @click="schemaEditor!.exportSchema()"
+                >
+                  save as
+                </v-btn>
+              </v-toolbar>
+              <v-toolbar
+                v-if="curMenu === 'csv'"
+                v-bind="hoverProps"
+                density="compact"
+                border
+              >
+                <v-btn
+                  prepend-icon="mdi-table-arrow-left"
+                  size="small"
+                  @click="csvEditor!.importCsv()"
+                >
+                  import
+                </v-btn>
+                <v-btn
+                  prepend-icon="mdi-vector-polyline-edit"
+                  size="small"
+                  @click="csvEditor!.processCsv()"
+                  :disabled="!csvEditor!.csvFile || !csvEditor!.selectedSchema"
+                >
+                  process
+                </v-btn>
+              </v-toolbar>
+            </template>
+          </v-hover>
+        </template>
+      </v-toolbar>
+
+      <SchemaEditor :hidden="tab === 1" ref="schemaEditor" />
+
+      <CsvEditor :hidden="tab === 0" ref="csvEditor" />
     </v-main>
   </v-app>
 </template>

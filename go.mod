@@ -1,4 +1,4 @@
-module csvtoschema
+module StructifyCSV
 
 go 1.21
 
