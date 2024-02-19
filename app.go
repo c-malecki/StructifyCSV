@@ -1,10 +1,10 @@
 package main
 
 import (
+	"StructifyCSV/backend/core"
+	"StructifyCSV/backend/entity"
+	"StructifyCSV/backend/ui"
 	"context"
-	"csvtoschema/backend/core"
-	"csvtoschema/backend/entity"
-	"csvtoschema/backend/ui"
 )
 
 type App struct {

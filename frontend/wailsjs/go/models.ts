@@ -53,25 +53,33 @@ export namespace entity {
 	        this.headers = source["headers"];
 	    }
 	}
-	export class CsvProcessingError {
-	    rowNum: number;
-	    colNum: number;
-	    error: string;
+	export class RowError {
+	    row: number;
+	    column: string;
+	    propertyKey: string;
+	    propertyType: string;
+	    value: any;
+	    errorType: string;
+	    errorMessage: string;
 	
 	    static createFrom(source: any = {}) {
-	        return new CsvProcessingError(source);
+	        return new RowError(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.rowNum = source["rowNum"];
-	        this.colNum = source["colNum"];
-	        this.error = source["error"];
+	        this.row = source["row"];
+	        this.column = source["column"];
+	        this.propertyKey = source["propertyKey"];
+	        this.propertyType = source["propertyType"];
+	        this.value = source["value"];
+	        this.errorType = source["errorType"];
+	        this.errorMessage = source["errorMessage"];
 	    }
 	}
 	export class CsvProcessingReport {
 	    successes: number[];
-	    errors: CsvProcessingError[];
+	    rowErrors: RowError[];
 	
 	    static createFrom(source: any = {}) {
 	        return new CsvProcessingReport(source);
@@ -80,7 +88,7 @@ export namespace entity {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.successes = source["successes"];
-	        this.errors = this.convertValues(source["errors"], CsvProcessingError);
+	        this.rowErrors = this.convertValues(source["rowErrors"], RowError);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

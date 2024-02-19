@@ -1,9 +1,9 @@
 package core
 
 import (
+	"StructifyCSV/backend/entity"
+	"StructifyCSV/backend/ui"
 	"context"
-	"csvtoschema/backend/entity"
-	"csvtoschema/backend/ui"
 	"encoding/json"
 	"fmt"
 	"os"

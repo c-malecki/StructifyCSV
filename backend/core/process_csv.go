@@ -1,9 +1,9 @@
 package core
 
 import (
+	"StructifyCSV/backend/entity"
+	"StructifyCSV/backend/ui"
 	"context"
-	"csvtoschema/backend/entity"
-	"csvtoschema/backend/ui"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -36,20 +36,20 @@ func ProcessCsv(jsonSchema entity.JsonSchema) entity.CsvProcessingReport {
 	var report entity.CsvProcessingReport
 
 	successCh := make(chan int)
-	pErrCh := make(chan entity.CsvProcessingError)
+	rowErrCh := make(chan entity.RowError)
 	resultCh := make(chan map[string]any)
 
 	wg.Add(4)
-	go processCsvWithJsonSchema(jsonSchema, resultCh, pErrCh, successCh, &wg)
+	go processCsvWithJsonSchema(jsonSchema, resultCh, rowErrCh, successCh, &wg)
 	go writeJsonFromResults(resultCh, &wg)
-	go buildReportSuccesses(successCh, &report, &wg)
-	go buildReportFailures(pErrCh, &report, &wg)
+	go aggregateRowSuccesses(successCh, &report, &wg)
+	go aggregateRowErrors(rowErrCh, &report, &wg)
 	wg.Wait()
 
 	return report
 }
 
-func processCsvWithJsonSchema(schema entity.JsonSchema, resultCh chan<- map[string]any, pErrCh chan<- entity.CsvProcessingError, successCh chan<- int, wg *sync.WaitGroup) {
+func processCsvWithJsonSchema(jsonSchema entity.JsonSchema, resultCh chan<- map[string]any, rowErrCh chan<- entity.RowError, successCh chan<- int, wg *sync.WaitGroup) {
 	file, err := os.Open("/home/meeps/Documents/Products.csv")
 	if err != nil {
 		// return error that file could not be opened
@@ -73,7 +73,7 @@ func processCsvWithJsonSchema(schema entity.JsonSchema, resultCh chan<- map[stri
 
 		if err == io.EOF {
 			close(resultCh)
-			close(pErrCh)
+			close(rowErrCh)
 			close(successCh)
 			wg.Done()
 			break
@@ -85,22 +85,135 @@ func processCsvWithJsonSchema(schema entity.JsonSchema, resultCh chan<- map[stri
 		rowNum++
 
 		if len(row) != len(headers) {
-			pErr := CreateHeaderMismatchErr(rowNum, len(row), len(headers))
-			pErrCh <- pErr
+			rowErr := CreateHeaderMismatchErr(rowNum, len(row), len(headers))
+			rowErrCh <- rowErr
 			continue
 		}
 
+		rowMap := make(map[string]interface{})
+		for key, propSchema := range jsonSchema.Properties {
+			if propSchema.Type != "object" && propSchema.CsvHeaderIndex == nil {
+				continue
+			}
+			processCsvRowToMap(key, *propSchema, rowNum, row, rowMap, rowErrCh)
+		}
+		successCh <- rowNum
+		resultCh <- rowMap
+
 		// need to check required properties
-		jsonMap := make(map[string]interface{})
-		rowSchema := entity.CsvRowSchema{RowNum: rowNum, RowData: row, Properties: schema.Properties}
-		rowMap := processCsvRowToMap(rowSchema, jsonMap, pErrCh)
+		// jsonMap := make(map[string]interface{})
+		// rowSchema := entity.CsvRowSchema{RowNum: rowNum, RowData: row, Properties: schema.Properties}
+		// rowMap := processCsvRowToMap(rowSchema, jsonMap, rowErrCh)
 
 		// if err != nil {
 		// 	fmt.Printf("Line: %sError: %s\n", row, err)
 		// 	continue
 		// }
-		successCh <- rowNum
-		resultCh <- rowMap
+
+	}
+}
+
+func processCsvRowToMap(propKey string, propSchema entity.PropertySchema, rowNum int, rowData []string, propMap map[string]interface{}, rowErrCh chan<- entity.RowError) {
+
+	switch propSchema.Type {
+	case "string":
+		i64 := propSchema.CsvHeaderIndex.(float64)
+		colNum := int(i64)
+		v := rowData[colNum]
+		isValid := ValidateStringProperty(v, propKey, propSchema, rowNum, colNum, rowErrCh)
+		if isValid {
+			propMap[propKey] = v
+		}
+	case "number":
+		i64 := propSchema.CsvHeaderIndex.(float64)
+		colNum := int(i64)
+		v, ok := ConvertToFloat(rowData[colNum], propKey, propSchema, rowNum, colNum, rowErrCh)
+		if ok {
+			isValid := ValidateNumberProperty(v, propKey, propSchema, rowNum, colNum, rowErrCh)
+			if isValid {
+				propMap[propKey] = v
+			}
+		}
+	case "integer":
+		i64 := propSchema.CsvHeaderIndex.(float64)
+		colNum := int(i64)
+		v, ok := ConvertToInt(rowData[colNum], propKey, propSchema, rowNum, colNum, rowErrCh)
+		if ok {
+			isValid := ValidateIntegerProperty(v, propKey, propSchema, rowNum, colNum, rowErrCh)
+			if isValid {
+				propMap[propKey] = v
+			}
+		}
+	case "boolean":
+		i64 := propSchema.CsvHeaderIndex.(float64)
+		colNum := int(i64)
+		v, ok := ConvertToBool(rowData[colNum], propKey, propSchema, rowNum, colNum, rowErrCh)
+		if ok {
+			propMap[propKey] = v
+		}
+	case "null":
+		propMap[propKey] = nil
+	case "array":
+		colNums := ConvertIndexArrToInts(propSchema.CsvHeaderIndex)
+
+		arrItems := make([]any, 0, len(colNums))
+		for _, colNum := range colNums {
+			v, ok := ConvertArrayItemType(rowData[colNum], propKey, propSchema, rowNum, colNum, rowErrCh)
+			if ok {
+				arrItems = append(arrItems, v)
+			}
+		}
+
+		isValid := ValidateArrayProperty(arrItems, propKey, propSchema, rowNum, rowErrCh)
+		if isValid {
+			propMap[propKey] = arrItems
+		}
+	case "object":
+		nextMap := make(map[string]interface{})
+		for key, propSchema := range propSchema.Properties {
+			processCsvRowToMap(key, *propSchema, rowNum, rowData, nextMap, rowErrCh)
+			isValid := ValidateObjectProperty(nextMap, key, *propSchema, rowNum, rowErrCh)
+			if isValid {
+				propMap[propKey] = nextMap
+			}
+		}
+		// if map len > 0
+		// rowSchema.Properties = propSchema.Properties
+		// resultMap := processCsvRowToMap(rowSchema, nextMap, rowErrCh)
+
+		// isValid := ValidateObjectProperty(propSchema, "", rowSchema.RowNum, rowErrCh)
+		// if isValid {
+		// 	propMap[propKey] = resultMap
+		// }
+	}
+
+}
+
+func aggregateRowSuccesses(successCh <-chan int, report *entity.CsvProcessingReport, wg *sync.WaitGroup) {
+	var successfulRowNums []int
+	for {
+		colNum, more := <-successCh
+		if more {
+			successfulRowNums = append(successfulRowNums, colNum)
+			report.Successes = successfulRowNums
+		} else {
+			wg.Done()
+			break
+		}
+	}
+}
+
+func aggregateRowErrors(rowErrCh <-chan entity.RowError, report *entity.CsvProcessingReport, wg *sync.WaitGroup) {
+	var rowErrors []entity.RowError
+	for {
+		rowErr, more := <-rowErrCh
+		if more {
+			rowErrors = append(rowErrors, rowErr)
+			report.RowErrors = rowErrors
+		} else {
+			wg.Done()
+			break
+		}
 	}
 }
 
@@ -126,108 +239,6 @@ func writeJsonFromResults(resultCh <-chan map[string]any, wg *sync.WaitGroup) {
 			writeString(jsonData, false)
 		} else {
 			writeString("\n]", true)
-			wg.Done()
-			break
-		}
-	}
-}
-
-func processCsvRowToMap(rowSchema entity.CsvRowSchema, jsonMap map[string]interface{}, pErrCh chan<- entity.CsvProcessingError) map[string]any {
-	for key, propSchema := range rowSchema.Properties {
-		if propSchema.Type != "object" && propSchema.CsvHeaderIndex == nil {
-			continue
-		}
-
-		switch propSchema.Type {
-		case "string":
-			i64 := propSchema.CsvHeaderIndex.(float64)
-			colNum := int(i64)
-			v := rowSchema.RowData[colNum]
-			isValid := ValidateStringProperty(*propSchema, rowSchema.RowNum, colNum, v, pErrCh)
-			if isValid {
-				jsonMap[key] = v
-			}
-		case "number":
-			i64 := propSchema.CsvHeaderIndex.(float64)
-			colNum := int(i64)
-			v, ok := ConvertToFloat(*propSchema, rowSchema, colNum, pErrCh)
-			if ok {
-				isValid := ValidateNumberProperty(*propSchema, rowSchema.RowNum, colNum, v, pErrCh)
-				if isValid {
-					jsonMap[key] = v
-				}
-			}
-		case "integer":
-			i64 := propSchema.CsvHeaderIndex.(float64)
-			colNum := int(i64)
-			v, ok := ConvertToInt(*propSchema, rowSchema, colNum, pErrCh)
-			if ok {
-				isValid := ValidateIntegerProperty(*propSchema, rowSchema.RowNum, colNum, v, pErrCh)
-				if isValid {
-					jsonMap[key] = v
-				}
-			}
-		case "boolean":
-			i64 := propSchema.CsvHeaderIndex.(float64)
-			colNum := int(i64)
-			v, ok := ConvertToBool(*propSchema, rowSchema, colNum, pErrCh)
-			if ok {
-				jsonMap[key] = v
-			}
-		case "null":
-			jsonMap[key] = nil
-		case "array":
-			colNums := ConvertIndexArrToInts(propSchema.CsvHeaderIndex)
-
-			arrItems := make([]any, 0, len(colNums))
-			for _, colNum := range colNums {
-				v, ok := ConvertArrayItemType(*propSchema, rowSchema, colNum, pErrCh)
-				if ok {
-					arrItems = append(arrItems, v)
-				}
-			}
-
-			isValid := ValidateArrayProperty(*propSchema, rowSchema.RowNum, arrItems, pErrCh)
-			if isValid {
-				jsonMap[key] = arrItems
-			}
-		case "object":
-			nextMap := make(map[string]interface{})
-			// if map len > 0
-			rowSchema.Properties = propSchema.Properties
-			resultMap := processCsvRowToMap(rowSchema, nextMap, pErrCh)
-
-			isValid := ValidateObjectProperty(*propSchema, "", rowSchema.RowNum, pErrCh)
-			if isValid {
-				jsonMap[key] = resultMap
-			}
-		}
-	}
-	return jsonMap
-}
-
-func buildReportSuccesses(successCh <-chan int, report *entity.CsvProcessingReport, wg *sync.WaitGroup) {
-	var successfulRowNums []int
-	for {
-		colNum, more := <-successCh
-		if more {
-			successfulRowNums = append(successfulRowNums, colNum)
-			report.Successes = successfulRowNums
-		} else {
-			wg.Done()
-			break
-		}
-	}
-}
-
-func buildReportFailures(pErrCh <-chan entity.CsvProcessingError, report *entity.CsvProcessingReport, wg *sync.WaitGroup) {
-	var csvProcessingErrs []entity.CsvProcessingError
-	for {
-		pErr, more := <-pErrCh
-		if more {
-			csvProcessingErrs = append(csvProcessingErrs, pErr)
-			report.Errors = csvProcessingErrs
-		} else {
 			wg.Done()
 			break
 		}
