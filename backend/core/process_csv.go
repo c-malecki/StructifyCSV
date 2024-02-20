@@ -2,7 +2,6 @@ package core
 
 import (
 	"StructifyCSV/backend/entity"
-	"StructifyCSV/backend/ui"
 	"context"
 	"encoding/csv"
 	"encoding/json"
@@ -10,14 +9,31 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 func ImportCsvFileData(c context.Context) entity.CsvFileData {
-	filePath := ui.PrepareOpenFileDialog(c, "csv", "")
+	opts := runtime.OpenDialogOptions{
+		Title: "Import CSV",
+		Filters: []runtime.FileFilter{
+			{
+				DisplayName: "CSV (*.csv)",
+				Pattern:     "*.csv",
+			},
+		},
+	}
+
+	filePath, err := runtime.OpenFileDialog(c, opts)
+	if err != nil {
+		fmt.Printf("File Path Error: %s\n", err)
+	}
+
 	file, err := os.Open(filePath)
 	if err != nil {
-		fmt.Printf("Error: %s\n", err)
+		fmt.Printf("Open File Error: %s\n", err)
 	}
 	defer file.Close()
 
@@ -31,7 +47,21 @@ func ImportCsvFileData(c context.Context) entity.CsvFileData {
 	return entity.CsvFileData{FileName: name, Location: filePath, Headers: headers}
 }
 
-func ProcessCsv(jsonSchema entity.JsonSchema) entity.CsvProcessingReport {
+func ProcessCsv(c context.Context, csvFile entity.CsvFileData, jsonSchema entity.JsonSchema) entity.CsvProcessingReport {
+	fileName := strings.TrimSuffix(csvFile.FileName, ".csv")
+
+	opts := runtime.SaveDialogOptions{
+		DefaultDirectory: ".",
+		DefaultFilename:  fileName + ".output.json",
+		Title:            "Save " + fileName + " output",
+	}
+
+	filePath, err := runtime.SaveFileDialog(c, opts)
+
+	if err != nil {
+		fmt.Printf("File Path Error: %s\n", err)
+	}
+
 	var wg sync.WaitGroup
 	var report entity.CsvProcessingReport
 
@@ -40,8 +70,8 @@ func ProcessCsv(jsonSchema entity.JsonSchema) entity.CsvProcessingReport {
 	resultCh := make(chan map[string]any)
 
 	wg.Add(4)
-	go processCsvWithJsonSchema(jsonSchema, resultCh, rowErrCh, successCh, &wg)
-	go writeJsonFromResults(resultCh, &wg)
+	go processCsvWithJsonSchema(csvFile.Location, jsonSchema, resultCh, rowErrCh, successCh, &wg)
+	go writeJsonFromResults(filePath, resultCh, &wg)
 	go aggregateRowSuccesses(successCh, &report, &wg)
 	go aggregateRowErrors(rowErrCh, &report, &wg)
 	wg.Wait()
@@ -49,11 +79,11 @@ func ProcessCsv(jsonSchema entity.JsonSchema) entity.CsvProcessingReport {
 	return report
 }
 
-func processCsvWithJsonSchema(jsonSchema entity.JsonSchema, resultCh chan<- map[string]any, rowErrCh chan<- entity.RowError, successCh chan<- int, wg *sync.WaitGroup) {
-	file, err := os.Open("/home/meeps/Documents/Products.csv")
+func processCsvWithJsonSchema(csvLocation string, jsonSchema entity.JsonSchema, resultCh chan<- map[string]any, rowErrCh chan<- entity.RowError, successCh chan<- int, wg *sync.WaitGroup) {
+	file, err := os.Open(csvLocation)
 	if err != nil {
 		// return error that file could not be opened
-		fmt.Printf("Error: %s\n", err)
+		fmt.Printf("Open File Error: %s\n", err)
 	}
 	defer file.Close()
 
@@ -217,12 +247,12 @@ func aggregateRowErrors(rowErrCh <-chan entity.RowError, report *entity.CsvProce
 	}
 }
 
-func writeJsonFromResults(resultCh <-chan map[string]any, wg *sync.WaitGroup) {
+func writeJsonFromResults(filePath string, resultCh <-chan map[string]any, wg *sync.WaitGroup) {
 	jsonFunc := func(resultMap map[string]any) string {
 		jsonData, _ := json.MarshalIndent(resultMap, entity.Indent, entity.Indent)
 		return entity.Indent + string(jsonData)
 	}
-	writeString := CreateStringWriter("/home/meeps/Documents/ProductsModel.json")
+	writeString := CreateStringWriter(filePath)
 	writeString("[\n", false)
 
 	first := true

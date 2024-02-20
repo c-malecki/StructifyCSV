@@ -4,6 +4,7 @@ import "./style.css";
 import "vuetify/styles";
 import { createVuetify } from "vuetify";
 import { aliases, mdi } from "vuetify/iconsets/mdi";
+import { createPinia } from "pinia";
 
 const vuetify = createVuetify({
   icons: {
@@ -39,6 +40,7 @@ const vuetify = createVuetify({
     },
   },
 });
+const pinia = createPinia();
 const app = createApp(App);
 
-app.use(vuetify).mount("#app");
+app.use(vuetify).use(pinia).mount("#app");

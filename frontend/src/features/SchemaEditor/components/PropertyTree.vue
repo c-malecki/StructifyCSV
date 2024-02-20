@@ -1,15 +1,12 @@
 <script lang="ts" setup>
-import { ref, inject } from "vue";
+import { ref } from "vue";
+import { useSchemaStore } from "../../../store/schema";
 import PropertyNode from "./PropertyNode/PropertyNode.vue";
 import AddPropertyForm from "./forms/AddPropertyForm.vue";
 import EditObjectRequiredForm from "./forms/EditObjectRequiredForm.vue";
-import { JsonSchemaKey } from "../SchemaEditor.types";
 import { entity } from "../../../../wailsjs/go/models";
 
-const jsonSchema = inject(JsonSchemaKey);
-if (!jsonSchema) {
-  throw new Error(`Could not resolve ${JsonSchemaKey.description}`);
-}
+const schemaStore = useSchemaStore();
 
 type CurForm = "add" | "required" | null;
 const curForm = ref<CurForm>(null);
@@ -23,8 +20,8 @@ const updateBaseKey = ({
   curKey: string;
   value: entity.PropertySchema;
 }) => {
-  delete jsonSchema.value.properties[curKey];
-  jsonSchema.value.properties[editKey] = value;
+  delete schemaStore.jsonSchema.properties[curKey];
+  schemaStore.jsonSchema.properties[editKey] = value;
 };
 
 const updateBaseValue = ({
@@ -37,13 +34,13 @@ const updateBaseValue = ({
   value: entity.PropertySchema;
 }) => {
   if (editKey !== curKey) {
-    delete jsonSchema.value.properties[curKey];
+    delete schemaStore.jsonSchema.properties[curKey];
   }
-  jsonSchema.value.properties[editKey] = value;
+  schemaStore.jsonSchema.properties[editKey] = value;
 };
 
 const deleteBaseProperty = (keyToDelete: string) => {
-  const property = jsonSchema.value.properties[keyToDelete];
+  const property = schemaStore.jsonSchema.properties[keyToDelete];
   const isObjOrArr = property!.type === "object" || property!.type === "array";
   let message = "";
   switch (isObjOrArr) {
@@ -55,7 +52,7 @@ const deleteBaseProperty = (keyToDelete: string) => {
       break;
   }
   if (confirm(message)) {
-    delete jsonSchema.value.properties[keyToDelete];
+    delete schemaStore.jsonSchema.properties[keyToDelete];
   }
 };
 
@@ -66,19 +63,19 @@ const addNewProperty = ({
   key: string;
   value: entity.PropertySchema;
 }) => {
-  jsonSchema.value.properties[key] = value;
+  schemaStore.jsonSchema.properties[key] = value;
 };
 
 const updateRequired = (required: string[]) => {
-  jsonSchema.value.required = required;
+  schemaStore.jsonSchema.required = required;
   curForm.value = null;
 };
 </script>
 
 <template>
-  <div class="proeprty_tree pa-4">
+  <div class="tree pa-4">
     <PropertyNode
-      v-for="([k, v], i) in Object.entries(jsonSchema.properties)"
+      v-for="[k, v] in Object.entries(schemaStore.jsonSchema.properties)"
       :key="`1-json-${k}`"
       :node="[k, v]"
       :level="1"
@@ -108,13 +105,13 @@ const updateRequired = (required: string[]) => {
 
       <AddPropertyForm
         v-if="curForm === 'add'"
-        :nodeValue="jsonSchema.properties"
+        :nodeValue="schemaStore.jsonSchema.properties"
         @close-form="curForm = null"
         @add-new-property="addNewProperty"
       />
       <EditObjectRequiredForm
         v-if="curForm === 'required'"
-        :objectProperty="jsonSchema"
+        :objectProperty="schemaStore.jsonSchema"
         @close-form="curForm = null"
         @update-required="updateRequired"
       />
@@ -123,10 +120,10 @@ const updateRequired = (required: string[]) => {
 </template>
 
 <style scoped>
-.proeprty_tree:before {
+.tree:before {
   content: "{";
 }
-.proeprty_tree:after {
+.tree:after {
   content: "}";
 }
 </style>

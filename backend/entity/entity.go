@@ -42,26 +42,10 @@ const (
 	Indent string = "    "
 )
 
-type DataType string
-
-const (
-	String  DataType = "string"
-	Number  DataType = "number"
-	Integer DataType = "integer"
-	Object  DataType = "object"
-	Array   DataType = "array"
-	Boolean DataType = "boolean"
-	Null    DataType = "null"
-)
-
 type CsvFileData struct {
 	FileName string   `json:"fileName"`
 	Location string   `json:"location"`
 	Headers  []string `json:"headers"`
-}
-
-type ArrayItems struct {
-	Type string
 }
 
 type CsvRowSchema struct {

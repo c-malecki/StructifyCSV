@@ -1,20 +1,17 @@
 <script lang="ts" setup>
-import { reactive, ref, inject } from "vue";
+import { reactive, ref } from "vue";
 import type { VForm } from "vuetify/components";
-import { JsonSchemaKey } from "../../SchemaEditor.types";
+import { useSchemaStore } from "../../../../store/schema";
 import { entity } from "../../../../../wailsjs/go/models";
+
+const schemaStore = useSchemaStore();
 
 type FormControl = {
   titleRules: ((val: string) => string | boolean)[];
   descriptionRules: ((val: string) => string | boolean)[];
 };
 
-const emit = defineEmits(["closeForm", "updateSchema"]);
-
-const jsonSchema = inject(JsonSchemaKey);
-if (!jsonSchema) {
-  throw new Error(`Could not resolve ${JsonSchemaKey.description}`);
-}
+const emit = defineEmits(["closeForm"]);
 
 const formRef = ref<VForm | null>(null);
 const formControl: FormControl = {
@@ -33,15 +30,16 @@ const formControl: FormControl = {
 const formValues = reactive<
   Omit<entity.JsonSchema, "properties" | "required" | "type">
 >({
-  title: jsonSchema.value.title,
-  description: jsonSchema.value.description,
+  title: schemaStore.jsonSchema.title,
+  description: schemaStore.jsonSchema.description,
 });
 
 const handleSubmit = () => {
   if (!formRef.value) return;
   formRef.value.validate().then(({ valid }) => {
     if (valid) {
-      emit("updateSchema", formValues);
+      schemaStore.updateJsonSchemaNameDesc(formValues);
+      emit("closeForm");
     }
   });
 };

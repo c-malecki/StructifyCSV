@@ -1,9 +1,8 @@
 <script lang="ts" setup>
 import { reactive, ref, type PropType } from "vue";
+import { useSchemaStore, type PropertyType } from "../../../../store/schema";
 import type { VForm } from "vuetify/components";
 import {
-  propertyTypes,
-  type PropertyType,
   type PropertyNode,
   type ArrayItemType,
   type PropertyConstructorFormValues,
@@ -14,6 +13,8 @@ import {
   enterNumOnKeyUp,
 } from "../../../../util/numInput";
 import { entity } from "../../../../../wailsjs/go/models";
+
+const schemaStore = useSchemaStore();
 
 const props = defineProps({
   node: {
@@ -140,7 +141,7 @@ const resetFormOnTypeChange = (typeVal: PropertyType) => {
             <VSelect
               v-model="formValues.type"
               label="Type"
-              :items="propertyTypes"
+              :items="schemaStore.propertyTypes"
               style="width: 200px"
               @update:model-value="resetFormOnTypeChange"
             />

@@ -81,7 +81,7 @@ const PropertiesObject = {
 };
 
 export const exampleSchema = new entity.JsonSchema({
-  title: "Product Example Schema",
+  title: "Product Example",
   description: "Just a test schema to build out the editor UI with.",
   type: "object",
   properties: PropertiesObject,

@@ -1,21 +1,15 @@
 <script lang="ts" setup>
-import { entity } from "../../../../wailsjs/go/models";
-import { type PropType } from "vue";
+import { useSchemaStore } from "../../../store/schema";
 
-const props = defineProps({
-  schema: {
-    type: Object as PropType<entity.JsonSchema>,
-    required: true,
-  },
-});
+const schemaStore = useSchemaStore();
 
 const emit = defineEmits(["showEdit"]);
 </script>
 
 <template>
   <div class="relative pa-4">
-    <h3>{{ props.schema.title }}</h3>
-    <p>{{ props.schema.description }}</p>
+    <h3>{{ schemaStore.jsonSchema.title }}</h3>
+    <p>{{ schemaStore.jsonSchema.description }}</p>
     <v-btn
       position="absolute"
       size="small"
