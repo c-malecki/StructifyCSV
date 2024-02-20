@@ -19,8 +19,6 @@ const showEditForm = ref(false);
 
     <SchemaInfoForm v-if="showEditForm" @close-form="showEditForm = false" />
 
-    <v-divider />
-
     <PropertyTree />
   </v-sheet>
 </template>

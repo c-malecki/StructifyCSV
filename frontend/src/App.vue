@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import TitleBar from "./ui/TitleBar.vue";
 import AppBar from "./ui/AppBar.vue";
-import CsvProcessor from "./features/CsvProcessor/CsvProcessor.vue";
+import CsvMapper from "./features/CsvMapper/CsvMapper.vue";
 import SchemaEditor from "./features/SchemaEditor/SchemaEditor.vue";
 </script>
 
@@ -10,8 +10,10 @@ import SchemaEditor from "./features/SchemaEditor/SchemaEditor.vue";
     <v-main>
       <TitleBar />
       <AppBar />
-      <SchemaEditor />
-      <CsvProcessor />
+      <v-sheet class="pa-4">
+        <SchemaEditor />
+        <CsvMapper />
+      </v-sheet>
     </v-main>
   </v-app>
 </template>

@@ -37,10 +37,25 @@ export namespace core {
 
 export namespace entity {
 	
+	export class CsvHeader {
+	    column: string;
+	    header: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CsvHeader(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.column = source["column"];
+	        this.header = source["header"];
+	    }
+	}
 	export class CsvFileData {
 	    fileName: string;
 	    location: string;
-	    headers: string[];
+	    headers: CsvHeader[];
+	    referenceRows: string[][];
 	
 	    static createFrom(source: any = {}) {
 	        return new CsvFileData(source);
@@ -50,9 +65,29 @@ export namespace entity {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.fileName = source["fileName"];
 	        this.location = source["location"];
-	        this.headers = source["headers"];
+	        this.headers = this.convertValues(source["headers"], CsvHeader);
+	        this.referenceRows = source["referenceRows"];
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
+	
 	export class RowError {
 	    row: number;
 	    column: string;

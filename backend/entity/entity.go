@@ -42,16 +42,16 @@ const (
 	Indent string = "    "
 )
 
-type CsvFileData struct {
-	FileName string   `json:"fileName"`
-	Location string   `json:"location"`
-	Headers  []string `json:"headers"`
+type CsvHeader struct {
+	Column string `json:"column"`
+	Header string `json:"header"`
 }
 
-type CsvRowSchema struct {
-	RowNum     int
-	RowData    []string
-	Properties Properties
+type CsvFileData struct {
+	FileName      string      `json:"fileName"`
+	Location      string      `json:"location"`
+	Headers       []CsvHeader `json:"headers"`
+	ReferenceRows [][]string  `json:"referenceRows"`
 }
 
 type RowError struct {

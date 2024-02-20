@@ -3,8 +3,8 @@ import {
   type PropertyConstructorFormValues,
   type PropertyConstructor,
   type ArrayItemType,
-  PropertyType,
 } from "../features/SchemaEditor/SchemaEditor.types";
+import { type PropertyType } from "../store/schema";
 
 const nullToUndefined = (properties: Record<string, any>) => {
   const result = {} as Record<string, any>;

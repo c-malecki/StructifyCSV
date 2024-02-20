@@ -16,16 +16,16 @@ type CsvStore = {
 
 export const useCsvStore = defineStore("csv", {
   state: (): CsvStore => ({
-    csvFile: exampleCsvFile,
+    csvFile: null,
     selectedSchema: exampleSchema,
     processingReport: null,
   }),
   getters: {
     csvHeaderOpts(state) {
       return state.csvFile
-        ? state.csvFile.headers.map((h, i) => {
+        ? state.csvFile.headers.map((ch, i) => {
             return {
-              header: h,
+              header: ch.header,
               index: i,
             };
           })
@@ -38,6 +38,7 @@ export const useCsvStore = defineStore("csv", {
   actions: {
     importCsvFileData() {
       ImportCsvFileData().then((res) => {
+        console.log(res);
         if (res.headers !== null) {
           this.csvFile = res;
         } else {

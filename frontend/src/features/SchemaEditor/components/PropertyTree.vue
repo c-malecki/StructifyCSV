@@ -73,50 +73,52 @@ const updateRequired = (required: string[]) => {
 </script>
 
 <template>
-  <div class="tree pa-4">
-    <PropertyNode
-      v-for="[k, v] in Object.entries(schemaStore.jsonSchema.properties)"
-      :key="`1-json-${k}`"
-      :node="[k, v]"
-      :level="1"
-      @update-base-key="updateBaseKey"
-      @update-base-value="updateBaseValue"
-      @delete-base-property="deleteBaseProperty"
-    />
-    <div>
-      <div v-if="!curForm" class="d-flex">
-        <v-btn
-          size="x-small"
-          @click="curForm = 'add'"
-          class="ml-2"
-          prepend-icon="mdi-plus"
-        >
-          add
-        </v-btn>
-        <v-btn
-          size="x-small"
-          @click="curForm = 'required'"
-          class="ml-4"
-          prepend-icon="mdi-pencil-box-outline"
-        >
-          required
-        </v-btn>
-      </div>
+  <v-sheet border>
+    <div class="tree pa-4">
+      <PropertyNode
+        v-for="[k, v] in Object.entries(schemaStore.jsonSchema.properties)"
+        :key="`1-json-${k}`"
+        :node="[k, v]"
+        :level="1"
+        @update-base-key="updateBaseKey"
+        @update-base-value="updateBaseValue"
+        @delete-base-property="deleteBaseProperty"
+      />
+      <div>
+        <div v-if="!curForm" class="d-flex">
+          <v-btn
+            size="x-small"
+            @click="curForm = 'add'"
+            class="ml-2"
+            prepend-icon="mdi-plus"
+          >
+            add
+          </v-btn>
+          <v-btn
+            size="x-small"
+            @click="curForm = 'required'"
+            class="ml-4"
+            prepend-icon="mdi-pencil-box-outline"
+          >
+            required
+          </v-btn>
+        </div>
 
-      <AddPropertyForm
-        v-if="curForm === 'add'"
-        :nodeValue="schemaStore.jsonSchema.properties"
-        @close-form="curForm = null"
-        @add-new-property="addNewProperty"
-      />
-      <EditObjectRequiredForm
-        v-if="curForm === 'required'"
-        :objectProperty="schemaStore.jsonSchema"
-        @close-form="curForm = null"
-        @update-required="updateRequired"
-      />
+        <AddPropertyForm
+          v-if="curForm === 'add'"
+          :nodeValue="schemaStore.jsonSchema.properties"
+          @close-form="curForm = null"
+          @add-new-property="addNewProperty"
+        />
+        <EditObjectRequiredForm
+          v-if="curForm === 'required'"
+          :objectProperty="schemaStore.jsonSchema"
+          @close-form="curForm = null"
+          @update-required="updateRequired"
+        />
+      </div>
     </div>
-  </div>
+  </v-sheet>
 </template>
 
 <style scoped>

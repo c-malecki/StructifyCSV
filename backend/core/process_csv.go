@@ -34,17 +34,61 @@ func ImportCsvFileData(c context.Context) entity.CsvFileData {
 	file, err := os.Open(filePath)
 	if err != nil {
 		fmt.Printf("Open File Error: %s\n", err)
+		// canceled import
+		return entity.CsvFileData{}
 	}
+
 	defer file.Close()
 
 	name := filepath.Base(filePath)
 
 	reader := csv.NewReader(file)
-	headers, err := reader.Read()
+
+	csvHeaders := make([]entity.CsvHeader, 0)
+
+	var headers, row []string
+	headers, err = reader.Read()
+
+	for i, h := range headers {
+		col, _ := IndexToColumn(i + 1)
+		ch := entity.CsvHeader{Column: col, Header: h}
+		csvHeaders = append(csvHeaders, ch)
+	}
+
+	firstFiveRows := make([][]string, 0, 5)
+
 	if err != nil {
 		fmt.Printf("Error: %s\n", err)
 	}
-	return entity.CsvFileData{FileName: name, Location: filePath, Headers: headers}
+
+	rowNum := 0
+
+	for {
+		if rowNum >= 6 {
+			file.Close()
+			break
+		}
+
+		row, err = reader.Read()
+
+		if err == io.EOF {
+			file.Close()
+			break
+		} else if err != nil {
+			// return some sort of error for not being able to read csv line
+			fmt.Printf("Row: %sError: %s\n", row, err)
+		}
+
+		if len(row) != len(headers) {
+			continue
+		}
+
+		firstFiveRows = append(firstFiveRows, row)
+
+		rowNum++
+	}
+
+	return entity.CsvFileData{FileName: name, Location: filePath, Headers: csvHeaders, ReferenceRows: firstFiveRows}
 }
 
 func ProcessCsv(c context.Context, csvFile entity.CsvFileData, jsonSchema entity.JsonSchema) entity.CsvProcessingReport {
@@ -129,17 +173,6 @@ func processCsvWithJsonSchema(csvLocation string, jsonSchema entity.JsonSchema, 
 		}
 		successCh <- rowNum
 		resultCh <- rowMap
-
-		// need to check required properties
-		// jsonMap := make(map[string]interface{})
-		// rowSchema := entity.CsvRowSchema{RowNum: rowNum, RowData: row, Properties: schema.Properties}
-		// rowMap := processCsvRowToMap(rowSchema, jsonMap, rowErrCh)
-
-		// if err != nil {
-		// 	fmt.Printf("Line: %sError: %s\n", row, err)
-		// 	continue
-		// }
-
 	}
 }
 

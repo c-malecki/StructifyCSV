@@ -16,8 +16,8 @@ const headers: VDataTableVirtual["headers"] = [
 </script>
 
 <template>
-  <v-sheet border rounded class="pa-4">
-    <h3>Processing Report</h3>
+  <v-sheet border class="mb-4">
+    <h3 class="pb-1 pt-1 pl-4">Processing Report</h3>
     <v-data-table-virtual
       v-if="csvStore.processingReport"
       :headers="headers"
@@ -27,6 +27,9 @@ const headers: VDataTableVirtual["headers"] = [
 </template>
 
 <style scoped>
+h3 {
+  background-color: #cfd8dc;
+}
 p {
   white-space: pre-line;
 }

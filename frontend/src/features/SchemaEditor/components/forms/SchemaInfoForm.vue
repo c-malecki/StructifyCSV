@@ -46,7 +46,7 @@ const handleSubmit = () => {
 </script>
 
 <template>
-  <VForm @submit.prevent="handleSubmit" ref="formRef" class="pa-4">
+  <VForm @submit.prevent="handleSubmit" ref="formRef" class="info pa-4">
     <VTextField
       v-model="formValues.title"
       label="Schema Name"
@@ -76,6 +76,9 @@ const handleSubmit = () => {
 </template>
 
 <style scoped>
+.info {
+  max-width: 1200px;
+}
 .v-input:not(.v-textarea):deep(.v-field__field) {
   height: 36px;
 }

@@ -1,0 +1,54 @@
+[
+    {
+        "bids": {
+            "initialPrice": 30.99,
+            "lastBid": null,
+            "totalBids": 3
+        },
+        "description": "All values should convert types successfully and properties pass validation",
+        "featured": true,
+        "images": [
+            "https://upload.wikimedia.org/wikipedia/en/9/9a/Trollface_non-free.png",
+            "https://upload.wikimedia.org/wikipedia/en/9/9a/Trollface_non-free.png"
+        ],
+        "numArr": [
+            1,
+            2
+        ],
+        "productName": "passes",
+        "seller": {
+            "address": {
+                "city": "Someville",
+                "country": "Someworld",
+                "lineOne": "123 Street",
+                "lineTwo": "",
+                "postalCode": "52522",
+                "state": "Someplace"
+            },
+            "id": 54,
+            "name": "Jim Bob"
+        }
+    },
+    {
+        "bids": {
+            "lastBid": null
+        },
+        "description": "Should fail type conversions and property validations",
+        "featured": false,
+        "images": [
+            "https://upload.wikimedia.org/wikipedia/en/9/9a/Trollface_non-free.png",
+            "https://upload.wikimedia.org/wikipedia/en/9/9a/Trollface_non-free.png"
+        ],
+        "seller": {
+            "address": {
+                "city": "Someville",
+                "country": "Someworld",
+                "lineOne": "543 Lane",
+                "lineTwo": "",
+                "postalCode": "33522",
+                "state": "Someplace"
+            },
+            "name": "Dink Man"
+        }
+    }
+]

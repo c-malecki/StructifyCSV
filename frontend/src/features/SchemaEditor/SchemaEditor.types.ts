@@ -1,5 +1,5 @@
 import { entity } from "../../../wailsjs/go/models";
-import { type PropertyType } from "../../store/store";
+import { type PropertyType } from "../../store/schema";
 
 export type ArrayItemType = "string" | "number" | "integer";
 

@@ -58,7 +58,7 @@ const colorScheme = computed(() => getHoverColorScheme(props.level));
             />
           </div>
 
-          <ProcessorNode
+          <MapperNode
             v-if="node[1].properties"
             v-for="([k, v], i) in Object.entries(node[1].properties)"
             :key="`${level + 1}-csv-${k}`"

@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { entity } from "../../wailsjs/go/models";
 import { ImportJsonSchema, ExportJsonSchema } from "../../wailsjs/go/main/App";
-import { exampleSchema } from "../util/example";
+// import { exampleSchema } from "../util/example";
 import { fixWailsJsonSchemaImport } from "../util/transform";
 
 export type AppTab = "schema" | "csv";
@@ -22,7 +22,12 @@ type SchemaStore = {
 
 export const useSchemaStore = defineStore("schema", {
   state: (): SchemaStore => ({
-    jsonSchema: exampleSchema,
+    jsonSchema: new entity.JsonSchema({
+      title: "New Schema",
+      description:
+        "To change the name and description of this Schema, use the EDIT button. \nTo begin building your Schema, click the ADD button below.",
+      properties: {},
+    }),
     propertyTypes: [
       "string",
       "number",
@@ -38,7 +43,7 @@ export const useSchemaStore = defineStore("schema", {
       this.jsonSchema = new entity.JsonSchema({
         title: "New Schema",
         description:
-          "To change the name and description of this Schema, use the EDIT button to the right. \nTo begin building your Schema, click the ADD button below.",
+          "To change the name and description of this Schema, use the EDIT button. \nTo begin building your Schema, click the ADD button below.",
         properties: {},
       });
     },
