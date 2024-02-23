@@ -27,12 +27,12 @@ func (a *App) ImportCsvFileData() entity.CsvFileData {
 	return core.ImportCsvFileData(a.ctx)
 }
 
-func (a *App) ExportJsonSchema(schema entity.JsonSchema) {
-	core.WriteJsonSchema(a.ctx, schema)
+func (a *App) ExportJsonSchema(jsonSchema entity.JsonSchema) {
+	core.ExportJsonSchema(a.ctx, jsonSchema)
 }
 
-func (a *App) ProcessCsvWithSchema(jsonSchema entity.JsonSchema) entity.CsvProcessingReport {
-	report := core.ProcessCsv(jsonSchema)
+func (a *App) ProcessCsvWithSchema(csvFile entity.CsvFileData, jsonSchema entity.JsonSchema) entity.CsvProcessingReport {
+	report := core.ProcessCsv(a.ctx, csvFile, jsonSchema)
 	return report
 }
 

@@ -1,13 +1,10 @@
 <script lang="ts" setup>
-import { inject, computed, type PropType } from "vue";
+import { computed, type PropType } from "vue";
+import { useCsvStore } from "../../../store/csv";
 import { getHoverColorScheme } from "../../../util/style";
-import { HeaderOptsKey } from "../CsvEditor.types";
 import { type PropertyNode } from "../../SchemaEditor/SchemaEditor.types";
 
-const headerOpts = inject(HeaderOptsKey);
-if (!headerOpts) {
-  throw new Error(`Could not resolve ${HeaderOptsKey.description}`);
-}
+const csvStore = useCsvStore();
 
 // make note about directly mutating props and why
 const props = defineProps({
@@ -49,7 +46,7 @@ const colorScheme = computed(() => getHoverColorScheme(props.level));
             <VAutocomplete
               v-if="props.node[1].type !== 'object'"
               v-model="props.node[1].csvHeaderIndex"
-              :items="headerOpts"
+              :items="csvStore.csvHeaderOpts"
               label="Headers"
               item-title="header"
               item-value="index"
@@ -61,7 +58,7 @@ const colorScheme = computed(() => getHoverColorScheme(props.level));
             />
           </div>
 
-          <ModelNode
+          <MapperNode
             v-if="node[1].properties"
             v-for="([k, v], i) in Object.entries(node[1].properties)"
             :key="`${level + 1}-csv-${k}`"

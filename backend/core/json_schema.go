@@ -2,13 +2,14 @@ package core
 
 import (
 	"StructifyCSV/backend/entity"
-	"StructifyCSV/backend/ui"
 	"context"
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type ImportSchemaRes struct {
@@ -17,7 +18,22 @@ type ImportSchemaRes struct {
 }
 
 func ImportJsonSchema(c context.Context) ImportSchemaRes {
-	filePath := ui.PrepareOpenFileDialog(c, "json", "schema")
+	opts := runtime.OpenDialogOptions{
+		Title: "Import JSON Schema",
+		Filters: []runtime.FileFilter{
+			{
+				DisplayName: "JSON Schema (*.schema.json)",
+				Pattern:     "*.schema.json",
+			},
+		},
+	}
+
+	filePath, err := runtime.OpenFileDialog(c, opts)
+
+	if err != nil {
+		fmt.Printf("File Path Error: %s\n", err)
+	}
+
 	var result ImportSchemaRes
 	var schema entity.JsonSchema
 
@@ -55,6 +71,40 @@ func ImportJsonSchema(c context.Context) ImportSchemaRes {
 	result.Schema = &schema
 	result.Error = nil
 	return result
+}
+
+func ExportJsonSchema(c context.Context, jsonSchema entity.JsonSchema) {
+	suggestedName := strings.ReplaceAll(jsonSchema.Title, " ", "_")
+	opts := runtime.SaveDialogOptions{
+		DefaultDirectory: ".",
+		DefaultFilename:  suggestedName + ".schema.json",
+		Title:            "Save JSON Schema",
+	}
+
+	filePath, err := runtime.SaveFileDialog(c, opts)
+
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+	}
+
+	writeString := CreateStringWriter(filePath)
+	boiler := createSchemaBoiler(jsonSchema)
+	writeString(boiler, false)
+
+	schemaMap := processSchemaProperties(jsonSchema.Properties)
+
+	jsonBytes, err := json.MarshalIndent(schemaMap, entity.Indent, entity.Indent)
+	if err != nil {
+		print(err)
+	}
+	writeString(string(jsonBytes), false)
+
+	if jsonSchema.Required != nil && len(jsonSchema.Required) > 0 {
+		required := createReqProps(jsonSchema.Required)
+		writeString(required, false)
+	}
+
+	writeString("\n}", true)
 }
 
 func createSchemaBoiler(schema entity.JsonSchema) string {
@@ -167,27 +217,4 @@ func processSchemaProperties(properties entity.Properties) map[string]interface{
 		schemaMap[k] = propertyMap
 	}
 	return schemaMap
-}
-
-func WriteJsonSchema(c context.Context, schema entity.JsonSchema) {
-	outPath := ui.PrepareSaveFileDialog(c, schema.Title)
-
-	writeString := CreateStringWriter(outPath)
-	boiler := createSchemaBoiler(schema)
-	writeString(boiler, false)
-
-	schemaMap := processSchemaProperties(schema.Properties)
-
-	jsonBytes, err := json.MarshalIndent(schemaMap, entity.Indent, entity.Indent)
-	if err != nil {
-		print(err)
-	}
-	writeString(string(jsonBytes), false)
-
-	if schema.Required != nil && len(schema.Required) > 0 {
-		required := createReqProps(schema.Required)
-		writeString(required, false)
-	}
-
-	writeString("\n}", true)
 }

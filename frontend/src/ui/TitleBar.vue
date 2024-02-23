@@ -19,36 +19,15 @@ const toggleMaximize = () => {
 </script>
 
 <template>
-  <div class="program-bar">
-    <b class="ml-4">StructifyCSV</b>
-    <button class="ml-auto program-button" @click="MinimizeWindow">
-      <v-icon size="x-small"> mdi-window-minimize </v-icon>
-    </button>
-    <button class="program-button" @click="toggleMaximize">
-      <v-icon size="x-small">
-        {{ isMaximized ? "mdi-window-restore" : "mdi-window-maximize" }}
-      </v-icon>
-    </button>
-    <button class="program-button" @click="ExitProgram">
-      <v-icon size="x-small"> mdi-window-close </v-icon>
-    </button>
-  </div>
+  <v-toolbar height="36" color="blue-grey-lighten-3">
+    <v-toolbar-title> StructifyCSV </v-toolbar-title>
+    <v-spacer />
+    <v-btn icon="mdi-window-minimize" size="small" @click="MinimizeWindow" />
+    <v-btn
+      :icon="isMaximized ? 'mdi-window-restore' : 'mdi-window-maximize'"
+      size="small"
+      @click="toggleMaximize"
+    />
+    <v-btn icon="mdi-window-close" size="small" @click="ExitProgram" />
+  </v-toolbar>
 </template>
-
-<style scoped>
-.program-bar {
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  height: 32px;
-  background-color: #e0e0e0;
-}
-.program-button {
-  width: 36px;
-}
-
-.program-button:hover {
-  background-color: #eeeeee;
-}
-</style>

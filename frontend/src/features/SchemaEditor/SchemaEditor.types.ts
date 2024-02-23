@@ -1,31 +1,9 @@
-import { InjectionKey, type Ref } from "vue";
 import { entity } from "../../../wailsjs/go/models";
-
-export type PropertyType =
-  | "string"
-  | "number"
-  | "integer"
-  | "object"
-  | "array"
-  | "boolean"
-  | "null";
-
-export const propertyTypes: PropertyType[] = [
-  "string",
-  "number",
-  "integer",
-  "object",
-  "array",
-  "boolean",
-  "null",
-];
+import { type PropertyType } from "../../store/schema";
 
 export type ArrayItemType = "string" | "number" | "integer";
 
 export type PropertyNode = [string, entity.PropertySchema];
-
-export const JsonSchemaKey: InjectionKey<Ref<entity.JsonSchema>> =
-  Symbol("JsonSchema");
 
 export type PropertyConstructorFormValues = {
   type: PropertyType;

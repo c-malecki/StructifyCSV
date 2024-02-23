@@ -26,8 +26,8 @@ export function MinimizeWindow() {
   return window['go']['main']['App']['MinimizeWindow']();
 }
 
-export function ProcessCsvWithSchema(arg1) {
-  return window['go']['main']['App']['ProcessCsvWithSchema'](arg1);
+export function ProcessCsvWithSchema(arg1, arg2) {
+  return window['go']['main']['App']['ProcessCsvWithSchema'](arg1, arg2);
 }
 
 export function UnmaximizeWindow() {

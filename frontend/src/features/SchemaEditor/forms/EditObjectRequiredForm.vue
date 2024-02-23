@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref, computed, type PropType } from "vue";
 import { type VForm } from "vuetify/components";
-import { entity } from "../../../../../wailsjs/go/models";
+import { entity } from "../../../../wailsjs/go/models";
 
 const props = defineProps({
   objectProperty: {

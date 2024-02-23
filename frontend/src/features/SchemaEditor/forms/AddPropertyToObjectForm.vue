@@ -1,16 +1,13 @@
 <script lang="ts" setup>
 import { ref, reactive } from "vue";
+import { useSchemaStore } from "../../../store/schema";
 import type { VForm } from "vuetify/components";
-import {
-  propertyTypes,
-  type PropertyConstructorFormValues,
-} from "../../SchemaEditor.types";
-import { propertyFormNullToUndefined } from "../../../../util/transform";
-import {
-  enforceNumOnKeyDown,
-  enterNumOnKeyUp,
-} from "../../../../util/numInput";
-import { entity } from "../../../../../wailsjs/go/models";
+import { type PropertyConstructorFormValues } from "../SchemaEditor.types";
+import { propertyFormNullToUndefined } from "../../../util/transform";
+import { enforceNumOnKeyDown, enterNumOnKeyUp } from "../../../util/numInput";
+import { entity } from "../../../../wailsjs/go/models";
+
+const schemaStore = useSchemaStore();
 
 const emit = defineEmits(["closeForm", "addNewProperty"]);
 
@@ -92,7 +89,7 @@ const resetFormOnTypeChange = () => {
             <VSelect
               v-model="formValues.type"
               label="Type"
-              :items="propertyTypes"
+              :items="schemaStore.propertyTypes"
               style="width: 200px"
               @update:model-value="resetFormOnTypeChange"
             />

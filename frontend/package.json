@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "pinia": "^2.1.7",
     "vite-plugin-vuetify": "^2.0.1",
     "vue": "^3.4.15",
     "vuetify": "^3.5.2"
