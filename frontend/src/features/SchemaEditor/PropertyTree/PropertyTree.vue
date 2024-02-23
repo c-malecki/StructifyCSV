@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { useSchemaStore } from "../../../store/schema";
-import PropertyNode from "./PropertyNode/PropertyNode.vue";
-import AddPropertyForm from "./forms/AddPropertyForm.vue";
-import EditObjectRequiredForm from "./forms/EditObjectRequiredForm.vue";
+import PropertyNode from "../PropertyNode/PropertyNode.vue";
+import AddPropertyToObjectForm from "../forms/AddPropertyToObjectForm.vue";
+import EditObjectRequiredForm from "../forms/EditObjectRequiredForm.vue";
 import { entity } from "../../../../wailsjs/go/models";
 
 const schemaStore = useSchemaStore();
@@ -73,7 +73,7 @@ const updateRequired = (required: string[]) => {
 </script>
 
 <template>
-  <v-sheet border>
+  <v-sheet class="ma-2">
     <div class="tree pa-4">
       <PropertyNode
         v-for="[k, v] in Object.entries(schemaStore.jsonSchema.properties)"
@@ -88,23 +88,25 @@ const updateRequired = (required: string[]) => {
         <div v-if="!curForm" class="d-flex">
           <v-btn
             size="x-small"
-            @click="curForm = 'add'"
-            class="ml-2"
+            color="primary"
             prepend-icon="mdi-plus"
+            class="ml-2"
+            @click="curForm = 'add'"
           >
             add
           </v-btn>
           <v-btn
             size="x-small"
-            @click="curForm = 'required'"
-            class="ml-4"
+            color="primary"
             prepend-icon="mdi-pencil-box-outline"
+            class="ml-4"
+            @click="curForm = 'required'"
           >
             required
           </v-btn>
         </div>
 
-        <AddPropertyForm
+        <AddPropertyToObjectForm
           v-if="curForm === 'add'"
           :nodeValue="schemaStore.jsonSchema.properties"
           @close-form="curForm = null"

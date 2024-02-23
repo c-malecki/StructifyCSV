@@ -10,10 +10,9 @@ import SchemaEditor from "./features/SchemaEditor/SchemaEditor.vue";
     <v-main>
       <TitleBar />
       <AppBar />
-      <v-sheet class="pa-4">
-        <SchemaEditor />
-        <CsvMapper />
-      </v-sheet>
+
+      <SchemaEditor />
+      <CsvMapper />
     </v-main>
   </v-app>
 </template>

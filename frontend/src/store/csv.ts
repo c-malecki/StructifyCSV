@@ -5,20 +5,22 @@ import {
   ImportJsonSchema,
   ProcessCsvWithSchema,
 } from "../../wailsjs/go/main/App";
-import { exampleSchema, exampleCsvFile } from "../util/example";
+// import { testSchema, testCsvFile, testReport } from "../util/testData";
 import { fixWailsJsonSchemaImport } from "../util/transform";
 
 type CsvStore = {
   csvFile: entity.CsvFileData | null;
   selectedSchema: entity.JsonSchema | null;
   processingReport: entity.CsvProcessingReport | null;
+  showReport: boolean;
 };
 
 export const useCsvStore = defineStore("csv", {
   state: (): CsvStore => ({
     csvFile: null,
-    selectedSchema: exampleSchema,
+    selectedSchema: null,
     processingReport: null,
+    showReport: false,
   }),
   getters: {
     csvHeaderOpts(state) {
@@ -69,6 +71,7 @@ export const useCsvStore = defineStore("csv", {
       if (!this.csvFile || !this.selectedSchema) return;
       ProcessCsvWithSchema(this.csvFile, this.selectedSchema).then((res) => {
         this.processingReport = res;
+        this.showReport = true;
       });
     },
   },

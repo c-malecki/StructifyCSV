@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { entity } from "../../wailsjs/go/models";
 import { ImportJsonSchema, ExportJsonSchema } from "../../wailsjs/go/main/App";
-// import { exampleSchema } from "../util/example";
+// import { testSchema } from "../util/testData";
 import { fixWailsJsonSchemaImport } from "../util/transform";
 
 export type AppTab = "schema" | "csv";

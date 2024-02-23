@@ -16,20 +16,24 @@ const headers: VDataTableVirtual["headers"] = [
 </script>
 
 <template>
-  <v-sheet border class="mb-4">
-    <h3 class="pb-1 pt-1 pl-4">Processing Report</h3>
-    <v-data-table-virtual
-      v-if="csvStore.processingReport"
-      :headers="headers"
-      :items="csvStore.processingReport.rowErrors"
-    />
-  </v-sheet>
+  <v-dialog :model-value="csvStore.showReport" persistent max-height="100%">
+    <v-sheet border class="mb-4">
+      <v-toolbar density="compact" color="blue-grey-lighten-4">
+        <v-toolbar-title>Processing Report</v-toolbar-title>
+        <v-spacer />
+        <v-btn icon="mdi-close" @click="csvStore.showReport = false" />
+      </v-toolbar>
+      <v-data-table-virtual
+        v-if="csvStore.processingReport"
+        :headers="headers"
+        :items="csvStore.processingReport.rowErrors"
+        height="600"
+      />
+    </v-sheet>
+  </v-dialog>
 </template>
 
 <style scoped>
-h3 {
-  background-color: #cfd8dc;
-}
 p {
   white-space: pre-line;
 }

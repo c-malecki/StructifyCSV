@@ -1,19 +1,17 @@
 <script lang="ts" setup>
 import { useCsvStore } from "../../../store/csv";
-import MapperNode from "./MapperNode.vue";
+import MapperNode from "../MapperNode/MapperNode.vue";
 
 const csvStore = useCsvStore();
 </script>
 
 <template>
-  <v-sheet border>
-    <h3 class="pb-1 pt-1 pl-4">
+  <v-sheet border class="pa-4 ma-2">
+    <h3>
       Schema:
       {{ csvStore.selectedSchema ? csvStore.selectedSchema.title : "" }}
       <span v-if="!csvStore.selectedSchema" class="empty"> none imported </span>
     </h3>
-
-    <v-divider />
 
     <div v-if="csvStore.selectedSchema" class="tree pa-4">
       <MapperNode
@@ -27,9 +25,6 @@ const csvStore = useCsvStore();
 </template>
 
 <style scoped>
-h3 {
-  background-color: #cfd8dc;
-}
 .empty {
   opacity: 0.5;
   font-weight: bold;

@@ -80,7 +80,7 @@ const PropertiesObject = {
   }),
 };
 
-export const exampleSchema = new entity.JsonSchema({
+export const testSchema = new entity.JsonSchema({
   title: "Product Example",
   description: "Just a test schema to build out the editor UI with.",
   type: "object",
@@ -88,7 +88,7 @@ export const exampleSchema = new entity.JsonSchema({
   required: ["productName", "description", "bids"],
 });
 
-export const exampleCsvFile = new entity.CsvFileData({
+export const testCsvFile = new entity.CsvFileData({
   fileName: "Products.csv",
   location: "/home/meeps/Documents/Products.csv",
   headers: [
@@ -111,5 +111,115 @@ export const exampleCsvFile = new entity.CsvFileData({
     { column: "Q", header: "Num Array 1" },
     { column: "R", header: "Num Array 2" },
   ],
-  referenceRows: [[]],
+  referenceRows: [
+    [
+      "passes",
+      "All values should convert types successfully and properties pass validation",
+      "1",
+      "https://upload.wikimedia.org/wikipedia/en/9/9a/Trollface_non-free.png",
+      "https://upload.wikimedia.org/wikipedia/en/9/9a/Trollface_non-free.png",
+      "30.99",
+      "35",
+      "3",
+      "54",
+      "Jim Bob",
+      "123 Street",
+      "",
+      "Someville",
+      "Someplace",
+      "Someworld",
+      "52522",
+      "1",
+      "2",
+    ],
+    [
+      "five",
+      "Should fail type conversions and property validations",
+      "0",
+      "https://upload.wikimedia.org/wikipedia/en/9/9a/Trollface_non-free.png",
+      "https://upload.wikimedia.org/wikipedia/en/9/9a/Trollface_non-free.png",
+      "4.99",
+      "20",
+      "-1",
+      "str",
+      "Dink Man",
+      "543 Lane",
+      "",
+      "Someville",
+      "Someplace",
+      "Someworld",
+      "33522",
+      "str1",
+      "",
+    ],
+  ],
+});
+
+export const testReport = new entity.CsvProcessingReport({
+  successes: [1, 2],
+  rowErrors: [
+    {
+      row: 2,
+      column: "Q",
+      propertyKey: "numArr",
+      propertyType: "number",
+      value: "str1",
+      errorType: "data type conversion",
+      errorMessage: "could not be converted to type number",
+    },
+    {
+      row: 2,
+      column: "R",
+      propertyKey: "numArr",
+      propertyType: "number",
+      value: "",
+      errorType: "data type conversion",
+      errorMessage: "could not be converted to type number",
+    },
+    {
+      row: 2,
+      column: "",
+      propertyKey: "numArr",
+      propertyType: "array",
+      value: null,
+      errorType: "property validation failure",
+      errorMessage: "length is less than 2.",
+    },
+    {
+      row: 2,
+      column: "F",
+      propertyKey: "initialPrice",
+      propertyType: "number",
+      value: 4.99,
+      errorType: "property validation failure",
+      errorMessage: "is less than 5.",
+    },
+    {
+      row: 2,
+      column: "H",
+      propertyKey: "totalBids",
+      propertyType: "integer",
+      value: -1,
+      errorType: "property validation failure",
+      errorMessage: "is less than 0.",
+    },
+    {
+      row: 2,
+      column: "I",
+      propertyKey: "id",
+      propertyType: "integer",
+      value: "str",
+      errorType: "data type conversion",
+      errorMessage: "could not be converted to type integer",
+    },
+    {
+      row: 2,
+      column: "A",
+      propertyKey: "productName",
+      propertyType: "string",
+      value: "five",
+      errorType: "property validation failure",
+      errorMessage: "length is less than 6",
+    },
+  ],
 });

@@ -1,14 +1,11 @@
 <script lang="ts" setup>
 import { ref, reactive } from "vue";
-import { useSchemaStore } from "../../../../store/schema";
+import { useSchemaStore } from "../../../store/schema";
 import type { VForm } from "vuetify/components";
-import { type PropertyConstructorFormValues } from "../../SchemaEditor.types";
-import { propertyFormNullToUndefined } from "../../../../util/transform";
-import {
-  enforceNumOnKeyDown,
-  enterNumOnKeyUp,
-} from "../../../../util/numInput";
-import { entity } from "../../../../../wailsjs/go/models";
+import { type PropertyConstructorFormValues } from "../SchemaEditor.types";
+import { propertyFormNullToUndefined } from "../../../util/transform";
+import { enforceNumOnKeyDown, enterNumOnKeyUp } from "../../../util/numInput";
+import { entity } from "../../../../wailsjs/go/models";
 
 const schemaStore = useSchemaStore();
 

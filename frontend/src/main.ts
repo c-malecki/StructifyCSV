@@ -35,9 +35,6 @@ const vuetify = createVuetify({
       density: "compact",
       bgColor: "#ffffff",
     },
-    VBtn: {
-      color: "secondary",
-    },
   },
 });
 const pinia = createPinia();

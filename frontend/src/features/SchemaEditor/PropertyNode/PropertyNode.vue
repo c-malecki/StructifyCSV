@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { ref, computed, type PropType } from "vue";
-import { getHoverColorScheme } from "../../../../util/style";
-import { getPropertyAttributesDisplay } from "../../../../util/transform";
-import { type PropertyNode } from "../../SchemaEditor.types";
-import { entity } from "../../../../../wailsjs/go/models";
+import { getHoverColorScheme } from "./../../../util/style";
+import { getPropertyAttributesDisplay } from "./../../../util/transform";
+import { type PropertyNode } from "./../SchemaEditor.types";
+import { entity } from "./../../../../wailsjs/go/models";
 import PropertyNodeButtons from "./PropertyNodeButtons.vue";
-import AddPropertyForm from "../forms/AddPropertyForm.vue";
+import AddPropertyToObjectForm from "../forms/AddPropertyToObjectForm.vue";
 import EditPropertyForm from "../forms/EditPropertyForm.vue";
 import EditObjectRequiredForm from "../forms/EditObjectRequiredForm.vue";
 
@@ -213,7 +213,7 @@ const updateRequired = (required: string[]) => {
             @delete-parent-property="deleteParentProperty"
           />
 
-          <AddPropertyForm
+          <AddPropertyToObjectForm
             v-if="node[1].type === 'object' && curForm === 'add'"
             @close-form="curForm = null"
             @add-new-property="addNewProperty"

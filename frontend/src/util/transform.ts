@@ -28,7 +28,7 @@ const nullToUndefined = (properties: Record<string, any>) => {
 };
 
 /**
- * When a "_.schema.json" file is unmarshalled, Wails returns `PropertySchema` struct.
+ * When a "*.schema.json" file is unmarshalled, Wails returns `PropertySchema` struct.
  * Values unprovided to the struct from the unmarshalled JSON are returned as `null` instead of `undefined`.
  * To align with the Wails generated `models.ts` TypeScript class `PropertySchema`, this converts the `null` form to `undefined`.
  */

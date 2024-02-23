@@ -12,6 +12,7 @@ const emit = defineEmits(["showForm", "deleteProperty"]);
   <div class="d-flex">
     <v-btn
       size="x-small"
+      color="primary"
       class="ml-4"
       prepend-icon="mdi-delete-outline"
       @click="emit('deleteProperty')"
@@ -20,6 +21,7 @@ const emit = defineEmits(["showForm", "deleteProperty"]);
     </v-btn>
     <v-btn
       size="x-small"
+      color="primary"
       class="ml-4"
       prepend-icon="mdi-pencil-box-outline"
       @click="emit('showForm', 'edit')"
@@ -29,6 +31,7 @@ const emit = defineEmits(["showForm", "deleteProperty"]);
     <v-btn
       v-if="props.isObjectProperty"
       size="x-small"
+      color="primary"
       class="ml-4"
       prepend-icon="mdi-plus"
       @click="emit('showForm', 'add')"
@@ -38,6 +41,7 @@ const emit = defineEmits(["showForm", "deleteProperty"]);
     <v-btn
       v-if="props.isObjectProperty"
       size="x-small"
+      color="primary"
       class="ml-4"
       prepend-icon="mdi-pencil-box-outline"
       @click="emit('showForm', 'required')"
