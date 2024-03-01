@@ -1,12 +1,10 @@
 module StructifyCSV
 
-go 1.21
-
-toolchain go1.21.4
+go 1.22.0
 
 require (
 	github.com/santhosh-tekuri/jsonschema v1.2.4
-	github.com/wailsapp/wails/v2 v2.7.1
+	github.com/wailsapp/wails/v2 v2.8.0
 )
 
 require (
